@@ -107,3 +107,6 @@ htmlcov/
 .history/
 .env*.local
 .husky/_
+
+# 移除geoip 因為過大無法上傳到github
+backend/geoip-lite/data/*.dat

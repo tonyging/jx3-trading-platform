@@ -119,14 +119,6 @@ npm run dev
 
 請參考各目錄下的 `.env.example` 文件進行環境變數配置。
 
-## API 文檔
-
-完整的 API 文檔請參考 [docs/api/README.md](docs/api/README.md)
-
-# JX3 Trading Platform (劍俠情緣叁交易媒合平台)
-
-[前面的內容保持不變...]
-
 ## 關於開發者
 
 - 獨立開發者：akin
