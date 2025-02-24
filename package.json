@@ -1,0 +1,41 @@
+{
+  "name": "jx3-trading-platform",
+  "version": "1.0.0",
+  "description": "劍俠情緣叁遊戲交易媒合平台 - 提供玩家安全、便利的遊戲幣、帳號和遊戲外觀交易服務",
+  "author": "tonyging",
+  "private": true,
+  "scripts": {
+    "dev": "echo \"請進入 frontend 或 backend 目錄執行相應的開發命令\" && exit 1",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "test:frontend": "cd frontend && npm run test",
+    "test:backend": "cd backend && npm run test",
+    "clean": "rm -rf node_modules && cd frontend && rm -rf node_modules && cd ../backend && rm -rf node_modules"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tonyging/jx3-trading-platform.git"
+  },
+  "keywords": [
+    "jx3",
+    "trading",
+    "platform",
+    "game",
+    "marketplace"
+  ],
+  "devDependencies": {
+    "sass": "^1.85.0",
+    "sass-loader": "^16.0.4"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/tonyging/jx3-trading-platform/issues"
+  },
+  "homepage": "https://github.com/tonyging/jx3-trading-platform#readme"
+}

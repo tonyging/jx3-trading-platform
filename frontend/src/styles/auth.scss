@@ -1,0 +1,199 @@
+@use 'sass:color';
+@use '_variables' as *;
+
+.login-page {
+  height: 100%;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: $background-color;
+  background-image: linear-gradient(135deg, #ffffff, #f0f0f0);
+  overflow-y: auto;
+}
+
+.site-header {
+  position: absolute;
+  top: $spacing-unit * 3;
+  left: $spacing-unit * 3;
+  z-index: 10;
+
+  h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: $primary-color;
+    margin: 0;
+    font-family: $font-family;
+  }
+}
+
+.content-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: $spacing-unit * 10;
+  overflow: auto;
+}
+
+.main-content {
+  width: 400px;
+  max-width: calc(100% - #{$spacing-unit * 4});
+  padding: $spacing-unit * 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #ffffff;
+  border-radius: $spacing-unit * 1.5;
+  box-shadow: $box-shadow;
+  border: 1px solid rgba($primary-color, 0.1);
+
+  h2 {
+    font-size: 32px;
+    font-weight: 600;
+    color: $primary-color;
+    margin-bottom: $spacing-unit * 3;
+    text-align: center;
+  }
+}
+
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-unit * 1.5;
+}
+
+.input-group {
+  width: 100%;
+  margin-bottom: $spacing-unit * 0.5;
+
+  input {
+    width: 100%;
+    padding: $spacing-unit * 1.5 $spacing-unit * 2;
+    border: 1px solid #e0e0e0;
+    border-radius: $spacing-unit;
+    font-size: 16px;
+    transition: $transition;
+    background: #ffffff;
+    color: $text-color;
+
+    &::placeholder {
+      color: #999999;
+    }
+
+    &:focus {
+      border-color: $primary-color;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba($primary-color, 0.1);
+    }
+
+    &.error {
+      border-color: $error-color;
+    }
+  }
+}
+
+.error-text {
+  color: $error-color;
+  font-size: 14px;
+  margin-top: $spacing-unit;
+}
+
+button {
+  width: 100%;
+  padding: $spacing-unit * 1.5 $spacing-unit * 2;
+  background: linear-gradient(to right, $primary-color, $primary-hover);
+  color: white;
+  border: none;
+  border-radius: $spacing-unit;
+  font-size: 16px;
+  cursor: pointer;
+  transition: $transition;
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    // 使用新的 color.adjust 函數替代舊的 adjust-color
+    background: linear-gradient(to right, $primary-hover, color.adjust($primary-hover, $lightness: 10%));
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+  }
+
+  &.google-login-button {
+    background: #ffffff;
+    background-image: none;
+    color: #333333;
+    border: 1px solid #dddddd;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+    &:hover:not(:disabled) {
+      background: #f8f8f8;
+      background-image: none;
+      transform: translateY(-1px);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    }
+
+    &:disabled {
+      background: #f5f5f5;
+      opacity: 0.7;
+    }
+  }
+}
+
+// 忘記密碼連結樣式
+.forgot-password {
+  width: 100%;
+  text-align: right;
+  // 調整上下邊距
+  margin: -5px 0 10px 0;
+
+  a {
+    // 使用我們定義的主要顏色變數，保持一致性
+    color: $primary-color;
+    text-decoration: none;
+    font-size: 14px;
+    transition: $transition;
+
+    &:hover {
+      color: $primary-hover;
+    }
+  }
+}
+
+.register-prompt {
+  margin-top: $spacing-unit * 4;
+  font-size: 14px;
+  color: #666666;
+
+  a {
+    color: $primary-color;
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      color: $primary-hover;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .site-header {
+    position: static;
+    width: 100%;
+    text-align: center;
+    padding: $spacing-unit * 2 0 0 0;
+  }
+
+  .content-wrapper {
+    padding-top: 0;
+  }
+
+  .main-content {
+    margin-top: $spacing-unit * 2;
+  }
+}
