@@ -8,9 +8,10 @@ import CreateProductModal from '@/components/CreateProductModal.vue'
 import EditProductModal from '@/components/EditProductModal.vue'
 import PurchaseConfirmModal from '@/components/PurchaseConfirmModal.vue'
 import { productApi } from '@/services/api/product'
+import { Product, ProductListType, Transaction } from '@/types'
 
 const showPurchaseModal = ref(false)
-const selectedProduct = ref(null)
+const selectedProduct = ref<Product | null>(null)
 
 const isAdmin = computed(() => {
   console.log('Current user:', userStore.currentUser)
@@ -30,7 +31,7 @@ const totalColumns = computed(() => {
 })
 
 // 添加处理购买点击的方法
-const handleBuyProduct = (product) => {
+const handleBuyProduct = (product: Product) => {
   selectedProduct.value = product
   showPurchaseModal.value = true
 }
@@ -47,7 +48,7 @@ const products = ref([])
 const loading = ref(true)
 
 //頁籤狀態
-const currentTab = ref<'all' | 'my' | 'trading' | 'admin'>('all')
+const currentTab = ref<ProductListType>('all')
 
 const sortFieldMap = {
   amount: 'amount',
@@ -74,7 +75,7 @@ const loadProducts = async () => {
     const requestParams: {
       sortBy: string
       order: 'asc' | 'desc'
-      tab: 'all' | 'my'
+      tab: 'all' | 'my' | 'trading' | 'admin'
       userId?: string
       status?: string | string[]
       buyerId?: string
@@ -136,7 +137,7 @@ const loadProducts = async () => {
 }
 
 // 切換頁籤的方法
-const switchTab = async (tab: 'all' | 'my' | 'trading' | 'admin') => {
+const switchTab = async (tab: ProductListType) => {
   if (tab === 'admin' && userStore.currentUser?.role !== 'admin') {
     showNotification('您沒有權限訪問此頁籤', 'error')
     return
@@ -215,6 +216,13 @@ const handleSort = async (field: keyof typeof sortFieldMap) => {
 const getSortIconClass = (field: string) => {
   if (currentSort.value.field !== field) return 'sort-icon'
   return currentSort.value.direction === 'asc' ? 'sort-icon ascending' : 'sort-icon descending'
+}
+
+const getUserName = (userId: string | User) => {
+  if (typeof userId === 'object' && userId !== null) {
+    return userId.name || '未知賣家'
+  }
+  return '未知賣家'
 }
 
 // 在組件掛載時載入商品列表
@@ -309,33 +317,37 @@ const handleSubmitEditProduct = async (data: { amount: number; price: number }) 
 
 // 確認購買商品頁面
 const handleConfirmPurchase = async (purchaseData: { amount: number; totalPrice: number }) => {
-  try {
-    // 調用保留商品的 API
-    const response = await productApi.reserveProduct(selectedProduct.value._id, purchaseData.amount)
+  if (selectedProduct.value) {
+    try {
+      const response = await productApi.reserveProduct(
+        selectedProduct.value._id,
+        purchaseData.amount,
+      )
 
-    // 添加回應資料的檢查和日誌
-    console.log('Purchase response:', response)
+      // 添加回應資料的檢查和日誌
+      console.log('Purchase response:', response)
 
-    // 確保我們有收到交易資料
-    if (!response.data?.transaction?._id) {
-      throw new Error('未收到有效的交易資訊')
+      // 確保我們有收到交易資料
+      if (!response.data?.transaction?._id) {
+        throw new Error('未收到有效的交易資訊')
+      }
+
+      // 關閉購買模態框
+      showPurchaseModal.value = false
+
+      // 使用正確的交易 ID 進行跳轉
+      router.push(`/transactions/${response.data.transaction._id}`)
+
+      // 顯示成功訊息
+      showNotification('購買成功！正在前往交易詳情頁面...', 'success')
+    } catch (error: any) {
+      // 提供更詳細的錯誤訊息
+      const errorMessage = error.message || '購買失敗，請稍後再試'
+      showNotification(errorMessage, 'error')
+      console.error('購買失敗詳情:', error)
+      console.error('選擇的商品:', selectedProduct.value)
+      console.error('購買資料:', purchaseData)
     }
-
-    // 關閉購買模態框
-    showPurchaseModal.value = false
-
-    // 使用正確的交易 ID 進行跳轉
-    router.push(`/transactions/${response.data.transaction._id}`)
-
-    // 顯示成功訊息
-    showNotification('購買成功！正在前往交易詳情頁面...', 'success')
-  } catch (error: any) {
-    // 提供更詳細的錯誤訊息
-    const errorMessage = error.message || '購買失敗，請稍後再試'
-    showNotification(errorMessage, 'error')
-    console.error('購買失敗詳情:', error)
-    console.error('選擇的商品:', selectedProduct.value)
-    console.error('購買資料:', purchaseData)
   }
 }
 
@@ -352,13 +364,14 @@ const handleViewTransaction = (product: Product) => {
   }
 }
 
-const getStatusDisplay = (status: string) => {
-  const statusMap = {
-    active: '可購買',
-    reserved: '交易中',
-    sold: '已售出',
-    deleted: '已下架',
-  }
+const statusMap: Record<Product['status'], string> = {
+  active: '可購買',
+  reserved: '交易中',
+  sold: '已售出',
+  deleted: '已下架',
+}
+
+const getStatusDisplay = (status: Product['status']) => {
   return statusMap[status] || `未知狀態(${status})`
 }
 

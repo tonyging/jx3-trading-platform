@@ -225,6 +225,14 @@ export const useUserStore = defineStore(
       }
     }
 
+    async function setUser(userData: { token: string; email: string; name: string }) {
+      // 將 token 存儲到 localStorage
+      localStorage.setItem('token', userData.token)
+      // 也將 token 存儲到 Pinia store 中
+      token.value = userData.token
+
+      console.log('用戶已登入:', userData)
+    }
     // 返回所有需要在組件中使用的狀態和方法
     return {
       currentUser,
@@ -242,6 +250,7 @@ export const useUserStore = defineStore(
       verifyPasswordResetCode,
       resetPassword,
       sendPasswordResetCode,
+      setUser,
     }
   },
   {

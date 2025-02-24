@@ -58,7 +58,7 @@ export const productApi = {
     limit?: number
     sortBy?: string
     order?: 'asc' | 'desc'
-    tab?: 'all' | 'my'
+    tab?: 'all' | 'my' | 'trading' | 'admin'
     userId?: string // 新增可選的使用者ID參數
   }) => {
     const response = await api.get<ProductListResponse>('/api/products', {

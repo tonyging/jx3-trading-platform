@@ -16,7 +16,7 @@ const loginForm = ref({
 })
 
 const registerForm = ref({
-  username: '',
+  name: '',
   email: '',
   password: '',
   confirmPassword: '',
@@ -53,7 +53,7 @@ const handleLogin = async () => {
 // 處理註冊
 const handleRegister = async () => {
   if (
-    !registerForm.value.username ||
+    !registerForm.value.name ||
     !registerForm.value.email ||
     !registerForm.value.password ||
     !registerForm.value.confirmPassword
@@ -70,7 +70,7 @@ const handleRegister = async () => {
   isSubmitting.value = true
   try {
     await userStore.register({
-      username: registerForm.value.username,
+      name: registerForm.value.name,
       email: registerForm.value.email,
       password: registerForm.value.password,
     })
@@ -160,7 +160,7 @@ const handleRegister = async () => {
         <form v-else @submit.prevent="handleRegister" class="space-y-6">
           <div>
             <input
-              v-model="registerForm.username"
+              v-model="registerForm.name"
               type="text"
               required
               class="w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors"

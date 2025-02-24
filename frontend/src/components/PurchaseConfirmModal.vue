@@ -11,7 +11,18 @@ const props = defineProps({
 
 const emit = defineEmits(['confirm', 'cancel'])
 
-// 計算單價（每萬遊戲幣的價格）
+// 計算賣家名稱
+const sellerName = computed(() => {
+  // 優先使用 seller 屬性
+  if (props.product.seller) {
+    return props.product.seller.name
+  }
+
+  // 若 seller 不存在，則回傳預設值
+  return '未知賣家'
+})
+
+// 計算單價
 const unitPrice = computed(() => props.product.amount / props.product.price)
 
 // 確認購買
@@ -32,7 +43,7 @@ const confirmPurchase = () => {
       <div class="product-details">
         <div class="detail-item">
           <span>賣家：</span>
-          <strong>{{ product.userId?.name || '未知賣家' }}</strong>
+          <strong>{{ sellerName }}</strong>
         </div>
         <div class="detail-item">
           <span>購買數量：</span>

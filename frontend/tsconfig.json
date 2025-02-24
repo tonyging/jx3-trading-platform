@@ -16,8 +16,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "outDir": "./compiled", // 指定編譯後檔案的位置
+    "rootDir": "./src",
+    "declaration": false       // 指定原始碼根目錄
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "env.d.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "compiled"]
 }

@@ -141,7 +141,7 @@ $transition: all 0.3s ease;
     }
 
     .confirm-button {
-      background: linear-gradient(to right, $primary-color, darken($primary-color, 10%));
+      background: linear-gradient(to right, $primary-color, #8b1d24);
       color: white;
 
       &:hover {
