@@ -45,12 +45,12 @@ export const userService = {
   // 個人資料相關
   getProfile: async (): Promise<UserResponse> => {
     const response = await api.get<UserResponse>('/api/users/profile')
-    return response.data // 顯式返回 response.data 而不是整個 response
+    return response.data
   },
 
-  updateProfile: async (data: UpdateProfileData) => {
+  updateProfile: async (data: UpdateProfileData): Promise<UserResponse> => {
     try {
-      const response = await api.patch<User>('/api/users/profile', data)
+      const response = await api.patch<UserResponse>('/api/users/profile', data)
       return response.data
     } catch (error: any) {
       throw new Error(error.response?.data?.message || '更新個人資料失敗')

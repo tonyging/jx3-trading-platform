@@ -27,7 +27,7 @@ export const userService = {
     // 個人資料相關
     getProfile: async () => {
         const response = await api.get('/api/users/profile');
-        return response.data; // 顯式返回 response.data 而不是整個 response
+        return response.data;
     },
     updateProfile: async (data) => {
         try {

@@ -8,11 +8,12 @@ const props = defineProps({
 const emit = defineEmits(['confirm', 'cancel']);
 // 計算賣家名稱
 const sellerName = computed(() => {
-    // 優先使用 seller 屬性
-    if (props.product.seller) {
-        return props.product.seller.name;
+    const userId = props.product.userId;
+    // 檢查 userId 是否為物件且包含 name
+    if (typeof userId === 'object' && userId !== null && 'name' in userId) {
+        return userId.name;
     }
-    // 若 seller 不存在，則回傳預設值
+    // 若無法取得賣家名稱，則回傳預設值
     return '未知賣家';
 });
 // 計算單價

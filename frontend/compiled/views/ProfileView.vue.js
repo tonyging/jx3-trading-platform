@@ -10,7 +10,7 @@ const successMessage = ref('');
 // 當元件載入時，從 store 中獲取用戶資料
 onMounted(() => {
     if (userStore.currentUser) {
-        username.value = userStore.currentUser.username;
+        username.value = userStore.currentUser.name;
         email.value = userStore.currentUser.email;
     }
 });

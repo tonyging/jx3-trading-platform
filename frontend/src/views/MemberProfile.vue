@@ -8,6 +8,12 @@ import { auth } from '@/firebase/init'
 import { RecaptchaVerifier, signInWithPhoneNumber, getAuth } from 'firebase/auth'
 import type { UpdateProfileData, UserResponse } from '@/types/user'
 
+declare global {
+  interface Window {
+    recaptchaVerifier: any
+  }
+}
+
 // 初始化路由和用戶狀態管理
 const router = useRouter()
 const userStore = useUserStore()
@@ -15,15 +21,23 @@ const userStore = useUserStore()
 // 當前選中的菜單項目
 const currentMenu = ref('general')
 
-// 定義側邊欄選單項目
-const menuItems = [
+// 定義選單項目的介面
+interface MenuItem {
+  id: string
+  icon: string
+  label: string
+  subLabel?: string
+}
+
+// 使用介面來定義選單項目
+const menuItems: MenuItem[] = [
   {
     id: 'general',
     icon: '👤',
     label: '一般',
   },
   {
-    id: 'security', // 新增
+    id: 'security',
     icon: '🔒',
     label: '交易安全',
   },
@@ -104,8 +118,9 @@ const updateUserInfo = async () => {
 
     const response = await userService.updateProfile(updateData)
 
-    if (response.data) {
-      await userStore.fetchCurrentUser() // 重新載入用戶資訊
+    if (response.status === 'success') {
+      // 修改條件檢查
+      await userStore.fetchCurrentUser()
       showNotification('會員資料更新成功')
     }
   } catch (error: any) {
@@ -249,7 +264,7 @@ watch(currentMenu, (newMenu) => {
               <div class="menu-item-icon">{{ item.icon }}</div>
               <div class="menu-item-text">
                 <span class="menu-item-label">{{ item.label }}</span>
-                <span class="menu-item-sublabel">{{ item.subLabel }}</span>
+                <span v-if="item.subLabel" class="menu-item-sublabel">{{ item.subLabel }}</span>
               </div>
             </div>
           </div>

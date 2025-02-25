@@ -9,7 +9,7 @@ const router = useRouter();
 const userStore = useUserStore();
 // 當前選中的菜單項目
 const currentMenu = ref('general');
-// 定義側邊欄選單項目
+// 使用介面來定義選單項目
 const menuItems = [
     {
         id: 'general',
@@ -17,7 +17,7 @@ const menuItems = [
         label: '一般',
     },
     {
-        id: 'security', // 新增
+        id: 'security',
         icon: '🔒',
         label: '交易安全',
     },
@@ -88,8 +88,9 @@ const updateUserInfo = async () => {
             name: userName.value.trim(),
         };
         const response = await userService.updateProfile(updateData);
-        if (response.data) {
-            await userStore.fetchCurrentUser(); // 重新載入用戶資訊
+        if (response.status === 'success') {
+            // 修改條件檢查
+            await userStore.fetchCurrentUser();
             showNotification('會員資料更新成功');
         }
     }
@@ -240,10 +241,12 @@ function __VLS_template() {
             ...{ class: ("menu-item-label") },
         });
         (item.label);
-        __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: ("menu-item-sublabel") },
-        });
-        (item.subLabel);
+        if (item.subLabel) {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: ("menu-item-sublabel") },
+            });
+            (item.subLabel);
+        }
     }
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: ("main-settings-area") },

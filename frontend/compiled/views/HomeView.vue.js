@@ -6,8 +6,24 @@ import CreateProductModal from '@/components/CreateProductModal.vue';
 import EditProductModal from '@/components/EditProductModal.vue';
 import PurchaseConfirmModal from '@/components/PurchaseConfirmModal.vue';
 import { productApi } from '@/services/api/product';
+// 定義 products
+const products = ref([]);
+const loading = ref(true);
 const showPurchaseModal = ref(false);
 const selectedProduct = ref(null);
+// 定義狀態映射
+const statusMap = {
+    active: '可購買',
+    reserved: '交易中',
+    sold: '已售出',
+    deleted: '已下架',
+};
+// 定義角色映射
+const roleMap = {
+    admin: '管理員',
+    user: '一般會員',
+    banned: '停權會員',
+};
 const isAdmin = computed(() => {
     console.log('Current user:', userStore.currentUser);
     console.log('Current user role:', userStore.currentUser?.role);
@@ -33,9 +49,6 @@ const router = useRouter();
 const userStore = useUserStore();
 // 使用 storeToRefs 解構 currentUser
 const { currentUser } = storeToRefs(userStore);
-// 商品相關的響應式狀態
-const products = ref([]);
-const loading = ref(true);
 //頁籤狀態
 const currentTab = ref('all');
 const sortFieldMap = {
@@ -65,17 +78,17 @@ const loadProducts = async () => {
         switch (currentTab.value) {
             case 'trading':
                 requestParams.status = 'reserved';
-                if (currentUser.value?.id) {
-                    requestParams.userId = currentUser.value.id;
-                    requestParams.buyerId = currentUser.value.id;
+                if (userStore.currentUser?.id) {
+                    requestParams.userId = userStore.currentUser.id;
+                    requestParams.buyerId = userStore.currentUser.id;
                 }
                 break;
             case 'my':
-                if (!currentUser.value?.id) {
+                if (!userStore.currentUser?.id) {
                     await userStore.fetchCurrentUser();
                 }
-                if (currentUser.value?.id) {
-                    requestParams.userId = currentUser.value?.id;
+                if (userStore.currentUser?.id) {
+                    requestParams.userId = userStore.currentUser.id;
                     requestParams.status = 'active';
                 }
                 else {
@@ -87,18 +100,13 @@ const loadProducts = async () => {
                 }
                 break;
             case 'admin':
-                // 管理員頁籤顯示除了 deleted 以外的所有商品
                 requestParams.status = ['active', 'reserved', 'sold'];
                 break;
             default:
                 requestParams.status = 'active';
         }
         const response = await productApi.getProducts(requestParams);
-        console.log('Loaded products:', response.data.products.map((p) => ({
-            id: p._id,
-            status: p.status,
-            seller: p.userId?.name,
-        })));
+        console.log('Loaded products:', response.data.products);
         products.value = response.data.products;
     }
     catch (error) {
@@ -117,7 +125,7 @@ const switchTab = async (tab) => {
         return;
     }
     currentTab.value = tab;
-    if (tab === 'my' && !currentUser.value?.data?.id) {
+    if (tab === 'my' && !userStore.currentUser?.id) {
         try {
             await userStore.fetchCurrentUser();
         }
@@ -206,10 +214,10 @@ onMounted(async () => {
         localStorage.removeItem('defaultTab');
     }
     // 等待用戶資訊載入完成
-    if (!userStore.currentUser?.data?.id) {
+    if (!userStore.currentUser?.id) {
         // 可以添加一個簡單的重試機制
         let retries = 3;
-        while (retries > 0 && !userStore.currentUser?._id) {
+        while (retries > 0 && !userStore.currentUser?.id) {
             await new Promise((resolve) => setTimeout(resolve, 500));
             retries--;
         }
@@ -260,7 +268,7 @@ const handleSubmitEditProduct = async (data) => {
     if (!currentEditProduct.value)
         return;
     try {
-        await productApi.updateProduct(currentEditProduct.value._id, data);
+        await productApi.updateProduct(currentEditProduct.value.id, data);
         isEditModalOpen.value = false;
         showNotification('商品更新成功');
         await loadProducts(); // 重新載入商品列表
@@ -274,17 +282,17 @@ const handleSubmitEditProduct = async (data) => {
 const handleConfirmPurchase = async (purchaseData) => {
     if (selectedProduct.value) {
         try {
-            const response = await productApi.reserveProduct(selectedProduct.value._id, purchaseData.amount);
+            const response = await productApi.reserveProduct(selectedProduct.value.id, purchaseData.amount);
             // 添加回應資料的檢查和日誌
             console.log('Purchase response:', response);
             // 確保我們有收到交易資料
-            if (!response.data?.transaction?._id) {
+            if (!response.data?.transaction?.id) {
                 throw new Error('未收到有效的交易資訊');
             }
             // 關閉購買模態框
             showPurchaseModal.value = false;
             // 使用正確的交易 ID 進行跳轉
-            router.push(`/transactions/${response.data.transaction._id}`);
+            router.push(`/transactions/${response.data.transaction.id}`);
             // 顯示成功訊息
             showNotification('購買成功！正在前往交易詳情頁面...', 'success');
         }
@@ -300,7 +308,7 @@ const handleConfirmPurchase = async (purchaseData) => {
 };
 const handleViewTransaction = (product) => {
     if (product.transactionId) {
-        const transactionId = typeof product.transactionId === 'object' ? product.transactionId._id : product.transactionId;
+        const transactionId = typeof product.transactionId === 'object' ? product.transactionId.id : product.transactionId;
         console.log('Resolved Transaction ID:', transactionId);
         router.push(`/transactions/${transactionId}`);
     }
@@ -308,12 +316,6 @@ const handleViewTransaction = (product) => {
         console.error('找不到交易ID:', product);
         showNotification('找不到相關交易資訊', 'error');
     }
-};
-const statusMap = {
-    active: '可購買',
-    reserved: '交易中',
-    sold: '已售出',
-    deleted: '已下架',
 };
 const getStatusDisplay = (status) => {
     return statusMap[status] || `未知狀態(${status})`;
@@ -330,15 +332,9 @@ const getStatusClass = (status) => {
 };
 // 轉換角色為中文顯示
 const getRoleDisplay = (role) => {
-    console.log('Getting role display for:', role);
-    const roleMap = {
-        admin: '管理員',
-        user: '一般會員',
-        banned: '停權會員',
-    };
-    const display = roleMap[role] || '未知角色';
-    console.log('Role display result:', display);
-    return display;
+    if (!role)
+        return '未知角色';
+    return roleMap[role] || '未知角色';
 };
 const handleMemberInfo = () => {
     router.push('/member-info');
@@ -495,7 +491,7 @@ function __VLS_template() {
     else if (__VLS_ctx.products.length === 0) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-            colspan: ("5"),
+            colspan: ((__VLS_ctx.totalColumns)),
             ...{ class: ("status-message") },
         });
     }
@@ -505,7 +501,7 @@ function __VLS_template() {
                 key: ((product.id)),
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
-            (product.userId?.name || '未知賣家');
+            (typeof product.userId === 'object' ? product.userId.name : '未知賣家');
             __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
             (product.amount);
             __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
@@ -569,13 +565,14 @@ function __VLS_template() {
                                 return;
                             if (!((__VLS_ctx.currentTab === 'admin')))
                                 return;
-                            __VLS_ctx.handleDeleteProduct(product._id);
+                            __VLS_ctx.handleDeleteProduct(product.id);
                         } },
                     ...{ class: ("delete-button") },
                 });
             }
             else {
-                if (product.userId?._id === __VLS_ctx.userStore.currentUser?.id) {
+                if (typeof product.userId === 'object' &&
+                    product.userId.id === __VLS_ctx.userStore.currentUser?.id) {
                     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: ("product-actions") },
                     });
@@ -589,7 +586,8 @@ function __VLS_template() {
                                     return;
                                 if (!(!((__VLS_ctx.currentTab === 'admin'))))
                                     return;
-                                if (!((product.userId?._id === __VLS_ctx.userStore.currentUser?.id)))
+                                if (!((typeof product.userId === 'object' &&
+                                    product.userId.id === __VLS_ctx.userStore.currentUser?.id)))
                                     return;
                                 __VLS_ctx.handleEditProduct(product);
                             } },
@@ -605,9 +603,10 @@ function __VLS_template() {
                                     return;
                                 if (!(!((__VLS_ctx.currentTab === 'admin'))))
                                     return;
-                                if (!((product.userId?._id === __VLS_ctx.userStore.currentUser?.id)))
+                                if (!((typeof product.userId === 'object' &&
+                                    product.userId.id === __VLS_ctx.userStore.currentUser?.id)))
                                     return;
-                                __VLS_ctx.handleDeleteProduct(product._id);
+                                __VLS_ctx.handleDeleteProduct(product.id);
                             } },
                         ...{ class: ("delete-button") },
                     });
@@ -623,7 +622,8 @@ function __VLS_template() {
                                     return;
                                 if (!(!((__VLS_ctx.currentTab === 'admin'))))
                                     return;
-                                if (!(!((product.userId?._id === __VLS_ctx.userStore.currentUser?.id))))
+                                if (!(!((typeof product.userId === 'object' &&
+                                    product.userId.id === __VLS_ctx.userStore.currentUser?.id))))
                                     return;
                                 __VLS_ctx.handleBuyProduct(product);
                             } },
@@ -730,14 +730,14 @@ const __VLS_self = (await import('vue')).defineComponent({
             CreateProductModal: CreateProductModal,
             EditProductModal: EditProductModal,
             PurchaseConfirmModal: PurchaseConfirmModal,
+            products: products,
+            loading: loading,
             showPurchaseModal: showPurchaseModal,
             selectedProduct: selectedProduct,
             isAdmin: isAdmin,
             totalColumns: totalColumns,
             handleBuyProduct: handleBuyProduct,
             userStore: userStore,
-            products: products,
-            loading: loading,
             currentTab: currentTab,
             notification: notification,
             switchTab: switchTab,

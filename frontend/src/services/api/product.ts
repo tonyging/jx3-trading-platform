@@ -1,53 +1,17 @@
 // services/api/product.ts
 import api from './index'
-import { TransactionResponse } from './transaction'
+import type {
+  TransactionResponse,
+  ProductStatus,
+  ProductResponse,
+  ProductListResponse,
+  ProductListType,
+} from '@/types'
 
-// 請求和響應的類型定義
+// 請求型別定義
 export interface CreateProductRequest {
   amount: number
   price: number
-}
-
-// 根據後端模型定義 Product 介面
-export interface Product {
-  _id: string // MongoDB 的 id 使用 _id
-  userId: string // ObjectId 在前端以字符串形式表示
-  amount: number
-  price: number
-  ratio: number
-  status: 'active' | 'reserved' | 'sold' | 'deleted'
-  createdAt: string
-  updatedAt: string
-  seller?: {
-    // 當 populate 時會出現的賣家資訊
-    name: string
-    email: string
-    contactInfo: {
-      line?: string
-      discord?: string
-      facebook?: string
-    }
-  }
-}
-
-// API 響應的介面定義
-export interface ProductResponse {
-  status: string
-  data: {
-    product: Product
-  }
-}
-
-export interface ProductListResponse {
-  status: string
-  data: {
-    products: Product[]
-    pagination: {
-      current: number
-      total: number
-      totalRecords: number
-    }
-  }
 }
 
 // 商品相關的 API
@@ -58,8 +22,10 @@ export const productApi = {
     limit?: number
     sortBy?: string
     order?: 'asc' | 'desc'
-    tab?: 'all' | 'my' | 'trading' | 'admin'
-    userId?: string // 新增可選的使用者ID參數
+    tab?: ProductListType
+    userId?: string
+    status?: ProductStatus | ProductStatus[]
+    buyerId?: string
   }) => {
     const response = await api.get<ProductListResponse>('/api/products', {
       params,
@@ -84,7 +50,11 @@ export const productApi = {
   // 更新商品 - 需要認證
   updateProduct: async (
     id: string,
-    data: Partial<CreateProductRequest & { status: Product['status'] }>,
+    data: Partial<{
+      amount: number
+      price: number
+      status: ProductStatus
+    }>,
   ) => {
     const response = await api.patch<ProductResponse>(`/api/products/${id}`, data)
     return response.data

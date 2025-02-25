@@ -61,6 +61,24 @@ export const useUserStore = defineStore('user', () => {
         currentUser.value = null;
         localStorage.removeItem('token');
     }
+    async function updateProfile(data) {
+        try {
+            const response = await userService.updateProfile(data);
+            if (response.status === 'success') {
+                // 更新本地用戶資料
+                if (currentUser.value) {
+                    currentUser.value.name = data.name;
+                }
+                return response;
+            }
+            else {
+                throw new Error('更新失敗');
+            }
+        }
+        catch (error) {
+            throw new Error(error.message || '更新個人資料失敗');
+        }
+    }
     // 取得當前用戶資料
     async function fetchCurrentUser() {
         console.log('開始獲取用戶資訊', token.value ? '有 token' : '無 token');
@@ -231,6 +249,7 @@ export const useUserStore = defineStore('user', () => {
         login,
         logout,
         fetchCurrentUser,
+        updateProfile,
         register,
         getGoogleAuthUrl,
         handleGoogleLogin,

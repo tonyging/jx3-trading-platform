@@ -8,10 +8,28 @@ import CreateProductModal from '@/components/CreateProductModal.vue'
 import EditProductModal from '@/components/EditProductModal.vue'
 import PurchaseConfirmModal from '@/components/PurchaseConfirmModal.vue'
 import { productApi } from '@/services/api/product'
-import { Product, ProductListType, Transaction } from '@/types'
+import type { Product, ProductListType, Transaction, ProductStatus, User, UserRole } from '@/types'
 
+// 定義 products
+const products = ref<Product[]>([])
+const loading = ref(true)
 const showPurchaseModal = ref(false)
 const selectedProduct = ref<Product | null>(null)
+
+// 定義狀態映射
+const statusMap: Record<Product['status'], string> = {
+  active: '可購買',
+  reserved: '交易中',
+  sold: '已售出',
+  deleted: '已下架',
+}
+
+// 定義角色映射
+const roleMap: Record<UserRole, string> = {
+  admin: '管理員',
+  user: '一般會員',
+  banned: '停權會員',
+}
 
 const isAdmin = computed(() => {
   console.log('Current user:', userStore.currentUser)
@@ -43,10 +61,6 @@ const userStore = useUserStore()
 // 使用 storeToRefs 解構 currentUser
 const { currentUser } = storeToRefs(userStore)
 
-// 商品相關的響應式狀態
-const products = ref([])
-const loading = ref(true)
-
 //頁籤狀態
 const currentTab = ref<ProductListType>('all')
 
@@ -75,9 +89,9 @@ const loadProducts = async () => {
     const requestParams: {
       sortBy: string
       order: 'asc' | 'desc'
-      tab: 'all' | 'my' | 'trading' | 'admin'
+      tab: ProductListType
       userId?: string
-      status?: string | string[]
+      status?: ProductStatus | ProductStatus[]
       buyerId?: string
     } = {
       sortBy: sortFieldMap[currentSort.value.field],
@@ -88,19 +102,19 @@ const loadProducts = async () => {
     // 根據不同頁籤設定 status
     switch (currentTab.value) {
       case 'trading':
-        requestParams.status = 'reserved'
-        if (currentUser.value?.id) {
-          requestParams.userId = currentUser.value.id
-          requestParams.buyerId = currentUser.value.id
+        requestParams.status = 'reserved' as ProductStatus
+        if (userStore.currentUser?.id) {
+          requestParams.userId = userStore.currentUser.id
+          requestParams.buyerId = userStore.currentUser.id
         }
         break
       case 'my':
-        if (!currentUser.value?.id) {
+        if (!userStore.currentUser?.id) {
           await userStore.fetchCurrentUser()
         }
-        if (currentUser.value?.id) {
-          requestParams.userId = currentUser.value?.id
-          requestParams.status = 'active'
+        if (userStore.currentUser?.id) {
+          requestParams.userId = userStore.currentUser.id
+          requestParams.status = 'active' as ProductStatus
         } else {
           console.warn('無法獲取用戶 ID')
           showNotification('無法取得用戶資訊', 'error')
@@ -110,22 +124,14 @@ const loadProducts = async () => {
         }
         break
       case 'admin':
-        // 管理員頁籤顯示除了 deleted 以外的所有商品
-        requestParams.status = ['active', 'reserved', 'sold']
+        requestParams.status = ['active', 'reserved', 'sold'] as ProductStatus[]
         break
       default:
-        requestParams.status = 'active'
+        requestParams.status = 'active' as ProductStatus
     }
 
     const response = await productApi.getProducts(requestParams)
-    console.log(
-      'Loaded products:',
-      response.data.products.map((p) => ({
-        id: p._id,
-        status: p.status,
-        seller: p.userId?.name,
-      })),
-    )
+    console.log('Loaded products:', response.data.products)
     products.value = response.data.products
   } catch (error) {
     showNotification('載入商品列表失敗', 'error')
@@ -143,7 +149,7 @@ const switchTab = async (tab: ProductListType) => {
     return
   }
   currentTab.value = tab
-  if (tab === 'my' && !currentUser.value?.data?.id) {
+  if (tab === 'my' && !userStore.currentUser?.id) {
     try {
       await userStore.fetchCurrentUser()
     } catch (error) {
@@ -218,7 +224,7 @@ const getSortIconClass = (field: string) => {
   return currentSort.value.direction === 'asc' ? 'sort-icon ascending' : 'sort-icon descending'
 }
 
-const getUserName = (userId: string | User) => {
+const getUserName = (userId: string | { _id: string; name: string; email: string }) => {
   if (typeof userId === 'object' && userId !== null) {
     return userId.name || '未知賣家'
   }
@@ -246,10 +252,10 @@ onMounted(async () => {
   }
 
   // 等待用戶資訊載入完成
-  if (!userStore.currentUser?.data?.id) {
+  if (!userStore.currentUser?.id) {
     // 可以添加一個簡單的重試機制
     let retries = 3
-    while (retries > 0 && !userStore.currentUser?._id) {
+    while (retries > 0 && !userStore.currentUser?.id) {
       await new Promise((resolve) => setTimeout(resolve, 500))
       retries--
     }
@@ -305,7 +311,7 @@ const handleSubmitEditProduct = async (data: { amount: number; price: number }) 
   if (!currentEditProduct.value) return
 
   try {
-    await productApi.updateProduct(currentEditProduct.value._id, data)
+    await productApi.updateProduct(currentEditProduct.value.id, data)
     isEditModalOpen.value = false
     showNotification('商品更新成功')
     await loadProducts() // 重新載入商品列表
@@ -320,7 +326,7 @@ const handleConfirmPurchase = async (purchaseData: { amount: number; totalPrice:
   if (selectedProduct.value) {
     try {
       const response = await productApi.reserveProduct(
-        selectedProduct.value._id,
+        selectedProduct.value.id,
         purchaseData.amount,
       )
 
@@ -328,7 +334,7 @@ const handleConfirmPurchase = async (purchaseData: { amount: number; totalPrice:
       console.log('Purchase response:', response)
 
       // 確保我們有收到交易資料
-      if (!response.data?.transaction?._id) {
+      if (!response.data?.transaction?.id) {
         throw new Error('未收到有效的交易資訊')
       }
 
@@ -336,7 +342,7 @@ const handleConfirmPurchase = async (purchaseData: { amount: number; totalPrice:
       showPurchaseModal.value = false
 
       // 使用正確的交易 ID 進行跳轉
-      router.push(`/transactions/${response.data.transaction._id}`)
+      router.push(`/transactions/${response.data.transaction.id}`)
 
       // 顯示成功訊息
       showNotification('購買成功！正在前往交易詳情頁面...', 'success')
@@ -354,7 +360,7 @@ const handleConfirmPurchase = async (purchaseData: { amount: number; totalPrice:
 const handleViewTransaction = (product: Product) => {
   if (product.transactionId) {
     const transactionId =
-      typeof product.transactionId === 'object' ? product.transactionId._id : product.transactionId
+      typeof product.transactionId === 'object' ? product.transactionId.id : product.transactionId
 
     console.log('Resolved Transaction ID:', transactionId)
     router.push(`/transactions/${transactionId}`)
@@ -364,20 +370,13 @@ const handleViewTransaction = (product: Product) => {
   }
 }
 
-const statusMap: Record<Product['status'], string> = {
-  active: '可購買',
-  reserved: '交易中',
-  sold: '已售出',
-  deleted: '已下架',
-}
-
 const getStatusDisplay = (status: Product['status']) => {
   return statusMap[status] || `未知狀態(${status})`
 }
 
 // 添加狀態標籤的樣式
-const getStatusClass = (status: string) => {
-  const classMap = {
+const getStatusClass = (status: ProductStatus) => {
+  const classMap: Record<ProductStatus, string> = {
     active: 'status-active',
     reserved: 'status-reserved',
     sold: 'status-sold',
@@ -387,16 +386,9 @@ const getStatusClass = (status: string) => {
 }
 
 // 轉換角色為中文顯示
-const getRoleDisplay = (role: string) => {
-  console.log('Getting role display for:', role)
-  const roleMap = {
-    admin: '管理員',
-    user: '一般會員',
-    banned: '停權會員',
-  }
-  const display = roleMap[role] || '未知角色'
-  console.log('Role display result:', display)
-  return display
+const getRoleDisplay = (role: UserRole | undefined) => {
+  if (!role) return '未知角色'
+  return roleMap[role] || '未知角色'
 }
 
 const handleMemberInfo = () => {
@@ -492,10 +484,10 @@ const handleMemberInfo = () => {
                 <td :colspan="totalColumns" class="status-message">載入中...</td>
               </tr>
               <tr v-else-if="products.length === 0">
-                <td colspan="5" class="status-message">暫無商品</td>
+                <td :colspan="totalColumns" class="status-message">暫無商品</td>
               </tr>
               <tr v-else v-for="product in products" :key="product.id">
-                <td>{{ product.userId?.name || '未知賣家' }}</td>
+                <td>{{ typeof product.userId === 'object' ? product.userId.name : '未知賣家' }}</td>
                 <td>{{ product.amount }}</td>
                 <td>{{ formatPrice(product.price) }}</td>
                 <td>{{ calculateValue(product.price, product.amount) }}</td>
@@ -522,7 +514,6 @@ const handleMemberInfo = () => {
                   <!-- 管理員頁籤的按鈕邏輯 -->
                   <template v-else-if="currentTab === 'admin'">
                     <div class="admin-actions">
-                      <!-- 查看交易按鈕 -->
                       <button
                         v-if="product.transactionId"
                         class="view-button"
@@ -530,9 +521,7 @@ const handleMemberInfo = () => {
                       >
                         查看交易
                       </button>
-
-                      <!-- 刪除按鈕 -->
-                      <button class="delete-button" @click="handleDeleteProduct(product._id)">
+                      <button class="delete-button" @click="handleDeleteProduct(product.id)">
                         刪除
                       </button>
                     </div>
@@ -540,12 +529,17 @@ const handleMemberInfo = () => {
 
                   <!-- 其他頁籤的按鈕邏輯 -->
                   <template v-else>
-                    <template v-if="product.userId?._id === userStore.currentUser?.id">
+                    <template
+                      v-if="
+                        typeof product.userId === 'object' &&
+                        product.userId.id === userStore.currentUser?.id
+                      "
+                    >
                       <div class="product-actions">
                         <button class="edit-button" @click="handleEditProduct(product)">
                           編輯
                         </button>
-                        <button class="delete-button" @click="handleDeleteProduct(product._id)">
+                        <button class="delete-button" @click="handleDeleteProduct(product.id)">
                           刪除
                         </button>
                       </div>

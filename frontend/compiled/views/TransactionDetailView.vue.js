@@ -38,7 +38,8 @@ const sendMessage = async () => {
 };
 // 格式化時間
 const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleString('zh-TW', {
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    return date.toLocaleString('zh-TW', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',

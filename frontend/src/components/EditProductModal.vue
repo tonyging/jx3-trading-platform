@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Product } from '@/services/api/product'
+import type { Product } from '@/types'
 
 const props = defineProps({
   isOpen: {
