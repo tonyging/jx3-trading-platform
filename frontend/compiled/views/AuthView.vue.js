@@ -36,7 +36,12 @@ const handleLogin = async () => {
         router.push('/');
     }
     catch (error) {
-        errorMessage.value = '登入失敗，請檢查您的帳號密碼';
+        const apiError = error;
+        errorMessage.value =
+            apiError.response?.data?.message ||
+                apiError.message ||
+                '登入失敗，請檢查您的帳號密碼';
+        console.error('登入失敗:', error);
     }
     finally {
         isSubmitting.value = false;
@@ -66,7 +71,10 @@ const handleRegister = async () => {
         errorMessage.value = '註冊成功，請登入';
     }
     catch (error) {
-        errorMessage.value = '註冊失敗，請稍後再試';
+        const apiError = error;
+        errorMessage.value =
+            apiError.response?.data?.message || apiError.message || '註冊失敗，請稍後再試';
+        console.error('註冊失敗:', error);
     }
     finally {
         isSubmitting.value = false;
@@ -79,57 +87,57 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("min-h-screen flex items-center justify-center bg-[#1a1a1a] bg-opacity-90 py-12 px-4 sm:px-6 lg:px-8"),
+        ...{ class: ("min-h-screen flex items-center justify-center bg-[#1a1a1a] bg-opacity-90 py-12 px-4 sm:px-6 lg:px-8") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("fixed inset-0 -z-10 bg-gradient-to-b from-[#1a1a1a] to-[#2a2a2a]"),
+        ...{ class: ("fixed inset-0 -z-10 bg-gradient-to-b from-[#1a1a1a] to-[#2a2a2a]") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("w-full max-w-md"),
+        ...{ class: ("w-full max-w-md") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("text-center mb-8"),
+        ...{ class: ("text-center mb-8") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
-         class: ("text-4xl font-bold text-[#f0d587] mb-2 font-serif"),
+        ...{ class: ("text-4xl font-bold text-[#f0d587] mb-2 font-serif") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-         class: ("text-[#9a8866] text-lg"),
+        ...{ class: ("text-[#9a8866] text-lg") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("bg-[#2a2a2a] bg-opacity-95 p-8 rounded-lg shadow-xl border border-[#9a8866]"),
+        ...{ class: ("bg-[#2a2a2a] bg-opacity-95 p-8 rounded-lg shadow-xl border border-[#9a8866]") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("flex mb-8 border-b border-[#9a8866]"),
+        ...{ class: ("flex mb-8 border-b border-[#9a8866]") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-         onClick: (__VLS_ctx.toggleForm),
-         class: (([
+        ...{ onClick: (__VLS_ctx.toggleForm) },
+        ...{ class: (([
                 'flex-1 py-2 text-lg font-medium transition-colors duration-200',
                 __VLS_ctx.isLogin
                     ? 'text-[#f0d587] border-b-2 border-[#f0d587]'
                     : 'text-[#9a8866] hover:text-[#f0d587]',
-            ])),
+            ])) },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-         onClick: (__VLS_ctx.toggleForm),
-         class: (([
+        ...{ onClick: (__VLS_ctx.toggleForm) },
+        ...{ class: (([
                 'flex-1 py-2 text-lg font-medium transition-colors duration-200',
                 !__VLS_ctx.isLogin
                     ? 'text-[#f0d587] border-b-2 border-[#f0d587]'
                     : 'text-[#9a8866] hover:text-[#f0d587]',
-            ])),
+            ])) },
     });
     if (__VLS_ctx.isLogin) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-             onSubmit: (__VLS_ctx.handleLogin),
-             class: ("space-y-6"),
+            ...{ onSubmit: (__VLS_ctx.handleLogin) },
+            ...{ class: ("space-y-6") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             type: ("email"),
             required: (true),
-             class: ("w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors"),
+            ...{ class: ("w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors") },
             placeholder: ("電子郵件"),
         });
         (__VLS_ctx.loginForm.email);
@@ -137,35 +145,35 @@ function __VLS_template() {
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             type: ("password"),
             required: (true),
-             class: ("w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors"),
+            ...{ class: ("w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors") },
             placeholder: ("密碼"),
         });
         (__VLS_ctx.loginForm.password);
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             type: ("submit"),
             disabled: ((__VLS_ctx.isSubmitting)),
-             class: ("w-full py-3 bg-[#9a8866] hover:bg-[#f0d587] text-[#1a1a1a] rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"),
+            ...{ class: ("w-full py-3 bg-[#9a8866] hover:bg-[#f0d587] text-[#1a1a1a] rounded-lg font-medium transition-colors duration-200 disabled:opacity-50") },
         });
         (__VLS_ctx.isSubmitting ? '登入中...' : '登入');
     }
     else {
         __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-             onSubmit: (__VLS_ctx.handleRegister),
-             class: ("space-y-6"),
+            ...{ onSubmit: (__VLS_ctx.handleRegister) },
+            ...{ class: ("space-y-6") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             value: ((__VLS_ctx.registerForm.name)),
             type: ("text"),
             required: (true),
-             class: ("w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors"),
+            ...{ class: ("w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors") },
             placeholder: ("使用者名稱"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             type: ("email"),
             required: (true),
-             class: ("w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors"),
+            ...{ class: ("w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors") },
             placeholder: ("電子郵件"),
         });
         (__VLS_ctx.registerForm.email);
@@ -173,7 +181,7 @@ function __VLS_template() {
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             type: ("password"),
             required: (true),
-             class: ("w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors"),
+            ...{ class: ("w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors") },
             placeholder: ("密碼"),
         });
         (__VLS_ctx.registerForm.password);
@@ -181,20 +189,20 @@ function __VLS_template() {
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             type: ("password"),
             required: (true),
-             class: ("w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors"),
+            ...{ class: ("w-full px-4 py-3 bg-[#1a1a1a] border border-[#9a8866] rounded-lg text-white placeholder-[#9a8866] focus:outline-none focus:border-[#f0d587] transition-colors") },
             placeholder: ("確認密碼"),
         });
         (__VLS_ctx.registerForm.confirmPassword);
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             type: ("submit"),
             disabled: ((__VLS_ctx.isSubmitting)),
-             class: ("w-full py-3 bg-[#9a8866] hover:bg-[#f0d587] text-[#1a1a1a] rounded-lg font-medium transition-colors duration-200 disabled:opacity-50"),
+            ...{ class: ("w-full py-3 bg-[#9a8866] hover:bg-[#f0d587] text-[#1a1a1a] rounded-lg font-medium transition-colors duration-200 disabled:opacity-50") },
         });
         (__VLS_ctx.isSubmitting ? '註冊中...' : '註冊');
     }
     if (__VLS_ctx.errorMessage) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("mt-4 text-red-400 text-center text-sm"),
+            ...{ class: ("mt-4 text-red-400 text-center text-sm") },
         });
         (__VLS_ctx.errorMessage);
     }

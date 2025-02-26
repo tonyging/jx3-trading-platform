@@ -20,12 +20,11 @@ export const useUserStore = defineStore('user', () => {
             return response;
         }
         catch (err) {
-            // 處理註冊錯誤
-            error.value = err.response?.data?.message || '註冊失敗，請稍後再試';
+            const apiError = err;
+            error.value = apiError.response?.data?.message || '註冊失敗，請稍後再試';
             throw error.value;
         }
         finally {
-            // 重置載入狀態
             loading.value = false;
         }
     }
@@ -47,7 +46,8 @@ export const useUserStore = defineStore('user', () => {
             }
         }
         catch (err) {
-            error.value = err.response?.data?.message || '登入失敗，請稍後再試';
+            const apiError = err;
+            error.value = apiError.response?.data?.message || '登入失敗，請稍後再試';
             throw error.value;
         }
         finally {
@@ -76,7 +76,8 @@ export const useUserStore = defineStore('user', () => {
             }
         }
         catch (error) {
-            throw new Error(error.message || '更新個人資料失敗');
+            const apiError = error;
+            throw new Error(apiError.response?.data?.message || apiError.message || '更新個人資料失敗');
         }
     }
     // 取得當前用戶資料
@@ -122,7 +123,8 @@ export const useUserStore = defineStore('user', () => {
             return response.url;
         }
         catch (err) {
-            error.value = err.response?.data?.message || '獲取 Google 登入連結失敗';
+            const apiError = err;
+            error.value = apiError.response?.data?.message || '獲取 Google 登入連結失敗';
             throw error.value;
         }
         finally {
@@ -146,7 +148,8 @@ export const useUserStore = defineStore('user', () => {
             }
         }
         catch (err) {
-            error.value = err.response?.data?.message || 'Google 登入失敗';
+            const apiError = err;
+            error.value = apiError.response?.data?.message || 'Google 登入失敗';
             throw error.value;
         }
         finally {
@@ -170,7 +173,8 @@ export const useUserStore = defineStore('user', () => {
             }
         }
         catch (err) {
-            error.value = err.response?.data?.message || 'Google 登入回調處理失敗';
+            const apiError = err;
+            error.value = apiError.response?.data?.message || 'Google 登入回調處理失敗';
             throw error.value;
         }
         finally {
@@ -186,10 +190,11 @@ export const useUserStore = defineStore('user', () => {
             return response;
         }
         catch (err) {
+            const apiError = err;
             console.error('發送驗證碼錯誤:', err);
-            if (err.response?.data?.message) {
-                error.value = err.response.data.message;
-                throw new Error(err.response.data.message);
+            if (apiError.response?.data?.message) {
+                error.value = apiError.response.data.message;
+                throw new Error(apiError.response.data.message);
             }
             else {
                 error.value = '發送驗證碼失敗，請稍後再試';
@@ -209,7 +214,8 @@ export const useUserStore = defineStore('user', () => {
             return response;
         }
         catch (err) {
-            error.value = err.response?.data?.message || '驗證碼驗證失敗';
+            const apiError = err;
+            error.value = apiError.response?.data?.message || '驗證碼驗證失敗';
             throw error.value;
         }
         finally {
@@ -225,7 +231,8 @@ export const useUserStore = defineStore('user', () => {
             return response;
         }
         catch (err) {
-            error.value = err.response?.data?.message || '重設密碼失敗';
+            const apiError = err;
+            error.value = apiError.response?.data?.message || '重設密碼失敗';
             throw error.value;
         }
         finally {

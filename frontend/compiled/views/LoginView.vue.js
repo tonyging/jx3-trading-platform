@@ -21,15 +21,22 @@ async function handleLogin() {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-        const response = await userStore.login({
+        // 方法1：使用 void 斷言告訴編譯器我們知道不使用回傳值
+        void (await userStore.login({
             email: email.value,
             password: password.value,
-        });
+        }));
         localStorage.setItem('shouldReload', 'true');
         router.push('/');
     }
     catch (error) {
-        errorMessage.value = '登入失敗，請檢查您的帳號密碼';
+        const apiError = error;
+        errorMessage.value =
+            apiError.response?.data?.message ||
+                apiError.message ||
+                '登入失敗，請檢查您的帳號密碼';
+        // 可選：記錄完整的錯誤信息
+        console.error('登入失敗:', error);
     }
     finally {
         isLoading.value = false;
@@ -41,11 +48,14 @@ async function handleGoogleLogin() {
         isLoading.value = true;
         errorMessage.value = '';
         // 獲取 Google 登入 URL
-        const url = await userStore.getGoogleAuthUrl(); // 直接獲取 url
+        const url = await userStore.getGoogleAuthUrl();
         window.location.href = url;
     }
     catch (error) {
-        errorMessage.value = '無法啟動 Google 登入';
+        const apiError = error;
+        errorMessage.value = apiError.message || '無法啟動 Google 登入';
+        // 記錄完整的錯誤信息
+        console.error('Google 登入失敗:', error);
         isLoading.value = false;
     }
 }
@@ -57,51 +67,51 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("login-page"),
+        ...{ class: ("login-page") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("site-header"),
+        ...{ class: ("site-header") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("content-wrapper"),
+        ...{ class: ("content-wrapper") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
-         class: ("main-content"),
+        ...{ class: ("main-content") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-         onSubmit: (__VLS_ctx.handleLogin),
-         class: ("login-form"),
+        ...{ onSubmit: (__VLS_ctx.handleLogin) },
+        ...{ class: ("login-form") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("input-group"),
+        ...{ class: ("input-group") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
         type: ("email"),
         required: (true),
         placeholder: ("電子郵件地址"),
-         class: (({ error: __VLS_ctx.errorMessage })),
+        ...{ class: (({ error: __VLS_ctx.errorMessage })) },
     });
     (__VLS_ctx.email);
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("input-group"),
+        ...{ class: ("input-group") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
         type: ("password"),
         required: (true),
         placeholder: ("密碼"),
-         class: (({ error: __VLS_ctx.errorMessage })),
+        ...{ class: (({ error: __VLS_ctx.errorMessage })) },
     });
     (__VLS_ctx.password);
     if (__VLS_ctx.errorMessage) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("error-text"),
+            ...{ class: ("error-text") },
         });
         (__VLS_ctx.errorMessage);
     }
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("forgot-password"),
+        ...{ class: ("forgot-password") },
     });
     const __VLS_0 = {}.RouterLink;
     /** @type { [typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, ] } */ ;
@@ -120,7 +130,7 @@ function __VLS_template() {
     });
     (__VLS_ctx.isLoading ? '處理中...' : '繼續');
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("register-prompt"),
+        ...{ class: ("register-prompt") },
     });
     const __VLS_6 = {}.RouterLink;
     /** @type { [typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, ] } */ ;
@@ -134,13 +144,13 @@ function __VLS_template() {
     __VLS_11.slots.default;
     var __VLS_11;
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("divider"),
+        ...{ class: ("divider") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-         onClick: (__VLS_ctx.handleGoogleLogin),
+        ...{ onClick: (__VLS_ctx.handleGoogleLogin) },
         type: ("button"),
-         class: ("google-login-button"),
+        ...{ class: ("google-login-button") },
         disabled: ((__VLS_ctx.isLoading)),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.img)({

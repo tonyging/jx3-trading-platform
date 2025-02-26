@@ -53,26 +53,26 @@ function __VLS_template() {
     ['cancel-button', 'submit-button',];
     // CSS variable injection 
     // CSS variable injection end 
-    if (__VLS_ctx.isOpen) {
+    if (props.isOpen) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             onClick: (__VLS_ctx.handleClose),
-             class: ("modal-overlay"),
+            ...{ onClick: (__VLS_ctx.handleClose) },
+            ...{ class: ("modal-overlay") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             onClick: () => { },
-             class: ("modal-content"),
+            ...{ onClick: () => { } },
+            ...{ class: ("modal-content") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-             onClick: (__VLS_ctx.handleClose),
-             class: ("modal-close-btn"),
+            ...{ onClick: (__VLS_ctx.handleClose) },
+            ...{ class: ("modal-close-btn") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-             onSubmit: (__VLS_ctx.handleSubmit),
-             class: ("create-form"),
+            ...{ onSubmit: (__VLS_ctx.handleSubmit) },
+            ...{ class: ("create-form") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("input-group"),
+            ...{ class: ("input-group") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
             for: ("amount"),
@@ -87,7 +87,7 @@ function __VLS_template() {
         });
         (__VLS_ctx.amount);
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("input-group"),
+            ...{ class: ("input-group") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
             for: ("price"),
@@ -102,21 +102,21 @@ function __VLS_template() {
         (__VLS_ctx.price);
         if (__VLS_ctx.errorMessage) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("error-message"),
+                ...{ class: ("error-message") },
             });
             (__VLS_ctx.errorMessage);
         }
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("button-group"),
+            ...{ class: ("button-group") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-             onClick: (__VLS_ctx.handleClose),
+            ...{ onClick: (__VLS_ctx.handleClose) },
             type: ("button"),
-             class: ("cancel-button"),
+            ...{ class: ("cancel-button") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             type: ("submit"),
-             class: ("submit-button"),
+            ...{ class: ("submit-button") },
             disabled: ((__VLS_ctx.isSubmitting)),
         });
         (__VLS_ctx.isSubmitting ? '處理中...' : '確認');

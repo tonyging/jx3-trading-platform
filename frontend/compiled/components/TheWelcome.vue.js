@@ -83,7 +83,7 @@ function __VLS_template() {
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.br)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.a, __VLS_intrinsicElements.a)({
-         onClick: (__VLS_ctx.openReadmeInEditor),
+        ...{ onClick: (__VLS_ctx.openReadmeInEditor) },
         href: ("javascript:void(0)"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.code, __VLS_intrinsicElements.code)({});

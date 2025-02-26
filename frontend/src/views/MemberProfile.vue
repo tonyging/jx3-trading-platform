@@ -18,10 +18,11 @@ interface ApiError {
   message?: string
 }
 
-// 移除全局 Window 介面定義中的 any 型別
 declare global {
   interface Window {
-    recaptchaVerifier?: RecaptchaVerifier
+    recaptchaVerifier?: RecaptchaVerifier & {
+      reset?: () => void
+    }
   }
 }
 
@@ -192,7 +193,7 @@ async function handleSendVerification() {
 
     // 重置 reCAPTCHA
     try {
-      if (window.recaptchaVerifier) {
+      if (window.recaptchaVerifier?.reset) {
         await window.recaptchaVerifier.reset()
       }
     } catch (resetError: unknown) {
@@ -248,7 +249,9 @@ watch(currentMenu, (newMenu) => {
           size: 'invisible',
           callback: () => {},
           'expired-callback': () => {
-            window.recaptchaVerifier?.reset()
+            if (window.recaptchaVerifier?.reset) {
+              window.recaptchaVerifier.reset()
+            }
           },
         })
 

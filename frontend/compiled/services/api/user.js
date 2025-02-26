@@ -35,7 +35,8 @@ export const userService = {
             return response.data;
         }
         catch (error) {
-            throw new Error(error.response?.data?.message || '更新個人資料失敗');
+            const apiError = error;
+            throw new Error(apiError.response?.data?.message || '更新個人資料失敗');
         }
     },
     // 密碼相關
@@ -80,7 +81,8 @@ export const userService = {
             return response.data;
         }
         catch (error) {
-            console.error('API 錯誤:', error.response?.data || error);
+            const apiError = error;
+            console.error('API 錯誤:', apiError.response?.data || error);
             throw error;
         }
     },
@@ -104,7 +106,8 @@ export const userService = {
             return response.data;
         }
         catch (error) {
-            throw new Error(error.response?.data?.message || '驗證失敗');
+            const apiError = error;
+            throw new Error(apiError.response?.data?.message || '驗證失敗');
         }
     },
     // 獲取手機驗證狀態
@@ -114,7 +117,8 @@ export const userService = {
             return response.data;
         }
         catch (error) {
-            throw new Error(error.response?.data?.message || '獲取驗證狀態失敗');
+            const apiError = error;
+            throw new Error(apiError.response?.data?.message || '獲取驗證狀態失敗');
         }
     },
 };

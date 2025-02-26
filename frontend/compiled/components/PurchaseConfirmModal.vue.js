@@ -32,57 +32,57 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("purchase-confirm-modal-overlay"),
+        ...{ class: ("purchase-confirm-modal-overlay") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("purchase-confirm-modal"),
+        ...{ class: ("purchase-confirm-modal") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-         onClick: (...[$event]) => {
+        ...{ onClick: (...[$event]) => {
                 __VLS_ctx.$emit('cancel');
-            },
-         class: ("close-button"),
+            } },
+        ...{ class: ("close-button") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("product-details"),
+        ...{ class: ("product-details") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("detail-item"),
+        ...{ class: ("detail-item") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({});
     (__VLS_ctx.sellerName);
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("detail-item"),
+        ...{ class: ("detail-item") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({});
     (__VLS_ctx.product.amount);
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("detail-item"),
+        ...{ class: ("detail-item") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({});
     (__VLS_ctx.unitPrice.toFixed(0));
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("detail-item"),
+        ...{ class: ("detail-item") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({});
     (__VLS_ctx.product.price);
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("modal-actions"),
+        ...{ class: ("modal-actions") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-         onClick: (...[$event]) => {
+        ...{ onClick: (...[$event]) => {
                 __VLS_ctx.$emit('cancel');
-            },
-         class: ("cancel-button"),
+            } },
+        ...{ class: ("cancel-button") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-         onClick: (__VLS_ctx.confirmPurchase),
-         class: ("confirm-button"),
+        ...{ onClick: (__VLS_ctx.confirmPurchase) },
+        ...{ class: ("confirm-button") },
     });
     ['purchase-confirm-modal-overlay', 'purchase-confirm-modal', 'close-button', 'product-details', 'detail-item', 'detail-item', 'detail-item', 'detail-item', 'modal-actions', 'cancel-button', 'confirm-button',];
     var __VLS_slots;

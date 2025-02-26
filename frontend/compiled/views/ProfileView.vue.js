@@ -18,11 +18,22 @@ onMounted(() => {
 const handleUpdateProfile = async () => {
     try {
         // 這裡之後會加入更新用戶資料的邏輯
+        // 方法1：使用完整的錯誤處理
+        const updateProfile = async () => {
+            // 假設這是一個未來會實現的更新邏輯
+            // await userService.updateProfile({ name: username.value })
+        };
+        await updateProfile();
         isEditing.value = false;
         successMessage.value = '個人資料更新成功';
     }
     catch (error) {
-        errorMessage.value = '更新失敗，請稍後再試';
+        // 方法2：完整的錯誤處理
+        const apiError = error;
+        errorMessage.value =
+            apiError.response?.data?.message || apiError.message || '更新失敗，請稍後再試';
+        // 可選：記錄完整的錯誤信息
+        console.error('Profile update error:', error);
     }
 }; /* PartiallyEnd: #3632/scriptSetup.vue */
 function __VLS_template() {
@@ -30,90 +41,90 @@ function __VLS_template() {
     let __VLS_components;
     let __VLS_directives;
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("min-h-screen bg-gray-50 py-8"),
+        ...{ class: ("min-h-screen bg-gray-50 py-8") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("max-w-3xl mx-auto px-4 sm:px-6 lg:px-8"),
+        ...{ class: ("max-w-3xl mx-auto px-4 sm:px-6 lg:px-8") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("bg-white shadow rounded-lg p-6"),
+        ...{ class: ("bg-white shadow rounded-lg p-6") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("mb-8"),
+        ...{ class: ("mb-8") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
-         class: ("text-2xl font-bold text-gray-900"),
+        ...{ class: ("text-2xl font-bold text-gray-900") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-         class: ("mt-1 text-sm text-gray-600"),
+        ...{ class: ("mt-1 text-sm text-gray-600") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("space-y-6"),
+        ...{ class: ("space-y-6") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-         class: ("block text-sm font-medium text-gray-700"),
+        ...{ class: ("block text-sm font-medium text-gray-700") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("mt-1"),
+        ...{ class: ("mt-1") },
     });
     if (__VLS_ctx.isEditing) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             value: ((__VLS_ctx.username)),
             type: ("text"),
-             class: ("shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"),
+            ...{ class: ("shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md") },
         });
     }
     else {
         __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-             class: ("py-2"),
+            ...{ class: ("py-2") },
         });
         (__VLS_ctx.username);
     }
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-         class: ("block text-sm font-medium text-gray-700"),
+        ...{ class: ("block text-sm font-medium text-gray-700") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-         class: ("py-2"),
+        ...{ class: ("py-2") },
     });
     (__VLS_ctx.email);
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("flex justify-end space-x-3"),
+        ...{ class: ("flex justify-end space-x-3") },
     });
     if (!__VLS_ctx.isEditing) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-             onClick: (...[$event]) => {
+            ...{ onClick: (...[$event]) => {
                     if (!((!__VLS_ctx.isEditing)))
                         return;
                     __VLS_ctx.isEditing = true;
-                },
-             class: ("px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"),
+                } },
+            ...{ class: ("px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500") },
         });
     }
     else {
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-             onClick: (...[$event]) => {
+            ...{ onClick: (...[$event]) => {
                     if (!(!((!__VLS_ctx.isEditing))))
                         return;
                     __VLS_ctx.isEditing = false;
-                },
-             class: ("px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"),
+                } },
+            ...{ class: ("px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-             onClick: (__VLS_ctx.handleUpdateProfile),
-             class: ("px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"),
+            ...{ onClick: (__VLS_ctx.handleUpdateProfile) },
+            ...{ class: ("px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500") },
         });
     }
     if (__VLS_ctx.errorMessage) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("mt-4 text-sm text-red-600"),
+            ...{ class: ("mt-4 text-sm text-red-600") },
         });
         (__VLS_ctx.errorMessage);
     }
     if (__VLS_ctx.successMessage) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("mt-4 text-sm text-green-600"),
+            ...{ class: ("mt-4 text-sm text-green-600") },
         });
         (__VLS_ctx.successMessage);
     }

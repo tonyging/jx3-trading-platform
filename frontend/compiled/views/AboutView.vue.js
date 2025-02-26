@@ -6,7 +6,7 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("about"),
+        ...{ class: ("about") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({});
     ['about',];

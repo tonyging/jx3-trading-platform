@@ -39,15 +39,15 @@ function __VLS_template() {
     // CSS variable injection end 
     if (__VLS_ctx.isOpen) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             onClick: (__VLS_ctx.closeModal),
-             class: ("modal-overlay"),
+            ...{ onClick: (__VLS_ctx.closeModal) },
+            ...{ class: ("modal-overlay") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("modal-content"),
+            ...{ class: ("modal-content") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("form-group"),
+            ...{ class: ("form-group") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
             for: ("amount"),
@@ -59,7 +59,7 @@ function __VLS_template() {
         });
         (__VLS_ctx.localAmount);
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("form-group"),
+            ...{ class: ("form-group") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
             for: ("price"),
@@ -71,15 +71,15 @@ function __VLS_template() {
         });
         (__VLS_ctx.localPrice);
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("modal-actions"),
+            ...{ class: ("modal-actions") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-             onClick: (__VLS_ctx.closeModal),
-             class: ("cancel-button"),
+            ...{ onClick: (__VLS_ctx.closeModal) },
+            ...{ class: ("cancel-button") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-             onClick: (__VLS_ctx.handleSubmit),
-             class: ("confirm-button"),
+            ...{ onClick: (__VLS_ctx.handleSubmit) },
+            ...{ class: ("confirm-button") },
         });
     }
     ['modal-overlay', 'modal-content', 'form-group', 'form-group', 'modal-actions', 'cancel-button', 'confirm-button',];

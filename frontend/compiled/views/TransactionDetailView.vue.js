@@ -17,7 +17,7 @@ const loadTransactionDetails = async () => {
         transaction.value = response.data;
     }
     catch (err) {
-        error.value = err.message || '載入交易詳情失敗';
+        error.value = err instanceof Error ? err.message : '載入交易詳情失敗';
     }
     finally {
         loading.value = false;
@@ -33,7 +33,7 @@ const sendMessage = async () => {
         await loadTransactionDetails(); // 重新載入交易詳情以更新訊息
     }
     catch (err) {
-        error.value = err.message || '發送訊息失敗';
+        error.value = err instanceof Error ? err.message : '發送訊息失敗';
     }
 };
 // 格式化時間
@@ -112,7 +112,7 @@ const completeTransaction = async () => {
     }
     catch (error) {
         // 處理可能的錯誤
-        showNotification(error.message || '結束交易失敗', 'error');
+        showNotification(error instanceof Error ? error.message : '結束交易失敗', 'error');
     }
 };
 const formatStatus = (status) => {
@@ -163,266 +163,266 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("platform-base"),
+        ...{ class: ("platform-base") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("content-wrapper"),
+        ...{ class: ("content-wrapper") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
-         class: ("main-content trade-content"),
+        ...{ class: ("main-content trade-content") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("page-header"),
+        ...{ class: ("page-header") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("title-status-wrapper"),
+        ...{ class: ("title-status-wrapper") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
-         class: ("page-title"),
+        ...{ class: ("page-title") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("page-actions"),
+        ...{ class: ("page-actions") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-         onClick: (__VLS_ctx.goBackToTradingTab),
-         class: ("back-button"),
+        ...{ onClick: (__VLS_ctx.goBackToTradingTab) },
+        ...{ class: ("back-button") },
     });
     if (__VLS_ctx.canCompleteTransaction) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-             onClick: (__VLS_ctx.completeTransaction),
-             class: ("complete-transaction-button"),
+            ...{ onClick: (__VLS_ctx.completeTransaction) },
+            ...{ class: ("complete-transaction-button") },
         });
     }
     if (__VLS_ctx.loading) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("status-message"),
+            ...{ class: ("status-message") },
         });
     }
     else if (__VLS_ctx.error) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("status-message error"),
+            ...{ class: ("status-message error") },
         });
         (__VLS_ctx.error);
     }
     else if (__VLS_ctx.transaction) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("transaction-container"),
+            ...{ class: ("transaction-container") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("content-grid"),
+            ...{ class: ("content-grid") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("left-column"),
+            ...{ class: ("left-column") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.section, __VLS_intrinsicElements.section)({
-             class: ("card transaction-status"),
+            ...{ class: ("card transaction-status") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("status-grid"),
+            ...{ class: ("status-grid") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("status-item"),
+            ...{ class: ("status-item") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-             class: ("label"),
+            ...{ class: ("label") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-             class: ("value"),
-             class: (('status-' + __VLS_ctx.transaction.status)),
+            ...{ class: ("value") },
+            ...{ class: (('status-' + __VLS_ctx.transaction.status)) },
         });
         (__VLS_ctx.formatStatus(__VLS_ctx.transaction.status));
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("status-item"),
+            ...{ class: ("status-item") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-             class: ("label"),
+            ...{ class: ("label") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-             class: ("value"),
+            ...{ class: ("value") },
         });
         (__VLS_ctx.transaction.amount);
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("status-item"),
+            ...{ class: ("status-item") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-             class: ("label"),
+            ...{ class: ("label") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-             class: ("value"),
+            ...{ class: ("value") },
         });
         (__VLS_ctx.formatPrice(__VLS_ctx.transaction.price));
         if (__VLS_ctx.userRole) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.section, __VLS_intrinsicElements.section)({
-                 class: ("card contact-card"),
+                ...{ class: ("card contact-card") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("contact-info"),
+                ...{ class: ("contact-info") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("info-item"),
+                ...{ class: ("info-item") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("label"),
+                ...{ class: ("label") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("value"),
+                ...{ class: ("value") },
             });
             (__VLS_ctx.userRole === 'seller' ? __VLS_ctx.transaction.seller.name : __VLS_ctx.transaction.buyer.name);
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("info-item"),
+                ...{ class: ("info-item") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("label"),
+                ...{ class: ("label") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("value"),
+                ...{ class: ("value") },
             });
             ((__VLS_ctx.userRole === 'seller'
                 ? __VLS_ctx.transaction.seller.contactInfo?.line
                 : __VLS_ctx.transaction.buyer.contactInfo?.line) || '未提供');
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("info-item"),
+                ...{ class: ("info-item") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("label"),
+                ...{ class: ("label") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("value"),
+                ...{ class: ("value") },
             });
             ((__VLS_ctx.userRole === 'seller'
                 ? __VLS_ctx.transaction.seller.contactInfo?.discord
                 : __VLS_ctx.transaction.buyer.contactInfo?.discord) || '未提供');
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("info-item"),
+                ...{ class: ("info-item") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("label"),
+                ...{ class: ("label") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("value"),
+                ...{ class: ("value") },
             });
             ((__VLS_ctx.userRole === 'seller'
                 ? __VLS_ctx.transaction.seller.contactInfo?.facebook
                 : __VLS_ctx.transaction.buyer.contactInfo?.facebook) || '未提供');
         }
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("right-column"),
+            ...{ class: ("right-column") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.section, __VLS_intrinsicElements.section)({
-             class: ("card message-board"),
+            ...{ class: ("card message-board") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("message-header-wrapper"),
+            ...{ class: ("message-header-wrapper") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
         if (__VLS_ctx.transaction) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("confirmation-status"),
+                ...{ class: ("confirmation-status") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("status-badge"),
+                ...{ class: ("status-badge") },
             });
             (__VLS_ctx.transaction.sellerConfirmed ? '✅' : '❌');
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("status-badge"),
+                ...{ class: ("status-badge") },
             });
             (__VLS_ctx.transaction.buyerConfirmed ? '✅' : '❌');
         }
         if (__VLS_ctx.counterpartyInfo) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("counterparty-info"),
+                ...{ class: ("counterparty-info") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
             (__VLS_ctx.userRole === 'seller' ? '買家資訊' : '賣家資訊');
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("info-grid"),
+                ...{ class: ("info-grid") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("info-item"),
+                ...{ class: ("info-item") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("label"),
+                ...{ class: ("label") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("value"),
+                ...{ class: ("value") },
             });
             (__VLS_ctx.counterpartyInfo.name);
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("info-item"),
+                ...{ class: ("info-item") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("label"),
+                ...{ class: ("label") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("value"),
+                ...{ class: ("value") },
             });
             (__VLS_ctx.counterpartyInfo.contactInfo?.line || '未提供');
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("info-item"),
+                ...{ class: ("info-item") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("label"),
+                ...{ class: ("label") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("value"),
+                ...{ class: ("value") },
             });
             (__VLS_ctx.counterpartyInfo.contactInfo?.discord || '未提供');
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("info-item"),
+                ...{ class: ("info-item") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("label"),
+                ...{ class: ("label") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("value"),
+                ...{ class: ("value") },
             });
             (__VLS_ctx.counterpartyInfo.contactInfo?.facebook || '未提供');
         }
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("messages"),
+            ...{ class: ("messages") },
         });
         for (const [message] of __VLS_getVForSourceType((__VLS_ctx.transaction.messages))) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 key: ((message._id)),
-                 class: ("message"),
+                ...{ class: ("message") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("message-header"),
+                ...{ class: ("message-header") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("sender"),
-                 class: ((message.sender === __VLS_ctx.transaction.seller._id
+                ...{ class: ("sender") },
+                ...{ class: ((message.sender === __VLS_ctx.transaction.seller._id
                         ? 'seller-message'
-                        : 'buyer-message')),
+                        : 'buyer-message')) },
             });
             (message.sender === __VLS_ctx.transaction.seller._id
                 ? `${__VLS_ctx.transaction.seller.name} (賣家)`
                 : `${__VLS_ctx.transaction.buyer.name} (買家)`);
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                 class: ("time"),
+                ...{ class: ("time") },
             });
             (__VLS_ctx.formatTime(message.timestamp));
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                 class: ("message-content"),
-                 class: ((message.sender === __VLS_ctx.transaction.seller._id
+                ...{ class: ("message-content") },
+                ...{ class: ((message.sender === __VLS_ctx.transaction.seller._id
                         ? 'seller-message'
-                        : 'buyer-message')),
+                        : 'buyer-message')) },
             });
             (message.content);
         }
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-             class: ("message-input"),
+            ...{ class: ("message-input") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.textarea, __VLS_intrinsicElements.textarea)({
-             onKeyup: (__VLS_ctx.sendMessage),
+            ...{ onKeyup: (__VLS_ctx.sendMessage) },
             value: ((__VLS_ctx.newMessage)),
             placeholder: ("輸入訊息..."),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-             onClick: (__VLS_ctx.sendMessage),
-             class: ("send-button"),
+            ...{ onClick: (__VLS_ctx.sendMessage) },
+            ...{ class: ("send-button") },
             disabled: ((!__VLS_ctx.newMessage.trim())),
         });
     }

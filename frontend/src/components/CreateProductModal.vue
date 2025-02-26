@@ -2,6 +2,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+const props = defineProps<{
+  isOpen: boolean
+}>()
+
 const emit = defineEmits<{
   'update:isOpen': [value: boolean]
   submit: [data: { amount: number; price: number }]
@@ -61,7 +65,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click="handleClose">
+  <div v-if="props.isOpen" class="modal-overlay" @click="handleClose">
     <div class="modal-content" @click.stop>
       <!-- 添加關閉按鈕 -->
       <button class="modal-close-btn" @click="handleClose">✕</button>

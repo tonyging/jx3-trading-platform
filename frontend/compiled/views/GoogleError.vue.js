@@ -10,15 +10,15 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("google-error"),
+        ...{ class: ("google-error") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-         class: ("error-container"),
+        ...{ class: ("error-container") },
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-         onClick: (__VLS_ctx.goToLogin),
+        ...{ onClick: (__VLS_ctx.goToLogin) },
     });
     ['google-error', 'error-container',];
     var __VLS_slots;
