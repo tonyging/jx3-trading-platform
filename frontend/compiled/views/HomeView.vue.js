@@ -348,99 +348,99 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ onClick: (__VLS_ctx.closeUserMenu) },
-        ...{ class: ("platform-base") },
+         onClick: (__VLS_ctx.closeUserMenu),
+         class: ("platform-base"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("site-header") },
+         class: ("site-header"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ onClick: () => { } },
-        ...{ class: ("user-menu-container") },
+         onClick: () => { },
+         class: ("user-menu-container"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ onClick: (__VLS_ctx.toggleUserMenu) },
-        ...{ class: ("user-avatar") },
+         onClick: (__VLS_ctx.toggleUserMenu),
+         class: ("user-avatar"),
     });
     (__VLS_ctx.userStore.currentUser?.name?.charAt(0) || '用');
     if (__VLS_ctx.isUserMenuOpen) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("user-dropdown-menu") },
+             class: ("user-dropdown-menu"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("user-info") },
+             class: ("user-info"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: ("user-name") },
+             class: ("user-name"),
         });
         (__VLS_ctx.userStore.currentUser?.name || '用戶');
         __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: ("role-tag") },
+             class: ("role-tag"),
         });
         (__VLS_ctx.getRoleDisplay(__VLS_ctx.userStore.currentUser?.role));
         __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: ("user-email") },
+             class: ("user-email"),
         });
         (__VLS_ctx.userStore.currentUser?.email);
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("user-actions") },
+             class: ("user-actions"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (__VLS_ctx.handleMemberInfo) },
-            ...{ class: ("menu-button profile-button") },
+             onClick: (__VLS_ctx.handleMemberInfo),
+             class: ("menu-button profile-button"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (__VLS_ctx.handleLogout) },
-            ...{ class: ("menu-button logout-button") },
+             onClick: (__VLS_ctx.handleLogout),
+             class: ("menu-button logout-button"),
         });
     }
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("content-wrapper") },
+         class: ("content-wrapper"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
-        ...{ class: ("main-content trade-content") },
+         class: ("main-content trade-content"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("table-header") },
+         class: ("table-header"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("tabs") },
+         class: ("tabs"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (...[$event]) => {
+         onClick: (...[$event]) => {
                 __VLS_ctx.switchTab('all');
-            } },
-        ...{ class: ((['tab', { active: __VLS_ctx.currentTab === 'all' }])) },
+            },
+         class: ((['tab', { active: __VLS_ctx.currentTab === 'all' }])),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (...[$event]) => {
+         onClick: (...[$event]) => {
                 __VLS_ctx.switchTab('my');
-            } },
-        ...{ class: ((['tab', { active: __VLS_ctx.currentTab === 'my' }])) },
+            },
+         class: ((['tab', { active: __VLS_ctx.currentTab === 'my' }])),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (...[$event]) => {
+         onClick: (...[$event]) => {
                 __VLS_ctx.switchTab('trading');
-            } },
-        ...{ class: ((['tab', { active: __VLS_ctx.currentTab === 'trading' }])) },
+            },
+         class: ((['tab', { active: __VLS_ctx.currentTab === 'trading' }])),
     });
     if (__VLS_ctx.userStore.currentUser?.role === 'admin') {
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (...[$event]) => {
+             onClick: (...[$event]) => {
                     if (!((__VLS_ctx.userStore.currentUser?.role === 'admin')))
                         return;
                     __VLS_ctx.switchTab('admin');
-                } },
-            ...{ class: ((['tab', { active: __VLS_ctx.currentTab === 'admin' }])) },
+                },
+             class: ((['tab', { active: __VLS_ctx.currentTab === 'admin' }])),
         });
     }
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.handleCreateProduct) },
-        ...{ class: ("create-button") },
+         onClick: (__VLS_ctx.handleCreateProduct),
+         class: ("create-button"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("trade-table") },
+         class: ("trade-table"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.table, __VLS_intrinsicElements.table)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.thead, __VLS_intrinsicElements.thead)({});
@@ -448,33 +448,33 @@ function __VLS_template() {
     __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ onClick: (...[$event]) => {
+         onClick: (...[$event]) => {
                 __VLS_ctx.handleSort('amount');
-            } },
-        ...{ class: ("sort-header") },
+            },
+         class: ("sort-header"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.span)({
-        ...{ class: ((__VLS_ctx.getSortIconClass('amount'))) },
+         class: ((__VLS_ctx.getSortIconClass('amount'))),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ onClick: (...[$event]) => {
+         onClick: (...[$event]) => {
                 __VLS_ctx.handleSort('price');
-            } },
-        ...{ class: ("sort-header") },
+            },
+         class: ("sort-header"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.span)({
-        ...{ class: ((__VLS_ctx.getSortIconClass('price'))) },
+         class: ((__VLS_ctx.getSortIconClass('price'))),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ onClick: (...[$event]) => {
+         onClick: (...[$event]) => {
                 __VLS_ctx.handleSort('value');
-            } },
-        ...{ class: ("sort-header") },
+            },
+         class: ("sort-header"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.span)({
-        ...{ class: ((__VLS_ctx.getSortIconClass('value'))) },
+         class: ((__VLS_ctx.getSortIconClass('value'))),
     });
     if (__VLS_ctx.isAdmin) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
@@ -485,14 +485,14 @@ function __VLS_template() {
         __VLS_elementAsFunction(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
             colspan: ((__VLS_ctx.totalColumns)),
-            ...{ class: ("status-message") },
+             class: ("status-message"),
         });
     }
     else if (__VLS_ctx.products.length === 0) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
             colspan: ((__VLS_ctx.totalColumns)),
-            ...{ class: ("status-message") },
+             class: ("status-message"),
         });
     }
     else {
@@ -511,7 +511,7 @@ function __VLS_template() {
             if (__VLS_ctx.isAdmin) {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
                 __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                    ...{ class: ((['status-tag', __VLS_ctx.getStatusClass(product.status)])) },
+                     class: ((['status-tag', __VLS_ctx.getStatusClass(product.status)])),
                     title: ((product.status)),
                 });
                 (__VLS_ctx.getStatusDisplay(product.status));
@@ -519,7 +519,7 @@ function __VLS_template() {
             __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
             if (__VLS_ctx.currentTab === 'trading') {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
+                     onClick: (...[$event]) => {
                             if (!(!((__VLS_ctx.loading))))
                                 return;
                             if (!(!((__VLS_ctx.products.length === 0))))
@@ -527,19 +527,19 @@ function __VLS_template() {
                             if (!((__VLS_ctx.currentTab === 'trading')))
                                 return;
                             __VLS_ctx.handleViewTransaction(product);
-                        } },
-                    ...{ class: ("view-button") },
+                        },
+                     class: ("view-button"),
                     disabled: ((!product.transactionId)),
                 });
                 (product.transactionId ? '查看交易' : '交易資訊異常');
             }
             else if (__VLS_ctx.currentTab === 'admin') {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("admin-actions") },
+                     class: ("admin-actions"),
                 });
                 if (product.transactionId) {
                     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                        ...{ onClick: (...[$event]) => {
+                         onClick: (...[$event]) => {
                                 if (!(!((__VLS_ctx.loading))))
                                     return;
                                 if (!(!((__VLS_ctx.products.length === 0))))
@@ -551,12 +551,12 @@ function __VLS_template() {
                                 if (!((product.transactionId)))
                                     return;
                                 __VLS_ctx.handleViewTransaction(product);
-                            } },
-                        ...{ class: ("view-button") },
+                            },
+                         class: ("view-button"),
                     });
                 }
                 __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
+                     onClick: (...[$event]) => {
                             if (!(!((__VLS_ctx.loading))))
                                 return;
                             if (!(!((__VLS_ctx.products.length === 0))))
@@ -566,18 +566,18 @@ function __VLS_template() {
                             if (!((__VLS_ctx.currentTab === 'admin')))
                                 return;
                             __VLS_ctx.handleDeleteProduct(product.id);
-                        } },
-                    ...{ class: ("delete-button") },
+                        },
+                     class: ("delete-button"),
                 });
             }
             else {
                 if (typeof product.userId === 'object' &&
                     product.userId.id === __VLS_ctx.userStore.currentUser?.id) {
                     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                        ...{ class: ("product-actions") },
+                         class: ("product-actions"),
                     });
                     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                        ...{ onClick: (...[$event]) => {
+                         onClick: (...[$event]) => {
                                 if (!(!((__VLS_ctx.loading))))
                                     return;
                                 if (!(!((__VLS_ctx.products.length === 0))))
@@ -590,11 +590,11 @@ function __VLS_template() {
                                     product.userId.id === __VLS_ctx.userStore.currentUser?.id)))
                                     return;
                                 __VLS_ctx.handleEditProduct(product);
-                            } },
-                        ...{ class: ("edit-button") },
+                            },
+                         class: ("edit-button"),
                     });
                     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                        ...{ onClick: (...[$event]) => {
+                         onClick: (...[$event]) => {
                                 if (!(!((__VLS_ctx.loading))))
                                     return;
                                 if (!(!((__VLS_ctx.products.length === 0))))
@@ -607,13 +607,13 @@ function __VLS_template() {
                                     product.userId.id === __VLS_ctx.userStore.currentUser?.id)))
                                     return;
                                 __VLS_ctx.handleDeleteProduct(product.id);
-                            } },
-                        ...{ class: ("delete-button") },
+                            },
+                         class: ("delete-button"),
                     });
                 }
                 else {
                     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                        ...{ onClick: (...[$event]) => {
+                         onClick: (...[$event]) => {
                                 if (!(!((__VLS_ctx.loading))))
                                     return;
                                 if (!(!((__VLS_ctx.products.length === 0))))
@@ -626,8 +626,8 @@ function __VLS_template() {
                                     product.userId.id === __VLS_ctx.userStore.currentUser?.id))))
                                     return;
                                 __VLS_ctx.handleBuyProduct(product);
-                            } },
-                        ...{ class: ("buy-button") },
+                            },
+                         class: ("buy-button"),
                     });
                 }
             }
@@ -637,11 +637,11 @@ function __VLS_template() {
     /** @type { [typeof CreateProductModal, ] } */ ;
     // @ts-ignore
     const __VLS_0 = __VLS_asFunctionalComponent(CreateProductModal, new CreateProductModal({
-        ...{ 'onSubmit': {} },
+         'onSubmit': {},
         isOpen: ((__VLS_ctx.isCreateModalOpen)),
     }));
     const __VLS_1 = __VLS_0({
-        ...{ 'onSubmit': {} },
+         'onSubmit': {},
         isOpen: ((__VLS_ctx.isCreateModalOpen)),
     }, ...__VLS_functionalComponentArgsRest(__VLS_0));
     let __VLS_5;
@@ -656,12 +656,12 @@ function __VLS_template() {
         /** @type { [typeof EditProductModal, ] } */ ;
         // @ts-ignore
         const __VLS_7 = __VLS_asFunctionalComponent(EditProductModal, new EditProductModal({
-            ...{ 'onSubmit': {} },
+             'onSubmit': {},
             isOpen: ((__VLS_ctx.isEditModalOpen)),
             product: ((__VLS_ctx.currentEditProduct)),
         }));
         const __VLS_8 = __VLS_7({
-            ...{ 'onSubmit': {} },
+             'onSubmit': {},
             isOpen: ((__VLS_ctx.isEditModalOpen)),
             product: ((__VLS_ctx.currentEditProduct)),
         }, ...__VLS_functionalComponentArgsRest(__VLS_7));
@@ -678,13 +678,13 @@ function __VLS_template() {
         /** @type { [typeof PurchaseConfirmModal, ] } */ ;
         // @ts-ignore
         const __VLS_14 = __VLS_asFunctionalComponent(PurchaseConfirmModal, new PurchaseConfirmModal({
-            ...{ 'onConfirm': {} },
-            ...{ 'onCancel': {} },
+             'onConfirm': {},
+             'onCancel': {},
             product: ((__VLS_ctx.selectedProduct)),
         }));
         const __VLS_15 = __VLS_14({
-            ...{ 'onConfirm': {} },
-            ...{ 'onCancel': {} },
+             'onConfirm': {},
+             'onCancel': {},
             product: ((__VLS_ctx.selectedProduct)),
         }, ...__VLS_functionalComponentArgsRest(__VLS_14));
         let __VLS_19;
@@ -704,7 +704,7 @@ function __VLS_template() {
     }
     if (__VLS_ctx.notification.show) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ((['notification', `notification-${__VLS_ctx.notification.type}`])) },
+             class: ((['notification', `notification-${__VLS_ctx.notification.type}`])),
         });
         (__VLS_ctx.notification.message);
     }

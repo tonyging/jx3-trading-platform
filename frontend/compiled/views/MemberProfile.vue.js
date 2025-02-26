@@ -204,64 +204,64 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("platform-base") },
+         class: ("platform-base"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("site-header") },
+         class: ("site-header"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("content-wrapper") },
+         class: ("content-wrapper"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
-        ...{ class: ("main-content settings-content") },
+         class: ("main-content settings-content"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("settings-container") },
+         class: ("settings-container"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("side-menu") },
+         class: ("side-menu"),
     });
     for (const [item] of __VLS_getVForSourceType((__VLS_ctx.menuItems))) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ onClick: (...[$event]) => {
+             onClick: (...[$event]) => {
                     __VLS_ctx.currentMenu = item.id;
-                } },
+                },
             key: ((item.id)),
-            ...{ class: ((['menu-item', { active: __VLS_ctx.currentMenu === item.id }])) },
+             class: ((['menu-item', { active: __VLS_ctx.currentMenu === item.id }])),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("menu-item-icon") },
+             class: ("menu-item-icon"),
         });
         (item.icon);
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("menu-item-text") },
+             class: ("menu-item-text"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: ("menu-item-label") },
+             class: ("menu-item-label"),
         });
         (item.label);
         if (item.subLabel) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                ...{ class: ("menu-item-sublabel") },
+                 class: ("menu-item-sublabel"),
             });
             (item.subLabel);
         }
     }
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("main-settings-area") },
+         class: ("main-settings-area"),
     });
     if (__VLS_ctx.currentMenu === 'general') {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("settings-section") },
+             class: ("settings-section"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-            ...{ onSubmit: (__VLS_ctx.updateUserInfo) },
-            ...{ class: ("user-form") },
+             onSubmit: (__VLS_ctx.updateUserInfo),
+             class: ("user-form"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("form-group") },
+             class: ("form-group"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
@@ -271,47 +271,47 @@ function __VLS_template() {
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             type: ("submit"),
-            ...{ class: ("save-button") },
+             class: ("save-button"),
         });
     }
     else if (__VLS_ctx.currentMenu === 'security') {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("settings-section") },
+             class: ("settings-section"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("security-info") },
+             class: ("security-info"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("security-item") },
+             class: ("security-item"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("security-item-header") },
+             class: ("security-item-header"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: ("status verified") },
+             class: ("status verified"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("security-item-content") },
+             class: ("security-item-content"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: ("verified-email") },
+             class: ("verified-email"),
         });
         (__VLS_ctx.userEmail);
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("security-item") },
+             class: ("security-item"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("security-item-header") },
+             class: ("security-item-header"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("security-item-content") },
+             class: ("security-item-content"),
         });
         if (!__VLS_ctx.phoneVerificationState.isVerified) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: ("phone-verification") },
+                 class: ("phone-verification"),
             });
             if (!__VLS_ctx.phoneVerificationState.isCodeSent) {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
@@ -323,68 +323,68 @@ function __VLS_template() {
                 (__VLS_ctx.phoneVerificationState.phoneNumber);
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     id: ("recaptcha-container"),
-                    ...{ class: ("mb-4") },
+                     class: ("mb-4"),
                 });
                 __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (__VLS_ctx.handleSendVerification) },
+                     onClick: (__VLS_ctx.handleSendVerification),
                     type: ("button"),
-                    ...{ class: ("verification-button") },
+                     class: ("verification-button"),
                     disabled: ((__VLS_ctx.phoneVerificationState.isVerifying)),
                 });
                 (__VLS_ctx.phoneVerificationState.isVerifying ? '發送中...' : '發送驗證碼');
             }
             else {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("verification-code-section") },
+                     class: ("verification-code-section"),
                 });
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("verification-input-group") },
+                     class: ("verification-input-group"),
                 });
                 __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
                     value: ((__VLS_ctx.phoneVerificationState.verificationCode)),
                     type: ("text"),
                     placeholder: ("請輸入驗證碼"),
                     disabled: ((__VLS_ctx.phoneVerificationState.isVerifying)),
-                    ...{ class: ("verification-code-input") },
+                     class: ("verification-code-input"),
                 });
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("verification-actions") },
+                     class: ("verification-actions"),
                 });
                 __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (__VLS_ctx.handleVerifyCode) },
+                     onClick: (__VLS_ctx.handleVerifyCode),
                     type: ("button"),
-                    ...{ class: ("verification-button") },
+                     class: ("verification-button"),
                     disabled: ((__VLS_ctx.phoneVerificationState.isVerifying)),
                 });
                 (__VLS_ctx.phoneVerificationState.isVerifying ? '驗證中...' : '驗證');
                 __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (() => {
+                     onClick: (() => {
                             __VLS_ctx.phoneVerificationState.isCodeSent = false;
-                        }) },
+                        }),
                     type: ("button"),
-                    ...{ class: ("verification-button resend-button") },
+                     class: ("verification-button resend-button"),
                     disabled: ((__VLS_ctx.phoneVerificationState.isVerifying)),
                 });
             }
         }
         else {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: ("verified-status") },
+                 class: ("verified-status"),
             });
             (__VLS_ctx.phoneVerificationState.phoneNumber);
         }
     }
     else if (__VLS_ctx.currentMenu === 'account-links') {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("settings-section") },
+             class: ("settings-section"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-            ...{ onSubmit: (__VLS_ctx.updateUserInfo) },
-            ...{ class: ("user-form") },
+             onSubmit: (__VLS_ctx.updateUserInfo),
+             class: ("user-form"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("form-group") },
+             class: ("form-group"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
@@ -393,7 +393,7 @@ function __VLS_template() {
             placeholder: ("請輸入 Line ID"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("form-group") },
+             class: ("form-group"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
@@ -402,7 +402,7 @@ function __VLS_template() {
             placeholder: ("請輸入 Facebook 連結"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("form-group") },
+             class: ("form-group"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
@@ -412,12 +412,12 @@ function __VLS_template() {
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             type: ("submit"),
-            ...{ class: ("save-button") },
+             class: ("save-button"),
         });
     }
     if (__VLS_ctx.notification.show) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ((['notification', `notification-${__VLS_ctx.notification.type}`])) },
+             class: ((['notification', `notification-${__VLS_ctx.notification.type}`])),
         });
         (__VLS_ctx.notification.message);
     }

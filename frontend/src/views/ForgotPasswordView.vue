@@ -4,6 +4,15 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+  message?: string
+}
+
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -50,13 +59,14 @@ async function handleSendVerification() {
     } else {
       errorMessage.value = response?.message || '發送驗證碼失敗，請稍後再試'
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const apiError = error as ApiError
     console.error('發送驗證碼時發生錯誤:', error)
-    // 確保顯示完整的錯誤訊息
-    if (error.response?.data?.message) {
-      errorMessage.value = error.response.data.message
-    } else if (error.message) {
-      errorMessage.value = error.message
+
+    if (apiError.response?.data?.message) {
+      errorMessage.value = apiError.response.data.message
+    } else if (apiError.message) {
+      errorMessage.value = apiError.message
     } else {
       errorMessage.value = '發送驗證碼失敗，請稍後再試'
     }
@@ -90,9 +100,11 @@ async function handleVerifyCode() {
     } else {
       errorMessage.value = response?.message || '驗證碼錯誤，請重新輸入'
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const apiError = error as ApiError
     console.error('驗證碼驗證時發生錯誤:', error)
-    errorMessage.value = error.response?.data?.message || error.message || '驗證碼錯誤，請重新輸入'
+    errorMessage.value =
+      apiError.response?.data?.message || apiError.message || '驗證碼錯誤，請重新輸入'
   } finally {
     isLoading.value = false
   }
@@ -138,10 +150,11 @@ async function handleResetPassword() {
     } else {
       errorMessage.value = response?.message || '重設密碼失敗，請稍後再試'
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const apiError = error as ApiError
     console.error('重設密碼時發生錯誤:', error)
     errorMessage.value =
-      error.response?.data?.message || error.message || '重設密碼失敗，請稍後再試'
+      apiError.response?.data?.message || apiError.message || '重設密碼失敗，請稍後再試'
   } finally {
     isLoading.value = false
   }

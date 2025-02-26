@@ -3,6 +3,15 @@ import { ref, computed } from 'vue'
 import { userService } from '@/services/api/user'
 import type { User, LoginCredentials } from '@/types/user'
 
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+  message?: string
+}
+
 interface RegisterCredentials {
   name: string
   email: string
@@ -30,14 +39,12 @@ export const useUserStore = defineStore(
 
       try {
         const response = await userService.register(userData)
-
         return response
-      } catch (err: any) {
-        // 處理註冊錯誤
-        error.value = err.response?.data?.message || '註冊失敗，請稍後再試'
+      } catch (err: unknown) {
+        const apiError = err as ApiError
+        error.value = apiError.response?.data?.message || '註冊失敗，請稍後再試'
         throw error.value
       } finally {
-        // 重置載入狀態
         loading.value = false
       }
     }
@@ -58,8 +65,9 @@ export const useUserStore = defineStore(
         } else {
           throw new Error('登入響應格式錯誤')
         }
-      } catch (err: any) {
-        error.value = err.response?.data?.message || '登入失敗，請稍後再試'
+      } catch (err: unknown) {
+        const apiError = err as ApiError
+        error.value = apiError.response?.data?.message || '登入失敗，請稍後再試'
         throw error.value
       } finally {
         loading.value = false
@@ -86,8 +94,9 @@ export const useUserStore = defineStore(
         } else {
           throw new Error('更新失敗')
         }
-      } catch (error: any) {
-        throw new Error(error.message || '更新個人資料失敗')
+      } catch (error: unknown) {
+        const apiError = error as ApiError
+        throw new Error(apiError.response?.data?.message || apiError.message || '更新個人資料失敗')
       }
     }
 
@@ -134,8 +143,9 @@ export const useUserStore = defineStore(
         error.value = null
         const response = await userService.getGoogleAuthUrl()
         return response.url
-      } catch (err: any) {
-        error.value = err.response?.data?.message || '獲取 Google 登入連結失敗'
+      } catch (err: unknown) {
+        const apiError = err as ApiError
+        error.value = apiError.response?.data?.message || '獲取 Google 登入連結失敗'
         throw error.value
       } finally {
         loading.value = false
@@ -157,8 +167,9 @@ export const useUserStore = defineStore(
         } else {
           throw new Error('Google 登入響應格式錯誤')
         }
-      } catch (err: any) {
-        error.value = err.response?.data?.message || 'Google 登入失敗'
+      } catch (err: unknown) {
+        const apiError = err as ApiError
+        error.value = apiError.response?.data?.message || 'Google 登入失敗'
         throw error.value
       } finally {
         loading.value = false
@@ -180,8 +191,9 @@ export const useUserStore = defineStore(
         } else {
           throw new Error('Google 登入回調處理失敗')
         }
-      } catch (err: any) {
-        error.value = err.response?.data?.message || 'Google 登入回調處理失敗'
+      } catch (err: unknown) {
+        const apiError = err as ApiError
+        error.value = apiError.response?.data?.message || 'Google 登入回調處理失敗'
         throw error.value
       } finally {
         loading.value = false
@@ -196,11 +208,12 @@ export const useUserStore = defineStore(
       try {
         const response = await userService.sendPasswordResetCode(data)
         return response
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const apiError = err as ApiError
         console.error('發送驗證碼錯誤:', err)
-        if (err.response?.data?.message) {
-          error.value = err.response.data.message
-          throw new Error(err.response.data.message)
+        if (apiError.response?.data?.message) {
+          error.value = apiError.response.data.message
+          throw new Error(apiError.response.data.message)
         } else {
           error.value = '發送驗證碼失敗，請稍後再試'
           throw new Error('發送驗證碼失敗，請稍後再試')
@@ -218,8 +231,9 @@ export const useUserStore = defineStore(
       try {
         const response = await userService.verifyPasswordResetCode(data)
         return response
-      } catch (err: any) {
-        error.value = err.response?.data?.message || '驗證碼驗證失敗'
+      } catch (err: unknown) {
+        const apiError = err as ApiError
+        error.value = apiError.response?.data?.message || '驗證碼驗證失敗'
         throw error.value
       } finally {
         loading.value = false
@@ -234,8 +248,9 @@ export const useUserStore = defineStore(
       try {
         const response = await userService.resetPasswordWithCode(data)
         return response
-      } catch (err: any) {
-        error.value = err.response?.data?.message || '重設密碼失敗'
+      } catch (err: unknown) {
+        const apiError = err as ApiError
+        error.value = apiError.response?.data?.message || '重設密碼失敗'
         throw error.value
       } finally {
         loading.value = false

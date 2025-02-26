@@ -142,43 +142,43 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("login-page") },
+         class: ("login-page"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("site-header") },
+         class: ("site-header"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("content-wrapper") },
+         class: ("content-wrapper"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
-        ...{ class: ("main-content") },
+         class: ("main-content"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
     if (__VLS_ctx.currentStep === 1) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-            ...{ onSubmit: (__VLS_ctx.handleSendVerification) },
-            ...{ class: ("login-form") },
+             onSubmit: (__VLS_ctx.handleSendVerification),
+             class: ("login-form"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("input-group") },
+             class: ("input-group"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             type: ("email"),
             required: (true),
             placeholder: ("請輸入您的電子郵件地址"),
-            ...{ class: (({ error: __VLS_ctx.errorMessage })) },
+             class: (({ error: __VLS_ctx.errorMessage })),
         });
         (__VLS_ctx.email);
         if (__VLS_ctx.errorMessage) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: ("error-text") },
+                 class: ("error-text"),
             });
             (__VLS_ctx.errorMessage);
         }
         if (__VLS_ctx.successMessage) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: ("success-text") },
+                 class: ("success-text"),
             });
             (__VLS_ctx.successMessage);
         }
@@ -188,7 +188,7 @@ function __VLS_template() {
         });
         (__VLS_ctx.isLoading ? '處理中...' : '發送驗證碼');
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("back-to-login") },
+             class: ("back-to-login"),
         });
         const __VLS_0 = {}.RouterLink;
         /** @type { [typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, ] } */ ;
@@ -204,30 +204,30 @@ function __VLS_template() {
     }
     if (__VLS_ctx.currentStep === 2) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-            ...{ onSubmit: (__VLS_ctx.handleVerifyCode) },
-            ...{ class: ("login-form") },
+             onSubmit: (__VLS_ctx.handleVerifyCode),
+             class: ("login-form"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("verification-message") },
+             class: ("verification-message"),
         });
         (__VLS_ctx.email);
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ onClick: (__VLS_ctx.handleSendVerification) },
-            ...{ class: ("resend-link") },
+             onClick: (__VLS_ctx.handleSendVerification),
+             class: ("resend-link"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("input-group") },
+             class: ("input-group"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             value: ((__VLS_ctx.verificationCode)),
             type: ("text"),
             required: (true),
             placeholder: ("請輸入驗證碼"),
-            ...{ class: (({ error: __VLS_ctx.errorMessage })) },
+             class: (({ error: __VLS_ctx.errorMessage })),
         });
         if (__VLS_ctx.errorMessage) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: ("error-text") },
+                 class: ("error-text"),
             });
             (__VLS_ctx.errorMessage);
         }
@@ -239,38 +239,38 @@ function __VLS_template() {
     }
     if (__VLS_ctx.currentStep === 3) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-            ...{ onSubmit: (__VLS_ctx.handleResetPassword) },
-            ...{ class: ("login-form") },
+             onSubmit: (__VLS_ctx.handleResetPassword),
+             class: ("login-form"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("input-group") },
+             class: ("input-group"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             type: ("password"),
             required: (true),
             placeholder: ("請輸入新密碼"),
-            ...{ class: (({ error: __VLS_ctx.errorMessage })) },
+             class: (({ error: __VLS_ctx.errorMessage })),
         });
         (__VLS_ctx.newPassword);
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("input-group") },
+             class: ("input-group"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             type: ("password"),
             required: (true),
             placeholder: ("請再次輸入新密碼"),
-            ...{ class: (({ error: __VLS_ctx.errorMessage })) },
+             class: (({ error: __VLS_ctx.errorMessage })),
         });
         (__VLS_ctx.confirmPassword);
         if (__VLS_ctx.errorMessage) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: ("error-text") },
+                 class: ("error-text"),
             });
             (__VLS_ctx.errorMessage);
         }
         if (__VLS_ctx.successMessage) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: ("success-text") },
+                 class: ("success-text"),
             });
             (__VLS_ctx.successMessage);
         }

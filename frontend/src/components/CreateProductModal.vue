@@ -2,11 +2,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-// 定義 props 和 emit
-const props = defineProps<{
-  isOpen: boolean
-}>()
-
 const emit = defineEmits<{
   'update:isOpen': [value: boolean]
   submit: [data: { amount: number; price: number }]

@@ -5,12 +5,23 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { userService } from '@/services/api/user'
 import { auth } from '@/firebase/init'
-import { RecaptchaVerifier, signInWithPhoneNumber, getAuth } from 'firebase/auth'
-import type { UpdateProfileData, UserResponse } from '@/types/user'
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'
+import type { UpdateProfileData } from '@/types/user'
 
+// 定義可能的錯誤類型
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+  message?: string
+}
+
+// 移除全局 Window 介面定義中的 any 型別
 declare global {
   interface Window {
-    recaptchaVerifier: any
+    recaptchaVerifier?: RecaptchaVerifier
   }
 }
 
@@ -64,7 +75,7 @@ const contactForm = reactive({
 const notification = ref({
   show: false,
   message: '',
-  type: 'success', // 'success' 或 'error'
+  type: 'success' as 'success' | 'error',
 })
 
 // 手機驗證相關的狀態
@@ -98,8 +109,12 @@ const loadUserInfo = async () => {
       userName.value = response.data.name
       userEmail.value = response.data.email
     }
-  } catch (error: any) {
-    showNotification(error.response?.data?.message || '載入用戶資訊失敗', 'error')
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    showNotification(
+      apiError.response?.data?.message || (apiError.message as string) || '載入用戶資訊失敗',
+      'error',
+    )
     console.error('載入用戶資訊失敗:', error)
   }
 }
@@ -119,12 +134,15 @@ const updateUserInfo = async () => {
     const response = await userService.updateProfile(updateData)
 
     if (response.status === 'success') {
-      // 修改條件檢查
       await userStore.fetchCurrentUser()
       showNotification('會員資料更新成功')
     }
-  } catch (error: any) {
-    showNotification(error.response?.data?.message || '更新會員資料失敗', 'error')
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    showNotification(
+      apiError.response?.data?.message || (apiError.message as string) || '更新會員資料失敗',
+      'error',
+    )
     console.error('更新會員資料失敗:', error)
   }
 }
@@ -161,22 +179,23 @@ async function handleSendVerification() {
     const confirmationResult = await signInWithPhoneNumber(
       auth,
       formattedPhoneNumber,
-      // @ts-ignore
-      window.recaptchaVerifier,
+      window.recaptchaVerifier as RecaptchaVerifier,
     )
 
     phoneVerificationState.verificationId = confirmationResult.verificationId
     phoneVerificationState.isCodeSent = true
     showNotification('驗證碼已發送到您的手機', 'success')
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const apiError = error as ApiError
     console.error('發送驗證碼錯誤:', error)
-    showNotification('發送驗證碼失敗，請檢查網絡連接', 'error')
+    showNotification((apiError.message as string) || '發送驗證碼失敗，請檢查網絡連接', 'error')
 
     // 重置 reCAPTCHA
     try {
-      // @ts-ignore
-      await window.recaptchaVerifier.reset()
-    } catch (resetError) {
+      if (window.recaptchaVerifier) {
+        await window.recaptchaVerifier.reset()
+      }
+    } catch (resetError: unknown) {
       console.error('重置 reCAPTCHA 時出錯:', resetError)
     }
   } finally {
@@ -194,7 +213,6 @@ async function handleVerifyCode() {
   try {
     phoneVerificationState.isVerifying = true
 
-    // 在這裡添加驗證邏輯
     const response = await userService.updatePhoneNumber(
       phoneVerificationState.phoneNumber,
       phoneVerificationState.verificationId,
@@ -206,9 +224,10 @@ async function handleVerifyCode() {
     } else {
       throw new Error(response.message || '驗證失敗')
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const apiError = error as ApiError
     console.error('驗證碼驗證錯誤:', error)
-    showNotification('驗證失敗，請檢查驗證碼是否正確', 'error')
+    showNotification((apiError.message as string) || '驗證失敗，請檢查驗證碼是否正確', 'error')
   } finally {
     phoneVerificationState.isVerifying = false
   }
@@ -229,13 +248,19 @@ watch(currentMenu, (newMenu) => {
           size: 'invisible',
           callback: () => {},
           'expired-callback': () => {
-            window.recaptchaVerifier.reset()
+            window.recaptchaVerifier?.reset()
           },
         })
 
         window.recaptchaVerifier.render()
-      } catch (error) {
-        showNotification('reCAPTCHA 初始化失敗', 'error')
+      } catch (error: unknown) {
+        // 記錄完整的錯誤訊息
+        console.error('reCAPTCHA 初始化錯誤:', error)
+
+        // 顯示友好的錯誤通知
+        const errorMessage = error instanceof Error ? error.message : 'reCAPTCHA 初始化失敗'
+
+        showNotification(errorMessage, 'error')
       }
     })
   }

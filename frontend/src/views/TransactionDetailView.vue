@@ -19,8 +19,8 @@ const loadTransactionDetails = async () => {
     loading.value = true
     const response = await transactionApi.getTransactionDetails(route.params.id as string)
     transaction.value = response.data
-  } catch (err: any) {
-    error.value = err.message || '載入交易詳情失敗'
+  } catch (err: unknown) {
+    error.value = err instanceof Error ? err.message : '載入交易詳情失敗'
   } finally {
     loading.value = false
   }
@@ -34,8 +34,8 @@ const sendMessage = async () => {
     await transactionApi.sendMessage(route.params.id as string, newMessage.value)
     newMessage.value = ''
     await loadTransactionDetails() // 重新載入交易詳情以更新訊息
-  } catch (err: any) {
-    error.value = err.message || '發送訊息失敗'
+  } catch (err: unknown) {
+    error.value = err instanceof Error ? err.message : '發送訊息失敗'
   }
 }
 
@@ -127,9 +127,9 @@ const completeTransaction = async () => {
 
     // 重新載入交易詳情以更新狀態
     await loadTransactionDetails()
-  } catch (error: any) {
+  } catch (error: unknown) {
     // 處理可能的錯誤
-    showNotification(error.message || '結束交易失敗', 'error')
+    showNotification(error instanceof Error ? error.message : '結束交易失敗', 'error')
   }
 }
 

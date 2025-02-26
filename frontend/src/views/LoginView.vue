@@ -4,6 +4,16 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
+// 定義可能的錯誤類型
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+  message?: string
+}
+
 // 初始化路由和用戶狀態管理工具
 const router = useRouter()
 const userStore = useUserStore()
@@ -28,14 +38,23 @@ async function handleLogin() {
   errorMessage.value = ''
 
   try {
-    const response = await userStore.login({
+    // 方法1：使用 void 斷言告訴編譯器我們知道不使用回傳值
+    void (await userStore.login({
       email: email.value,
       password: password.value,
-    })
+    }))
+
     localStorage.setItem('shouldReload', 'true')
     router.push('/')
-  } catch (error: any) {
-    errorMessage.value = '登入失敗，請檢查您的帳號密碼'
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    errorMessage.value =
+      apiError.response?.data?.message ||
+      (apiError.message as string) ||
+      '登入失敗，請檢查您的帳號密碼'
+
+    // 可選：記錄完整的錯誤信息
+    console.error('登入失敗:', error)
   } finally {
     isLoading.value = false
   }
@@ -48,10 +67,15 @@ async function handleGoogleLogin() {
     errorMessage.value = ''
 
     // 獲取 Google 登入 URL
-    const url = await userStore.getGoogleAuthUrl() // 直接獲取 url
+    const url = await userStore.getGoogleAuthUrl()
     window.location.href = url
-  } catch (error) {
-    errorMessage.value = '無法啟動 Google 登入'
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    errorMessage.value = (apiError.message as string) || '無法啟動 Google 登入'
+
+    // 記錄完整的錯誤信息
+    console.error('Google 登入失敗:', error)
+
     isLoading.value = false
   }
 }

@@ -1,5 +1,4 @@
 import api from './index'
-import type { AxiosResponse } from 'axios'
 import type {
   User,
   UserResponse,
@@ -9,9 +8,17 @@ import type {
   UpdatePasswordData,
   ResetPasswordData,
   LoginHistoryEntry,
-  LoginResponse,
   GoogleAuthResponse,
 } from '@/types/user'
+
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+  message?: string
+}
 
 export const userService = {
   // 發送驗證碼的新方法
@@ -52,8 +59,9 @@ export const userService = {
     try {
       const response = await api.patch<UserResponse>('/api/users/profile', data)
       return response.data
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || '更新個人資料失敗')
+    } catch (error: unknown) {
+      const apiError = error as ApiError
+      throw new Error(apiError.response?.data?.message || '更新個人資料失敗')
     }
   },
 
@@ -107,8 +115,9 @@ export const userService = {
       const response = await api.post('/api/users/forgot-password/send-code', data)
       console.log('收到回應:', response.data)
       return response.data
-    } catch (error: any) {
-      console.error('API 錯誤:', error.response?.data || error)
+    } catch (error: unknown) {
+      const apiError = error as ApiError
+      console.error('API 錯誤:', apiError.response?.data || error)
       throw error
     }
   },
@@ -133,8 +142,9 @@ export const userService = {
         verificationId,
       })
       return response.data
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || '驗證失敗')
+    } catch (error: unknown) {
+      const apiError = error as ApiError
+      throw new Error(apiError.response?.data?.message || '驗證失敗')
     }
   },
 
@@ -143,8 +153,9 @@ export const userService = {
     try {
       const response = await api.get('/api/users/phone-verification-status')
       return response.data
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || '獲取驗證狀態失敗')
+    } catch (error: unknown) {
+      const apiError = error as ApiError
+      throw new Error(apiError.response?.data?.message || '獲取驗證狀態失敗')
     }
   },
 }

@@ -124,13 +124,13 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("login-page") },
+         class: ("login-page"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("content-wrapper") },
+         class: ("content-wrapper"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
-        ...{ class: ("main-content") },
+         class: ("main-content"),
     });
     if (__VLS_ctx.currentStage === __VLS_ctx.RegisterStage.EmailPassword) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
@@ -143,32 +143,32 @@ function __VLS_template() {
     }
     if (__VLS_ctx.currentStage === __VLS_ctx.RegisterStage.EmailPassword) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-            ...{ onSubmit: (__VLS_ctx.sendVerificationCode) },
-            ...{ class: ("login-form") },
+             onSubmit: (__VLS_ctx.sendVerificationCode),
+             class: ("login-form"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("input-group") },
+             class: ("input-group"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             type: ("email"),
             required: (true),
             placeholder: ("電子郵件地址"),
-            ...{ class: (({ error: __VLS_ctx.errorMessage })) },
+             class: (({ error: __VLS_ctx.errorMessage })),
         });
         (__VLS_ctx.formData.email);
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("input-group") },
+             class: ("input-group"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             type: ("password"),
             required: (true),
             placeholder: ("密碼"),
-            ...{ class: (({ error: __VLS_ctx.errorMessage })) },
+             class: (({ error: __VLS_ctx.errorMessage })),
         });
         (__VLS_ctx.formData.password);
         if (__VLS_ctx.errorMessage) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: ("error-text") },
+                 class: ("error-text"),
             });
             (__VLS_ctx.errorMessage);
         }
@@ -180,26 +180,26 @@ function __VLS_template() {
     }
     else if (__VLS_ctx.currentStage === __VLS_ctx.RegisterStage.VerificationCode) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-            ...{ onSubmit: (__VLS_ctx.verifyCode) },
-            ...{ class: ("login-form") },
+             onSubmit: (__VLS_ctx.verifyCode),
+             class: ("login-form"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: ("verification-subtitle") },
+             class: ("verification-subtitle"),
         });
         (__VLS_ctx.formData.email);
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("input-group") },
+             class: ("input-group"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             value: ((__VLS_ctx.formData.verificationCode)),
             type: ("text"),
             required: (true),
             placeholder: ("驗證碼"),
-            ...{ class: (({ error: __VLS_ctx.errorMessage })) },
+             class: (({ error: __VLS_ctx.errorMessage })),
         });
         if (__VLS_ctx.errorMessage) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: ("error-text") },
+                 class: ("error-text"),
             });
             (__VLS_ctx.errorMessage);
         }
@@ -211,27 +211,27 @@ function __VLS_template() {
     }
     else if (__VLS_ctx.currentStage === __VLS_ctx.RegisterStage.UserName) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-            ...{ onSubmit: (__VLS_ctx.completeRegistration) },
-            ...{ class: ("login-form") },
+             onSubmit: (__VLS_ctx.completeRegistration),
+             class: ("login-form"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("input-group") },
+             class: ("input-group"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             value: ((__VLS_ctx.formData.name)),
             type: ("text"),
             required: (true),
             placeholder: ("名稱"),
-            ...{ class: (({ error: __VLS_ctx.errorMessage })) },
+             class: (({ error: __VLS_ctx.errorMessage })),
         });
         if (__VLS_ctx.errorMessage) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: ("error-text") },
+                 class: ("error-text"),
             });
             (__VLS_ctx.errorMessage);
         }
         __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: ("terms-agreement") },
+             class: ("terms-agreement"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.a, __VLS_intrinsicElements.a)({
             href: ("#"),
@@ -244,7 +244,7 @@ function __VLS_template() {
     }
     if (__VLS_ctx.currentStage === __VLS_ctx.RegisterStage.EmailPassword) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("register-prompt") },
+             class: ("register-prompt"),
         });
         const __VLS_0 = {}.RouterLink;
         /** @type { [typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, ] } */ ;

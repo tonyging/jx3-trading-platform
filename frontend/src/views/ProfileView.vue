@@ -3,6 +3,16 @@
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 
+// 定義可能的錯誤類型
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+  message?: string
+}
+
 const userStore = useUserStore()
 
 // 用於存儲用戶資料的響應式變數
@@ -24,10 +34,23 @@ onMounted(() => {
 const handleUpdateProfile = async () => {
   try {
     // 這裡之後會加入更新用戶資料的邏輯
+    // 方法1：使用完整的錯誤處理
+    const updateProfile = async () => {
+      // 假設這是一個未來會實現的更新邏輯
+      // await userService.updateProfile({ name: username.value })
+    }
+
+    await updateProfile()
     isEditing.value = false
     successMessage.value = '個人資料更新成功'
-  } catch (error) {
-    errorMessage.value = '更新失敗，請稍後再試'
+  } catch (error: unknown) {
+    // 方法2：完整的錯誤處理
+    const apiError = error as ApiError
+    errorMessage.value =
+      apiError.response?.data?.message || (apiError.message as string) || '更新失敗，請稍後再試'
+
+    // 可選：記錄完整的錯誤信息
+    console.error('Profile update error:', error)
   }
 }
 </script>

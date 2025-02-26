@@ -8,7 +8,17 @@ import CreateProductModal from '@/components/CreateProductModal.vue'
 import EditProductModal from '@/components/EditProductModal.vue'
 import PurchaseConfirmModal from '@/components/PurchaseConfirmModal.vue'
 import { productApi } from '@/services/api/product'
-import type { Product, ProductListType, Transaction, ProductStatus, User, UserRole } from '@/types'
+import type { Product, ProductListType, ProductStatus, UserRole } from '@/types'
+
+// 定義可能的錯誤類型
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+  message?: string
+}
 
 // 定義 products
 const products = ref<Product[]>([])
@@ -59,7 +69,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 // 使用 storeToRefs 解構 currentUser
-const { currentUser } = storeToRefs(userStore)
+const {} = storeToRefs(userStore)
 
 //頁籤狀態
 const currentTab = ref<ProductListType>('all')
@@ -78,7 +88,7 @@ const currentSort = ref({
 const notification = ref({
   show: false,
   message: '',
-  type: 'success', // 'success' 或 'error'
+  type: 'success' as 'success' | 'error',
 })
 
 // 載入商品列表
@@ -133,8 +143,12 @@ const loadProducts = async () => {
     const response = await productApi.getProducts(requestParams)
     console.log('Loaded products:', response.data.products)
     products.value = response.data.products
-  } catch (error) {
-    showNotification('載入商品列表失敗', 'error')
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    showNotification(
+      apiError.response?.data?.message || (apiError.message as string) || '載入商品列表失敗',
+      'error',
+    )
     console.error('載入商品列表失敗:', error)
     products.value = []
   } finally {
@@ -152,8 +166,10 @@ const switchTab = async (tab: ProductListType) => {
   if (tab === 'my' && !userStore.currentUser?.id) {
     try {
       await userStore.fetchCurrentUser()
-    } catch (error) {
+    } catch (error: unknown) {
+      const apiError = error as ApiError
       console.error('Failed to load user info:', error)
+      showNotification((apiError.message as string) || '載入用戶資訊失敗', 'error')
     }
   }
 
@@ -224,13 +240,6 @@ const getSortIconClass = (field: string) => {
   return currentSort.value.direction === 'asc' ? 'sort-icon ascending' : 'sort-icon descending'
 }
 
-const getUserName = (userId: string | { _id: string; name: string; email: string }) => {
-  if (typeof userId === 'object' && userId !== null) {
-    return userId.name || '未知賣家'
-  }
-  return '未知賣家'
-}
-
 // 在組件掛載時載入商品列表
 onMounted(async () => {
   if (!userStore.isAuthenticated) {
@@ -278,8 +287,9 @@ const handleSubmitProduct = async (data: { amount: number; price: number }) => {
     isCreateModalOpen.value = false
     showNotification('商品建立成功')
     await loadProducts() // 重新載入商品列表
-  } catch (error: any) {
-    showNotification(error.message || '建立商品失敗，請稍後再試', 'error')
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    showNotification((apiError.message as string) || '建立商品失敗，請稍後再試', 'error')
     console.error('建立商品失敗:', error)
   }
 }
@@ -290,12 +300,12 @@ const handleDeleteProduct = async (productId: string) => {
     await productApi.deleteProduct(productId)
     showNotification('商品已成功刪除')
     await loadProducts() // 重新載入商品列表
-  } catch (error: any) {
-    showNotification(error.message || '刪除商品失敗，請稍後再試', 'error')
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    showNotification((apiError.message as string) || '刪除商品失敗，請稍後再試', 'error')
     console.error('刪除商品失敗:', error)
   }
 }
-
 // 編輯商品相關狀態和方法
 const isEditModalOpen = ref(false)
 const currentEditProduct = ref<Product | null>(null)
@@ -315,8 +325,9 @@ const handleSubmitEditProduct = async (data: { amount: number; price: number }) 
     isEditModalOpen.value = false
     showNotification('商品更新成功')
     await loadProducts() // 重新載入商品列表
-  } catch (error: any) {
-    showNotification(error.message || '更新商品失敗，請稍後再試', 'error')
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    showNotification((apiError.message as string) || '更新商品失敗，請稍後再試', 'error')
     console.error('更新商品失敗:', error)
   }
 }
@@ -330,7 +341,6 @@ const handleConfirmPurchase = async (purchaseData: { amount: number; totalPrice:
         purchaseData.amount,
       )
 
-      // 添加回應資料的檢查和日誌
       console.log('Purchase response:', response)
 
       // 確保我們有收到交易資料
@@ -346,21 +356,34 @@ const handleConfirmPurchase = async (purchaseData: { amount: number; totalPrice:
 
       // 顯示成功訊息
       showNotification('購買成功！正在前往交易詳情頁面...', 'success')
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = error as ApiError
       // 提供更詳細的錯誤訊息
-      const errorMessage = error.message || '購買失敗，請稍後再試'
+      const errorMessage = (apiError.message as string) || '購買失敗，請稍後再試'
+
       showNotification(errorMessage, 'error')
       console.error('購買失敗詳情:', error)
       console.error('選擇的商品:', selectedProduct.value)
-      console.error('購買資料:', purchaseData)
     }
   }
 }
 
 const handleViewTransaction = (product: Product) => {
   if (product.transactionId) {
-    const transactionId =
-      typeof product.transactionId === 'object' ? product.transactionId.id : product.transactionId
+    let transactionId: string | undefined
+
+    if (typeof product.transactionId === 'object') {
+      // 優先使用 id，如果沒有再用 _id
+      transactionId = product.transactionId.id || product.transactionId._id
+    } else {
+      transactionId = product.transactionId
+    }
+
+    if (!transactionId) {
+      console.error('交易 ID 無效:', product.transactionId)
+      showNotification('交易資訊異常', 'error')
+      return
+    }
 
     console.log('Resolved Transaction ID:', transactionId)
     router.push(`/transactions/${transactionId}`)

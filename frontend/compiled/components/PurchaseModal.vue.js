@@ -35,28 +35,28 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("purchase-modal-overlay") },
+         class: ("purchase-modal-overlay"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("purchase-modal") },
+         class: ("purchase-modal"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("modal-header") },
+         class: ("modal-header"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.closeModal) },
-        ...{ class: ("close-button") },
+         onClick: (__VLS_ctx.closeModal),
+         class: ("close-button"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("product-info") },
+         class: ("product-info"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
     (__VLS_ctx.product.amount);
     __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
     (__VLS_ctx.formatPrice(__VLS_ctx.product.price / __VLS_ctx.product.amount));
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("purchase-amount") },
+         class: ("purchase-amount"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         for: ("amount-input"),
@@ -69,20 +69,20 @@ function __VLS_template() {
     });
     (__VLS_ctx.purchaseAmount);
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("purchase-summary") },
+         class: ("purchase-summary"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
     (__VLS_ctx.calculateTotalPrice());
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("modal-actions") },
+         class: ("modal-actions"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.closeModal) },
-        ...{ class: ("cancel-button") },
+         onClick: (__VLS_ctx.closeModal),
+         class: ("cancel-button"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.confirmPurchase) },
-        ...{ class: ("confirm-button") },
+         onClick: (__VLS_ctx.confirmPurchase),
+         class: ("confirm-button"),
         disabled: ((__VLS_ctx.purchaseAmount < 1 || __VLS_ctx.purchaseAmount > __VLS_ctx.product.amount)),
     });
     ['purchase-modal-overlay', 'purchase-modal', 'modal-header', 'close-button', 'product-info', 'purchase-amount', 'purchase-summary', 'modal-actions', 'cancel-button', 'confirm-button',];

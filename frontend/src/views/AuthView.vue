@@ -3,6 +3,15 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+  message?: string
+}
+
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -43,8 +52,13 @@ const handleLogin = async () => {
   try {
     await userStore.login(loginForm.value)
     router.push('/')
-  } catch (error: any) {
-    errorMessage.value = '登入失敗，請檢查您的帳號密碼'
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    errorMessage.value =
+      apiError.response?.data?.message ||
+      (apiError.message as string) ||
+      '登入失敗，請檢查您的帳號密碼'
+    console.error('登入失敗:', error)
   } finally {
     isSubmitting.value = false
   }
@@ -76,8 +90,11 @@ const handleRegister = async () => {
     })
     isLogin.value = true // 註冊成功後切換到登入表單
     errorMessage.value = '註冊成功，請登入'
-  } catch (error: any) {
-    errorMessage.value = '註冊失敗，請稍後再試'
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    errorMessage.value =
+      apiError.response?.data?.message || (apiError.message as string) || '註冊失敗，請稍後再試'
+    console.error('註冊失敗:', error)
   } finally {
     isSubmitting.value = false
   }

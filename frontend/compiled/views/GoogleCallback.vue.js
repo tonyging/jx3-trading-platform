@@ -25,10 +25,10 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("google-callback") },
+         class: ("google-callback"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("loading-spinner") },
+         class: ("loading-spinner"),
     });
     ['google-callback', 'loading-spinner',];
     var __VLS_slots;

@@ -57,51 +57,51 @@ function __VLS_template() {
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("login-page") },
+         class: ("login-page"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("site-header") },
+         class: ("site-header"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("content-wrapper") },
+         class: ("content-wrapper"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
-        ...{ class: ("main-content") },
+         class: ("main-content"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-        ...{ onSubmit: (__VLS_ctx.handleLogin) },
-        ...{ class: ("login-form") },
+         onSubmit: (__VLS_ctx.handleLogin),
+         class: ("login-form"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("input-group") },
+         class: ("input-group"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
         type: ("email"),
         required: (true),
         placeholder: ("電子郵件地址"),
-        ...{ class: (({ error: __VLS_ctx.errorMessage })) },
+         class: (({ error: __VLS_ctx.errorMessage })),
     });
     (__VLS_ctx.email);
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("input-group") },
+         class: ("input-group"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
         type: ("password"),
         required: (true),
         placeholder: ("密碼"),
-        ...{ class: (({ error: __VLS_ctx.errorMessage })) },
+         class: (({ error: __VLS_ctx.errorMessage })),
     });
     (__VLS_ctx.password);
     if (__VLS_ctx.errorMessage) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("error-text") },
+             class: ("error-text"),
         });
         (__VLS_ctx.errorMessage);
     }
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("forgot-password") },
+         class: ("forgot-password"),
     });
     const __VLS_0 = {}.RouterLink;
     /** @type { [typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, ] } */ ;
@@ -120,7 +120,7 @@ function __VLS_template() {
     });
     (__VLS_ctx.isLoading ? '處理中...' : '繼續');
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("register-prompt") },
+         class: ("register-prompt"),
     });
     const __VLS_6 = {}.RouterLink;
     /** @type { [typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, ] } */ ;
@@ -134,13 +134,13 @@ function __VLS_template() {
     __VLS_11.slots.default;
     var __VLS_11;
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("divider") },
+         class: ("divider"),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.handleGoogleLogin) },
+         onClick: (__VLS_ctx.handleGoogleLogin),
         type: ("button"),
-        ...{ class: ("google-login-button") },
+         class: ("google-login-button"),
         disabled: ((__VLS_ctx.isLoading)),
     });
     __VLS_elementAsFunction(__VLS_intrinsicElements.img)({

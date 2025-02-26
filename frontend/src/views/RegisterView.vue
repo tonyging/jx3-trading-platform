@@ -3,8 +3,17 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import axios from 'axios'
 import { userService } from '@/services/api/user'
+
+// 定義可能的錯誤類型
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+  message?: string
+}
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -68,17 +77,16 @@ const sendVerificationCode = async () => {
       passwordLength: formData.password.length,
     })
 
-    const response = await userService.sendVerificationCode({
+    await userService.sendVerificationCode({
       email: formData.email,
       password: formData.password,
     })
 
-    console.log('Verification code send response:', response)
-
     currentStage.value = RegisterStage.VerificationCode
-  } catch (error: any) {
-    console.log('error', error)
-    errorMessage.value = error || '發送驗證碼失敗'
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    errorMessage.value =
+      apiError.response?.data?.message || (apiError.message as string) || '發送驗證碼失敗'
   } finally {
     isLoading.value = false
   }
@@ -101,8 +109,10 @@ const verifyCode = async () => {
     })
 
     currentStage.value = RegisterStage.UserName
-  } catch (error: any) {
-    errorMessage.value = error.response?.data?.message || '驗證碼錯誤'
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    errorMessage.value =
+      apiError.response?.data?.message || (apiError.message as string) || '驗證碼錯誤'
   } finally {
     isLoading.value = false
   }
@@ -119,20 +129,23 @@ const completeRegistration = async () => {
   errorMessage.value = ''
 
   try {
-    const response = await userService.completeRegistration({
+    const registrationResponse = await userService.completeRegistration({
       email: formData.email,
       name: formData.name,
     })
 
-    // 自動登入並跳轉到主頁
+    console.log('Registration response:', registrationResponse)
+
     await userStore.login({
       email: formData.email,
       password: formData.password,
     })
 
     router.push('/')
-  } catch (error: any) {
-    errorMessage.value = error.response?.data?.message || '註冊失敗'
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    errorMessage.value =
+      apiError.response?.data?.message || (apiError.message as string) || '註冊失敗'
   } finally {
     isLoading.value = false
   }

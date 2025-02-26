@@ -78,6 +78,7 @@ export interface PaymentProof {
 // 交易相關型別
 export interface Transaction {
   id: string
+  _id: string
   seller: string | User
   buyer: string | User
   product: string | Product
