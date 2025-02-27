@@ -7,7 +7,6 @@
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
-    "test:unit": "vitest",
     "test:e2e": "playwright test",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
@@ -15,7 +14,9 @@
     "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint .",
     "format": "prettier --write src/",
-    "clean": "rm -rf compiled"
+    "clean": "rm -rf compiled",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
   },
   "dependencies": {
     "@vueuse/core": "^12.5.0",
@@ -50,9 +51,10 @@
     "sass": "^1.85.0",
     "sass-loader": "^16.0.4",
     "typescript": "~5.7.3",
+    "unplugin-vue-macros": "^2.14.4",
     "vite": "^6.0.11",
     "vite-plugin-vue-devtools": "^7.7.1",
-    "vitest": "^3.0.5",
+    "vitest": "^3.0.7",
     "vue-tsc": "^2.2.0"
   }
 }
