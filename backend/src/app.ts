@@ -26,9 +26,8 @@ class App {
     const corsOptions = {
       origin: [
         "http://localhost:5173", // Vite 預設開發伺服器
-        "http://127.0.0.1:5173", // localhost 的替代地址
-        // 如果有正式環境的域名，也可以加在這裡
-        // 'https://your-production-domain.com'
+        "http://127.0.0.1:5173",
+        "https://jx3-trading-platform.onrender.com",
       ],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
       allowedHeaders: [
