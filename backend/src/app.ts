@@ -73,6 +73,11 @@ class App {
   }
 
   private routes(): void {
+    // 健康檢查端點
+    this.app.get("/healthz", (req: Request, res: Response) => {
+      res.status(200).send("OK");
+    });
+
     this.app.use("/api/users", userRoutes);
     this.app.use("/api/ratings", ratingRoutes);
     this.app.use("/api/products", productRoutes);
