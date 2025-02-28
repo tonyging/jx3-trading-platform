@@ -58,7 +58,7 @@ const totalColumns = computed(() => {
   return baseColumns
 })
 
-// 添加处理购买点击的方法
+// 處理購買點擊
 const handleBuyProduct = (product: Product) => {
   selectedProduct.value = product
   showPurchaseModal.value = true
@@ -295,9 +295,9 @@ const handleSubmitProduct = async (data: { amount: number; price: number }) => {
 }
 
 // 刪除商品的方法
-const handleDeleteProduct = async (productId: string) => {
+const handleDeleteProduct = async (product: Product) => {
   try {
-    await productApi.deleteProduct(productId)
+    await productApi.deleteProduct(product._id)
     showNotification('商品已成功刪除')
     await loadProducts() // 重新載入商品列表
   } catch (error: unknown) {
@@ -319,9 +319,8 @@ const handleEditProduct = (product: Product) => {
 // 提交編輯商品
 const handleSubmitEditProduct = async (data: { amount: number; price: number }) => {
   if (!currentEditProduct.value) return
-
   try {
-    await productApi.updateProduct(currentEditProduct.value.id, data)
+    await productApi.updateProduct(currentEditProduct.value._id, data)
     isEditModalOpen.value = false
     showNotification('商品更新成功')
     await loadProducts() // 重新載入商品列表
@@ -337,14 +336,12 @@ const handleConfirmPurchase = async (purchaseData: { amount: number; totalPrice:
   if (selectedProduct.value) {
     try {
       const response = await productApi.reserveProduct(
-        selectedProduct.value.id,
+        selectedProduct.value._id,
         purchaseData.amount,
       )
 
-      console.log('Purchase response:', response)
-
       // 確保我們有收到交易資料
-      if (!response.data?.transaction?.id) {
+      if (!response.data?.transaction?._id) {
         throw new Error('未收到有效的交易資訊')
       }
 
@@ -555,14 +552,14 @@ const handleMemberInfo = () => {
                     <template
                       v-if="
                         typeof product.userId === 'object' &&
-                        product.userId.id === userStore.currentUser?.id
+                        product.userId._id === userStore.currentUser?.id
                       "
                     >
                       <div class="product-actions">
                         <button class="edit-button" @click="handleEditProduct(product)">
                           編輯
                         </button>
-                        <button class="delete-button" @click="handleDeleteProduct(product.id)">
+                        <button class="delete-button" @click="handleDeleteProduct(product)">
                           刪除
                         </button>
                       </div>
