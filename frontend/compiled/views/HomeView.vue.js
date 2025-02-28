@@ -39,7 +39,7 @@ const totalColumns = computed(() => {
     }
     return baseColumns;
 });
-// 添加处理购买点击的方法
+// 處理購買點擊
 const handleBuyProduct = (product) => {
     selectedProduct.value = product;
     showPurchaseModal.value = true;
@@ -242,9 +242,9 @@ const handleSubmitProduct = async (data) => {
     }
 };
 // 刪除商品的方法
-const handleDeleteProduct = async (productId) => {
+const handleDeleteProduct = async (product) => {
     try {
-        await productApi.deleteProduct(productId);
+        await productApi.deleteProduct(product._id);
         showNotification('商品已成功刪除');
         await loadProducts(); // 重新載入商品列表
     }
@@ -267,7 +267,7 @@ const handleSubmitEditProduct = async (data) => {
     if (!currentEditProduct.value)
         return;
     try {
-        await productApi.updateProduct(currentEditProduct.value.id, data);
+        await productApi.updateProduct(currentEditProduct.value._id, data);
         isEditModalOpen.value = false;
         showNotification('商品更新成功');
         await loadProducts(); // 重新載入商品列表
@@ -282,16 +282,15 @@ const handleSubmitEditProduct = async (data) => {
 const handleConfirmPurchase = async (purchaseData) => {
     if (selectedProduct.value) {
         try {
-            const response = await productApi.reserveProduct(selectedProduct.value.id, purchaseData.amount);
-            console.log('Purchase response:', response);
+            const response = await productApi.reserveProduct(selectedProduct.value._id, purchaseData.amount);
             // 確保我們有收到交易資料
-            if (!response.data?.transaction?.id) {
+            if (!response.data?.transaction?._id) {
                 throw new Error('未收到有效的交易資訊');
             }
             // 關閉購買模態框
             showPurchaseModal.value = false;
             // 使用正確的交易 ID 進行跳轉
-            router.push(`/transactions/${response.data.transaction.id}`);
+            router.push(`/transactions/${response.data.transaction._id}`);
             // 顯示成功訊息
             showNotification('購買成功！正在前往交易詳情頁面...', 'success');
         }
@@ -310,7 +309,7 @@ const handleViewTransaction = (product) => {
         let transactionId;
         if (typeof product.transactionId === 'object') {
             // 優先使用 id，如果沒有再用 _id
-            transactionId = product.transactionId.id || product.transactionId._id;
+            transactionId = product.transactionId._id;
         }
         else {
             transactionId = product.transactionId;
@@ -509,7 +508,7 @@ function __VLS_template() {
     else {
         for (const [product] of __VLS_getVForSourceType((__VLS_ctx.products))) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({
-                key: ((product.id)),
+                key: ((product._id)),
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
             (typeof product.userId === 'object' ? product.userId.name : '未知賣家');
@@ -576,14 +575,14 @@ function __VLS_template() {
                                 return;
                             if (!((__VLS_ctx.currentTab === 'admin')))
                                 return;
-                            __VLS_ctx.handleDeleteProduct(product.id);
+                            __VLS_ctx.handleDeleteProduct(product);
                         } },
                     ...{ class: ("delete-button") },
                 });
             }
             else {
                 if (typeof product.userId === 'object' &&
-                    product.userId.id === __VLS_ctx.userStore.currentUser?.id) {
+                    product.userId._id === __VLS_ctx.userStore.currentUser?.id) {
                     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: ("product-actions") },
                     });
@@ -598,7 +597,7 @@ function __VLS_template() {
                                 if (!(!((__VLS_ctx.currentTab === 'admin'))))
                                     return;
                                 if (!((typeof product.userId === 'object' &&
-                                    product.userId.id === __VLS_ctx.userStore.currentUser?.id)))
+                                    product.userId._id === __VLS_ctx.userStore.currentUser?.id)))
                                     return;
                                 __VLS_ctx.handleEditProduct(product);
                             } },
@@ -615,9 +614,9 @@ function __VLS_template() {
                                 if (!(!((__VLS_ctx.currentTab === 'admin'))))
                                     return;
                                 if (!((typeof product.userId === 'object' &&
-                                    product.userId.id === __VLS_ctx.userStore.currentUser?.id)))
+                                    product.userId._id === __VLS_ctx.userStore.currentUser?.id)))
                                     return;
-                                __VLS_ctx.handleDeleteProduct(product.id);
+                                __VLS_ctx.handleDeleteProduct(product);
                             } },
                         ...{ class: ("delete-button") },
                     });
@@ -634,7 +633,7 @@ function __VLS_template() {
                                 if (!(!((__VLS_ctx.currentTab === 'admin'))))
                                     return;
                                 if (!(!((typeof product.userId === 'object' &&
-                                    product.userId.id === __VLS_ctx.userStore.currentUser?.id))))
+                                    product.userId._id === __VLS_ctx.userStore.currentUser?.id))))
                                     return;
                                 __VLS_ctx.handleBuyProduct(product);
                             } },

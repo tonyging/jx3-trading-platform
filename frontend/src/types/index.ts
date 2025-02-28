@@ -36,11 +36,11 @@ export interface PartialReservedTransaction {
 
 // 商品相關型別
 export interface Product {
-  id: string
+  _id: string
   userId:
     | string
     | {
-        id: string
+        _id: string
         name: string
         email: string
       }
@@ -77,7 +77,6 @@ export interface PaymentProof {
 
 // 交易相關型別
 export interface Transaction {
-  id: string
   _id: string
   seller: string | User
   buyer: string | User

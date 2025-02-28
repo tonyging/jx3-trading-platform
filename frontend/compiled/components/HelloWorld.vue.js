@@ -1,4 +1,11 @@
-const __VLS_props = defineProps(); /* PartiallyEnd: #3632/scriptSetup.vue */
+export default (await import('vue')).defineComponent({
+    props: {
+        msg: {
+            type: String,
+            required: true,
+        },
+    },
+}); /* PartiallyEnd: #3632/script.vue */
 function __VLS_template() {
     const __VLS_ctx = {};
     let __VLS_components;
@@ -40,18 +47,5 @@ function __VLS_template() {
     };
 }
 ;
-const __VLS_self = (await import('vue')).defineComponent({
-    setup() {
-        return {};
-    },
-    __typeProps: {},
-});
-export default (await import('vue')).defineComponent({
-    setup() {
-        return {};
-    },
-    __typeProps: {},
-    __typeEl: {},
-});
-; /* PartiallyEnd: #4569/main.vue */
+let __VLS_self;
 //# sourceMappingURL=HelloWorld.vue.js.map

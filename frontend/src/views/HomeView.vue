@@ -349,7 +349,7 @@ const handleConfirmPurchase = async (purchaseData: { amount: number; totalPrice:
       showPurchaseModal.value = false
 
       // 使用正確的交易 ID 進行跳轉
-      router.push(`/transactions/${response.data.transaction.id}`)
+      router.push(`/transactions/${response.data.transaction._id}`)
 
       // 顯示成功訊息
       showNotification('購買成功！正在前往交易詳情頁面...', 'success')
@@ -371,7 +371,7 @@ const handleViewTransaction = (product: Product) => {
 
     if (typeof product.transactionId === 'object') {
       // 優先使用 id，如果沒有再用 _id
-      transactionId = product.transactionId.id || product.transactionId._id
+      transactionId = product.transactionId._id
     } else {
       transactionId = product.transactionId
     }
@@ -506,7 +506,7 @@ const handleMemberInfo = () => {
               <tr v-else-if="products.length === 0">
                 <td :colspan="totalColumns" class="status-message">暫無商品</td>
               </tr>
-              <tr v-else v-for="product in products" :key="product.id">
+              <tr v-else v-for="product in products" :key="product._id">
                 <td>{{ typeof product.userId === 'object' ? product.userId.name : '未知賣家' }}</td>
                 <td>{{ product.amount }}</td>
                 <td>{{ formatPrice(product.price) }}</td>
@@ -541,7 +541,7 @@ const handleMemberInfo = () => {
                       >
                         查看交易
                       </button>
-                      <button class="delete-button" @click="handleDeleteProduct(product.id)">
+                      <button class="delete-button" @click="handleDeleteProduct(product)">
                         刪除
                       </button>
                     </div>
