@@ -7,26 +7,31 @@ const api = axios.create({
     console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL)
     return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
   })(),
-  headers: {
-    'Content-Type': 'application/json',
-  },
   timeout: 5000,
 })
 
-// 請求攔截器：記錄請求詳情並添加認證 token
+// 請求攔截器：重建 headers 對象並添加認證 token
 api.interceptors.request.use(
   (config) => {
+    // 保留原始的 headers 對象，但設置我們需要的屬性
+    if (config.headers) {
+      config.headers['Content-Type'] = 'application/json'
+      config.headers['Accept'] = 'application/json'
+
+      // 從 localStorage 獲取 token
+      const token = localStorage.getItem('token')
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`
+      }
+    }
+
     console.log('發送請求:', {
       url: config.url,
       method: config.method,
       data: config.data,
       headers: config.headers,
     })
-    // 從 localStorage 獲取 token
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
+
     return config
   },
   (error) => {
@@ -35,7 +40,7 @@ api.interceptors.request.use(
   },
 )
 
-// 響應攔截器：完整保留響應結構
+// 響應攔截器：處理各種響應情況
 api.interceptors.response.use(
   (response) => {
     console.log('收到響應:', {
@@ -52,35 +57,30 @@ api.interceptors.response.use(
       data: error.response?.data,
     })
 
-    switch (error.response?.status) {
-      case 401:
-        localStorage.removeItem('token')
-        window.location.href = '/login'
-        break
-      case 403:
-        console.error('沒有權限')
-        break
-      case 404:
-        console.error('資源不存在')
-        break
-      case 500:
-        console.error('伺服器內部錯誤')
-        break
+    // 處理各種錯誤狀態
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
+          // 處理未授權錯誤
+          localStorage.removeItem('token')
+          window.location.href = '/login'
+          break
+        case 403:
+          console.error('沒有權限')
+          break
+        case 404:
+          console.error('資源不存在')
+          break
+        case 500:
+          console.error('伺服器內部錯誤')
+          break
+        default:
+          // 處理其他錯誤
+          break
+      }
     }
 
     return Promise.reject(errorMessage)
-  },
-)
-
-// 第二個響應攔截器：額外的 401 處理
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/login'
-    }
-    return Promise.reject(error)
   },
 )
 
