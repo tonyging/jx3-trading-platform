@@ -52,6 +52,7 @@ api.interceptors.response.use(
   (error) => {
     const errorMessage = error.response?.data?.message || '未知錯誤'
     console.error('響應錯誤:', {
+      error: error,
       status: error.response?.status,
       message: errorMessage,
       data: error.response?.data,
