@@ -109,6 +109,11 @@ const loadUserInfo = async () => {
     if (response.status === 'success' && response.data) {
       userName.value = response.data.name
       userEmail.value = response.data.email
+
+      if (response.data.phoneNumber) {
+        phoneVerificationState.phoneNumber = response.data.phoneNumber
+        phoneVerificationState.isVerified = response.data.isPhoneVerified || false
+      }
     }
   } catch (error: unknown) {
     const apiError = error as ApiError
@@ -330,6 +335,9 @@ watch(currentMenu, (newMenu) => {
                   <div class="security-item-header">
                     <h3>手機號碼驗證</h3>
                   </div>
+                  <span v-if="phoneVerificationState.isVerified" class="status verified">
+                    ✓ 已驗證
+                  </span>
                   <div class="security-item-content">
                     <div v-if="!phoneVerificationState.isVerified" class="phone-verification">
                       <div v-if="!phoneVerificationState.isCodeSent">
