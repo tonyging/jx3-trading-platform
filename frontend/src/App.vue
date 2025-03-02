@@ -5,6 +5,14 @@ import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
 
+async function preWarmBackend() {
+  try {
+    await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/health`)
+  } catch (error) {
+    console.log('正在喚醒後端服務...')
+  }
+}
+
 onMounted(async () => {
   if (userStore.token && !userStore.currentUser) {
     try {
