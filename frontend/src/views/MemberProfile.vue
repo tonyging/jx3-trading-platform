@@ -112,7 +112,7 @@ const loadUserInfo = async () => {
 
       if (response.data.phoneNumber) {
         phoneVerificationState.phoneNumber = response.data.phoneNumber
-        phoneVerificationState.isVerified = response.data.isPhoneVerified || false
+        phoneVerificationState.isVerified = !!response.data.isPhoneVerified
       }
     }
   } catch (error: unknown) {

@@ -120,6 +120,7 @@ export const useUserStore = defineStore(
             name: userData.data.name,
             role: userData.data.role || 'user', // 提供預設值
             createdAt: userData.data.createdAt,
+            isPhoneVerified: userData.data.isPhoneVerified,
           }
 
           currentUser.value = userDataWithRole

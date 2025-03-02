@@ -70,6 +70,10 @@ const loadUserInfo = async () => {
         if (response.status === 'success' && response.data) {
             userName.value = response.data.name;
             userEmail.value = response.data.email;
+            if (response.data.phoneNumber) {
+                phoneVerificationState.phoneNumber = response.data.phoneNumber;
+                phoneVerificationState.isVerified = !!response.data.isPhoneVerified;
+            }
         }
     }
     catch (error) {
@@ -313,6 +317,11 @@ function __VLS_template() {
             ...{ class: ("security-item-header") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
+        if (__VLS_ctx.phoneVerificationState.isVerified) {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: ("status verified") },
+            });
+        }
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: ("security-item-content") },
         });
@@ -428,7 +437,7 @@ function __VLS_template() {
         });
         (__VLS_ctx.notification.message);
     }
-    ['platform-base', 'site-header', 'content-wrapper', 'main-content', 'settings-content', 'settings-container', 'side-menu', 'active', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'save-button', 'settings-section', 'security-info', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'verified-email', 'security-item', 'security-item-header', 'security-item-content', 'phone-verification', 'mb-4', 'verification-button', 'verification-code-section', 'verification-input-group', 'verification-code-input', 'verification-actions', 'verification-button', 'verification-button', 'resend-button', 'verified-status', 'settings-section', 'user-form', 'form-group', 'form-group', 'form-group', 'save-button', 'notification',];
+    ['platform-base', 'site-header', 'content-wrapper', 'main-content', 'settings-content', 'settings-container', 'side-menu', 'active', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'save-button', 'settings-section', 'security-info', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'verified-email', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'phone-verification', 'mb-4', 'verification-button', 'verification-code-section', 'verification-input-group', 'verification-code-input', 'verification-actions', 'verification-button', 'verification-button', 'resend-button', 'verified-status', 'settings-section', 'user-form', 'form-group', 'form-group', 'form-group', 'save-button', 'notification',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;

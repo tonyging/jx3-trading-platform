@@ -25,6 +25,8 @@ export interface User {
     discord?: string
     facebook?: string
   }
+  phoneNumber?: string
+  isPhoneVerified: boolean
 }
 
 // 部分保留交易相關型別

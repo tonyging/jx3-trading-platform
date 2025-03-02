@@ -4,7 +4,8 @@ export interface User {
   name: string
   role: 'admin' | 'user' | 'banned'
   createdAt?: Date
-  // 其他用戶資料欄位
+  phoneNumber?: string
+  isPhoneVerified: boolean
 }
 
 export interface UserResponse {
@@ -15,6 +16,8 @@ export interface UserResponse {
     name: string
     role: 'admin' | 'user' | 'banned'
     createdAt: Date
+    phoneNumber?: string
+    isPhoneVerified: boolean
   }
 }
 
@@ -79,6 +82,8 @@ export interface GoogleAuthResponse {
       name: string
       role: 'admin' | 'user' | 'banned'
       createdAt?: Date
+      phoneNumber?: string
+      isPhoneVerified: boolean
     }
   }
 }
