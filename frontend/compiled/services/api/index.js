@@ -6,7 +6,7 @@ const api = axios.create({
         console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
         return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
     })(),
-    timeout: 5000,
+    timeout: 10000,
 });
 // 請求攔截器：重建 headers 對象並添加認證 token
 api.interceptors.request.use((config) => {
@@ -41,6 +41,7 @@ api.interceptors.response.use((response) => {
 }, (error) => {
     const errorMessage = error.response?.data?.message || '未知錯誤';
     console.error('響應錯誤:', {
+        error: error,
         status: error.response?.status,
         message: errorMessage,
         data: error.response?.data,

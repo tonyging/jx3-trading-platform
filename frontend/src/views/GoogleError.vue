@@ -19,6 +19,7 @@ const goToLogin = () => {
 </template>
 
 <style scoped lang="scss">
+@use 'sass:color';
 .google-error {
   display: flex;
   justify-content: center;
@@ -53,7 +54,7 @@ const goToLogin = () => {
       transition: background-color 0.3s;
 
       &:hover {
-        background: darken(#b4282d, 10%);
+        background: color.adjust(#b4282d, $lightness: -10%);
       }
     }
   }

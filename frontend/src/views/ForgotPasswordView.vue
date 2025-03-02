@@ -263,6 +263,7 @@ async function handleResetPassword() {
 
 <style lang="scss" scoped>
 @use '@/styles/auth.scss';
+@use 'sass:color';
 
 .verification-message {
   text-align: center;
@@ -280,7 +281,7 @@ async function handleResetPassword() {
     text-decoration: underline;
 
     &:hover {
-      color: darken(#d32f2f, 10%);
+      color: color.adjust(#d32f2f, $lightness: -10%);
     }
   }
 }
