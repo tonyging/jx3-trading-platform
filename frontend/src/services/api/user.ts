@@ -144,7 +144,7 @@ export const userService = {
       return response.data
     } catch (error: unknown) {
       const apiError = error as ApiError
-      throw new Error(apiError.response?.data?.message || '驗證失敗')
+      throw apiError
     }
   },
 
@@ -155,7 +155,7 @@ export const userService = {
       return response.data
     } catch (error: unknown) {
       const apiError = error as ApiError
-      throw new Error(apiError.response?.data?.message || '獲取驗證狀態失敗')
+      throw new Error(apiError.message || '獲取驗證狀態失敗')
     }
   },
 }

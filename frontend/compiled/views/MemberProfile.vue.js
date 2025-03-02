@@ -170,8 +170,18 @@ async function handleVerifyCode() {
     }
     catch (error) {
         const apiError = error;
-        console.error('驗證碼驗證錯誤:', error);
-        showNotification(apiError.message || '驗證失敗，請檢查驗證碼是否正確', 'error');
+        const errorMessage = apiError;
+        if (errorMessage === '此手機號碼已被其他用戶使用') {
+            phoneVerificationState.isCodeSent = false;
+            phoneVerificationState.phoneNumber = '';
+            phoneVerificationState.verificationCode = '';
+            phoneVerificationState.verificationId = '';
+            showNotification('此手機號碼已被其他用戶使用，請使用其他號碼', 'error');
+        }
+        else {
+            // 其他錯誤時，保持在驗證碼輸入界面
+            showNotification('驗證失敗，請檢查驗證碼是否正確', 'error');
+        }
     }
     finally {
         phoneVerificationState.isVerifying = false;
