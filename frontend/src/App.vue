@@ -14,6 +14,7 @@ async function preWarmBackend() {
 }
 
 onMounted(async () => {
+  preWarmBackend()
   if (userStore.token && !userStore.currentUser) {
     try {
       await userStore.fetchCurrentUser()
