@@ -301,7 +301,9 @@ watch(currentMenu, (newMenu) => {
   <div class="platform-base">
     <!-- 頁面頂部標題 -->
     <div class="site-header">
-      <h1>劍三交易平台</h1>
+      <router-link to="/" class="header-link">
+        <h1>劍三交易平台</h1>
+      </router-link>
     </div>
 
     <!-- 主要內容區域 -->
@@ -870,6 +872,22 @@ $font-family: 'Microsoft YaHei', '微軟雅黑', sans-serif;
 
 .mb-4 {
   margin-bottom: 1rem;
+}
+
+.header-link {
+  text-decoration: none;
+  display: inline-block;
+  color: inherit;
+  background-color: transparent;
+
+  &:hover,
+  &:active,
+  &:focus {
+    background-color: transparent;
+    text-decoration: none;
+    color: inherit;
+    outline: none;
+  }
 }
 
 // 響應式設計
