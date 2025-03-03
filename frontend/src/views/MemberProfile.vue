@@ -262,11 +262,11 @@ async function handleVerifyCode() {
 }
 
 watch(currentMenu, (newMenu) => {
-  if (newMenu === 'security') {
+  if (newMenu === 'security' && !phoneVerificationState.isVerified) {
     nextTick(() => {
       const recaptchaContainer = document.getElementById('recaptcha-container')
 
-      if (!recaptchaContainer) {
+      if (!recaptchaContainer =) {
         showNotification('reCAPTCHA 容器未找到', 'error')
         return
       }
@@ -415,7 +415,7 @@ watch(currentMenu, (newMenu) => {
                         </div>
                       </div>
                     </div>
-                    <div v-else class="verified-status">
+                    <div v-else>
                       {{ phoneVerificationState.phoneNumber }}
                     </div>
                   </div>
