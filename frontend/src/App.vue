@@ -13,7 +13,7 @@ async function preWarmBackend() {
     appStore.setBackendWaking(true)
     appStore.incrementConnectionAttempts()
 
-    await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/health`, {
+    await axios.get(`${import.meta.env.VITE_API_BASE_URL}/healthz`, {
       timeout: 10000, // 10 秒超時
     })
 
