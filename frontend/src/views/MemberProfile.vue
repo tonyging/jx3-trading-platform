@@ -115,6 +115,12 @@ const loadUserInfo = async () => {
         phoneVerificationState.isVerified = !!response.data.isPhoneVerified
       }
     }
+    console.log(
+      '用戶手機資訊: ',
+      phoneVerificationState.phoneNumber,
+      '驗證狀態: ',
+      phoneVerificationState.isVerified,
+    )
   } catch (error: unknown) {
     const apiError = error as ApiError
     showNotification(
