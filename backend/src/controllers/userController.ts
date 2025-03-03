@@ -311,6 +311,8 @@ class UserController {
           name: user.name,
           createdAt: user.createdAt,
           role: user.role || "user",
+          phoneNumber: user.phoneNumber,
+          isPhoneVerified: user.isPhoneVerified,
         },
       });
     } catch (error) {
@@ -885,6 +887,13 @@ class UserController {
     next: NextFunction
   ) {
     try {
+      console.log("收到手機驗證請求:", {
+        phoneNumber: req.body.phoneNumber,
+        verificationId: req.body.verificationId,
+        userId: req.user._id,
+        timestamp: new Date().toISOString(),
+      });
+
       const { phoneNumber, verificationId } = req.body;
       const userId = req.user._id; // 從驗證中間件獲取
 
@@ -925,6 +934,12 @@ class UserController {
           message: "找不到使用者",
         });
       }
+
+      console.log("用戶更新結果:", {
+        success: !!user,
+        phoneNumber: user?.phoneNumber,
+        isPhoneVerified: user?.isPhoneVerified,
+      });
 
       res.status(200).json({
         status: "success",

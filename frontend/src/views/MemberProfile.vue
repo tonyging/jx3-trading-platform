@@ -225,10 +225,17 @@ async function handleVerifyCode() {
   try {
     phoneVerificationState.isVerifying = true
 
+    console.log('開始驗證手機號碼:', {
+      phoneNumber: phoneVerificationState.phoneNumber,
+      verificationId: phoneVerificationState.verificationId,
+    })
+
     const response = await userService.updatePhoneNumber(
       phoneVerificationState.phoneNumber,
       phoneVerificationState.verificationId,
     )
+
+    console.log('手機驗證響應:', response)
 
     if (response.status === 'success') {
       phoneVerificationState.isVerified = true
@@ -349,10 +356,11 @@ watch(currentMenu, (newMenu) => {
                 <div class="security-item">
                   <div class="security-item-header">
                     <h3>手機號碼驗證</h3>
+                    <span v-if="phoneVerificationState.isVerified" class="status verified">
+                      ✓ 已驗證
+                    </span>
                   </div>
-                  <span v-if="phoneVerificationState.isVerified" class="status verified">
-                    ✓ 已驗證
-                  </span>
+
                   <div class="security-item-content">
                     <div v-if="!phoneVerificationState.isVerified" class="phone-verification">
                       <div v-if="!phoneVerificationState.isCodeSent">
@@ -408,7 +416,7 @@ watch(currentMenu, (newMenu) => {
                       </div>
                     </div>
                     <div v-else class="verified-status">
-                      ✓ 手機號碼已驗證：{{ phoneVerificationState.phoneNumber }}
+                      {{ phoneVerificationState.phoneNumber }}
                     </div>
                   </div>
                 </div>
