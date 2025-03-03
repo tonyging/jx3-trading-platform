@@ -266,7 +266,7 @@ watch(currentMenu, (newMenu) => {
     nextTick(() => {
       const recaptchaContainer = document.getElementById('recaptcha-container')
 
-      if (!recaptchaContainer =) {
+      if (!recaptchaContainer) {
         showNotification('reCAPTCHA 容器未找到', 'error')
         return
       }
