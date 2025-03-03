@@ -1,12 +1,16 @@
 // src/services/api/index.ts
 import axios from 'axios';
+import { useAppStore } from '@/stores/appState';
+function getAppStore() {
+    return useAppStore();
+}
 const api = axios.create({
     baseURL: (() => {
         console.log('Environment:', import.meta.env.MODE);
         console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
         return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
     })(),
-    timeout: 10000,
+    timeout: 60000, // 增加到 60 秒以處理 Render 的冷啟動
 });
 // 請求攔截器：重建 headers 對象並添加認證 token
 api.interceptors.request.use((config) => {
@@ -19,6 +23,14 @@ api.interceptors.request.use((config) => {
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
         }
+    }
+    // 長時間請求才顯示加載指示器
+    if (config.timeout && config.timeout > 5000) {
+        const appStore = getAppStore();
+        // 設置一個延遲，如果請求時間超過 2 秒才顯示加載指示器
+        config._loadingTimeout = setTimeout(() => {
+            appStore.setBackendWaking(true);
+        }, 2000);
     }
     console.log('發送請求:', {
         url: config.url,
@@ -37,6 +49,16 @@ api.interceptors.response.use((response) => {
         status: response.status,
         data: response.data,
     });
+    // 清除可能的加載超時
+    if (response.config._loadingTimeout) {
+        clearTimeout(response.config._loadingTimeout);
+    }
+    // 如果正在顯示加載指示器，隱藏它
+    const appStore = getAppStore();
+    if (appStore.isBackendWaking) {
+        appStore.setBackendWaking(false);
+        appStore.resetConnectionAttempts();
+    }
     return response;
 }, (error) => {
     const errorMessage = error.response?.data?.message || '未知錯誤';
@@ -46,6 +68,31 @@ api.interceptors.response.use((response) => {
         message: errorMessage,
         data: error.response?.data,
     });
+    // 清除可能的加載超時
+    if (error.config && error.config._loadingTimeout) {
+        clearTimeout(error.config._loadingTimeout);
+    }
+    const appStore = getAppStore();
+    // 處理超時錯誤，嘗試重新連接
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        console.log('請求超時，可能是後端正在啟動');
+        appStore.incrementConnectionAttempts();
+        // 如果嘗試次數少於 5 次，保持加載指示器
+        if (appStore.connectionAttempts < 5) {
+            appStore.setBackendWaking(true);
+        }
+        else {
+            // 超過嘗試次數，隱藏加載指示器
+            appStore.setBackendWaking(false);
+            return Promise.reject('伺服器連接超時，請稍後再試');
+        }
+    }
+    else {
+        // 非超時錯誤，隱藏加載指示器
+        if (appStore.isBackendWaking) {
+            appStore.setBackendWaking(false);
+        }
+    }
     // 處理各種錯誤狀態
     if (error.response) {
         switch (error.response.status) {

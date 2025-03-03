@@ -1,7 +1,35 @@
 import { onMounted } from 'vue';
 import { useUserStore } from '@/stores/user';
+import { useAppStore } from '@/stores/appState';
+import axios from 'axios';
 const userStore = useUserStore();
+const appStore = useAppStore();
+async function preWarmBackend() {
+    try {
+        appStore.setBackendWaking(true);
+        appStore.incrementConnectionAttempts();
+        await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/health`, {
+            timeout: 10000, // 10 秒超時
+        });
+        appStore.setBackendWaking(false);
+        appStore.resetConnectionAttempts();
+    }
+    catch (error) {
+        console.log('正在喚醒後端服務...', error);
+        // 5 秒後重試
+        setTimeout(() => {
+            if (appStore.connectionAttempts < 5) {
+                // 最多嘗試 5 次
+                preWarmBackend();
+            }
+            else {
+                appStore.setBackendWaking(false);
+            }
+        }, 5000);
+    }
+}
 onMounted(async () => {
+    preWarmBackend();
     if (userStore.token && !userStore.currentUser) {
         try {
             await userStore.fetchCurrentUser();
@@ -22,8 +50,25 @@ function __VLS_template() {
     // @ts-ignore
     const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({}));
     const __VLS_2 = __VLS_1({}, ...__VLS_functionalComponentArgsRest(__VLS_1));
-    var __VLS_6 = {};
-    var __VLS_5;
+    if (__VLS_ctx.appStore.isBackendWaking) {
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("backend-waking-overlay") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("loading-spinner") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: ("waking-message") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: ("waking-submessage") },
+        });
+        if (__VLS_ctx.appStore.connectionAttempts > 1) {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            (__VLS_ctx.appStore.connectionAttempts);
+        }
+    }
+    ['backend-waking-overlay', 'loading-spinner', 'waking-message', 'waking-submessage',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -41,14 +86,15 @@ function __VLS_template() {
 ;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
-        return {};
+        return {
+            appStore: appStore,
+        };
     },
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
-    __typeEl: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */
 //# sourceMappingURL=App.vue.js.map
