@@ -1,3 +1,4 @@
+// services/api/user.ts
 import api from './index';
 export const userService = {
     // 發送驗證碼的新方法
@@ -119,6 +120,34 @@ export const userService = {
         catch (error) {
             const apiError = error;
             throw new Error(apiError.message || '獲取驗證狀態失敗');
+        }
+    },
+    // Discord相關方法
+    // 獲取Discord授權URL
+    getDiscordAuthUrl: async () => {
+        try {
+            const response = await api.get('/api/users/auth/discord');
+            return response.data;
+        }
+        catch (error) {
+            const apiError = error;
+            throw new Error(apiError.response?.data?.message || '獲取Discord授權URL失敗');
+        }
+    },
+    // 處理Discord授權回調 - 這個通常不需要直接呼叫，因為重定向會自動處理
+    handleDiscordCallback: async (code) => {
+        const response = await api.get(`/api/users/auth/discord/callback?code=${code}`);
+        return response.data;
+    },
+    // 解除Discord綁定
+    unlinkDiscord: async () => {
+        try {
+            const response = await api.post('/api/users/unlink-discord');
+            return response.data;
+        }
+        catch (error) {
+            const apiError = error;
+            throw new Error(apiError.response?.data?.message || '解除Discord綁定失敗');
         }
     },
 };

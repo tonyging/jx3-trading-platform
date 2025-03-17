@@ -34,7 +34,7 @@ onMounted(async () => {
     try {
       // 取得最新的用戶資料
       await userStore.fetchCurrentUser()
-      const userData = userStore.user
+      const userData = userStore.currentUser
 
       if (userData) {
         // 獲取 Discord 頭像

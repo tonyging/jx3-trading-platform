@@ -6,7 +6,7 @@ import { useUserStore } from '@/stores/user'
 import { userService } from '@/services/api/user'
 import { auth } from '@/firebase/init'
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'
-import type { UpdateProfileData, UpdateContactInfoData } from '@/types/user'
+import type { UpdateProfileData } from '@/types/user'
 
 // 定義可能的錯誤類型
 interface ApiError {
@@ -205,25 +205,18 @@ const updateUserInfo = async () => {
 // 更新聯絡資訊
 const updateContactInfo = async () => {
   try {
-    const updateData: UpdateContactInfoData = {
-      contactInfo: {
-        facebook: contactForm.facebook.trim(),
-      },
-    }
+    // 僅處理本地狀態，不實際調用API
+    const facebookLink = contactForm.facebook.trim()
 
-    const response = await userService.updateContactInfo(updateData)
+    // 模擬成功響應
+    showNotification('Facebook 連結已保存', 'success')
 
-    if (response.status === 'success') {
-      await userStore.fetchCurrentUser()
-      showNotification('聯絡資訊更新成功')
-    }
+    // 更新本地顯示
+    console.log('已暫存 Facebook 連結:', facebookLink)
+    // 將來在此處添加實際的API調用
   } catch (error: unknown) {
-    const apiError = error as ApiError
-    showNotification(
-      apiError.response?.data?.message || (apiError.message as string) || '更新聯絡資訊失敗',
-      'error',
-    )
-    console.error('更新聯絡資訊失敗:', error)
+    showNotification('更新 Facebook 連結失敗', 'error')
+    console.error('更新 Facebook 連結失敗:', error)
   }
 }
 

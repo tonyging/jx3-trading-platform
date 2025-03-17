@@ -1,3 +1,4 @@
+// router/index.ts
 import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 const router = createRouter({
@@ -83,6 +84,14 @@ const router = createRouter({
             name: 'GoogleLoginSuccess',
             component: () => import('@/views/GoogleLoginSuccessView.vue'),
             meta: { requiresGuest: true },
+        },
+        {
+            path: '/account-links',
+            component: () => import('@/views/AccountLinkResult.vue'),
+            meta: {
+                requiresAuth: true,
+                title: 'Discord綁定 - 劍三交易平台',
+            },
         },
     ],
 });

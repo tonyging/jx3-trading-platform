@@ -1,3 +1,4 @@
+// stores/user.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { userService } from '@/services/api/user';
