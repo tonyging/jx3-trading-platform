@@ -93,6 +93,15 @@ const router = createRouter({
                 title: 'Discord綁定 - 劍三交易平台',
             },
         },
+        {
+            path: '/privacy-policy',
+            name: 'privacy-policy',
+            component: () => import('@/views/PrivacyPolicyView.vue'),
+            meta: {
+                requiresAuth: true,
+                title: '隱私政策 - 劍三交易平台',
+            },
+        },
     ],
 });
 router.beforeEach(async (to, from, next) => {
