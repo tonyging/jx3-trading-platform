@@ -54,11 +54,6 @@ const menuItems: MenuItem[] = [
     icon: '🔒',
     label: '交易安全',
   },
-  {
-    id: 'account-links',
-    icon: '🔗',
-    label: '帳號連結',
-  },
 ]
 
 // 用戶名稱和電子郵件
@@ -67,7 +62,6 @@ const userEmail = ref('')
 
 // 聯絡資訊表單
 const contactForm = reactive({
-  facebook: '',
   discord: '',
   phone: '',
 })
@@ -97,17 +91,6 @@ const discordState = reactive({
   avatar: '',
   isLinking: false,
   global_name: '',
-})
-
-// 計算社交帳號連結狀態 - 已修改為只計算兩個社交账号
-const socialAccountsStatus = computed(() => {
-  let linked = 0
-  const total = 2 // Facebook, Discord (移除了 Line)
-
-  if (contactForm.facebook) linked++
-  if (discordState.isLinked) linked++
-
-  return `${linked}/${total}`
 })
 
 // 顯示通知的方法
@@ -144,26 +127,8 @@ const loadUserInfo = async () => {
         discordState.username = response.data.discordUsername
         discordState.avatar = response.data.discordAvatar || ''
         discordState.global_name = response.data.global_name || ''
-        // 將Discord資訊同步到表單中
-        contactForm.discord = response.data.discordUsername
-      }
-
-      // 載入聯絡資訊
-      if (response.data.contactInfo) {
-        contactForm.facebook = response.data.contactInfo.facebook || ''
-        // 如果Discord欄位為空，但用戶已連結Discord，則使用Discord用戶名
-        if (!contactForm.discord && discordState.isLinked) {
-          contactForm.discord = discordState.username
-        }
       }
     }
-    console.log(
-      '用戶手機資訊: ',
-      phoneVerificationState.phoneNumber,
-      '驗證狀態: ',
-      phoneVerificationState.isVerified,
-    )
-    console.log('Discord連結狀態:', discordState)
   } catch (error: unknown) {
     const apiError = error as ApiError
     showNotification(
@@ -199,24 +164,6 @@ const updateUserInfo = async () => {
       'error',
     )
     console.error('更新會員資料失敗:', error)
-  }
-}
-
-// 更新聯絡資訊
-const updateContactInfo = async () => {
-  try {
-    // 僅處理本地狀態，不實際調用API
-    const facebookLink = contactForm.facebook.trim()
-
-    // 模擬成功響應
-    showNotification('Facebook 連結已保存', 'success')
-
-    // 更新本地顯示
-    console.log('已暫存 Facebook 連結:', facebookLink)
-    // 將來在此處添加實際的API調用
-  } catch (error: unknown) {
-    showNotification('更新 Facebook 連結失敗', 'error')
-    console.error('更新 Facebook 連結失敗:', error)
   }
 }
 
@@ -559,68 +506,48 @@ watch(currentMenu, (newMenu) => {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <!-- 帳號連結 -->
-            <div v-else-if="currentMenu === 'account-links'" class="settings-section">
-              <h2>帳號連結</h2>
-
-              <!-- 社交帳號狀態信息 -->
-              <div class="social-accounts-status">
-                <p>已連結帳號：{{ socialAccountsStatus }}</p>
-              </div>
-
-              <form @submit.prevent="updateContactInfo" class="user-form">
-                <div class="form-group">
-                  <label>Facebook 連結</label>
-                  <input
-                    v-model="contactForm.facebook"
-                    type="text"
-                    placeholder="請輸入 Facebook 連結"
-                  />
-                </div>
-
-                <!-- Discord帳號連結 -->
-                <div class="form-group discord-section">
-                  <label>Discord帳號</label>
-
-                  <div v-if="!discordState.isLinked" class="discord-connect">
-                    <p class="discord-status">尚未連結Discord帳號</p>
-                    <button
-                      type="button"
-                      class="discord-connect-button"
-                      @click="connectDiscord"
-                      :disabled="discordState.isLinking"
-                    >
-                      <span class="discord-icon">🎮</span>
-                      {{ discordState.isLinking ? '連結中...' : '連結Discord帳號' }}
-                    </button>
+                <div class="security-item discord-section">
+                  <div class="security-item-header">
+                    <h3>Discord 帳號連結</h3>
+                    <span v-if="discordState.isLinked" class="status verified">✓ 已連結</span>
                   </div>
+                  <div class="security-item-content">
+                    <div v-if="!discordState.isLinked" class="discord-connect">
+                      <p class="discord-status">尚未連結Discord帳號</p>
+                      <button
+                        type="button"
+                        class="verification-button"
+                        @click="connectDiscord"
+                        :disabled="discordState.isLinking"
+                      >
+                        <span class="discord-icon">🎮</span>
+                        {{ discordState.isLinking ? '連結中...' : '連結Discord帳號' }}
+                      </button>
+                    </div>
 
-                  <div v-else class="discord-info">
-                    <div class="discord-profile">
-                      <div v-if="discordState.avatar" class="discord-avatar">
-                        <img :src="discordState.avatar" alt="Discord Avatar" />
-                      </div>
-                      <div class="discord-user-info">
-                        <span class="discord-username">
-                          {{ discordState.global_name || discordState.username }}
-                        </span>
+                    <div v-else class="discord-info">
+                      <div class="discord-profile-container">
+                        <div v-if="discordState.avatar" class="discord-avatar">
+                          <img :src="discordState.avatar" alt="Discord Avatar" />
+                        </div>
+                        <div class="discord-user-details">
+                          <span class="discord-username">
+                            {{ discordState.global_name || discordState.username }}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          class="verification-button secondary-button discord-unlink-button"
+                          @click="disconnectDiscord"
+                        >
+                          解除連結
+                        </button>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      class="discord-disconnect-button"
-                      @click="disconnectDiscord"
-                    >
-                      解除連結
-                    </button>
                   </div>
                 </div>
-
-                <button type="submit" class="save-button">儲存 Facebook 連結</button>
-              </form>
+              </div>
             </div>
           </div>
         </div>
@@ -800,8 +727,9 @@ $discord-color: #5865f2;
     background: #fff;
     border: 1px solid #e0e0e0;
     border-radius: $spacing-unit;
-    padding: $spacing-unit * 3;
-    margin-bottom: $spacing-unit * 3;
+    padding: $spacing-unit * 2; // 減少內距
+    margin-bottom: $spacing-unit * 2; // 減少間距
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); // 增加輕微陰影
 
     &-header {
       display: flex;
@@ -825,6 +753,11 @@ $discord-color: #5865f2;
           color: #4caf50;
         }
       }
+    }
+
+    &:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.3s ease;
     }
 
     &-content {
@@ -1071,11 +1004,10 @@ $discord-color: #5865f2;
 }
 
 .discord-section {
-  border: 1px solid #e0e0e0;
-  border-radius: $spacing-unit;
-  padding: $spacing-unit * 2;
-  background-color: rgba($discord-color, 0.02);
-  margin-bottom: $spacing-unit * 3;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-unit * 2;
+  align-items: stretch;
 }
 
 .discord-connect {
@@ -1117,57 +1049,57 @@ $discord-color: #5865f2;
 }
 
 .discord-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.discord-profile {
-  display: flex;
-  align-items: center;
-  gap: $spacing-unit * 2;
-}
-
-.discord-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-
-  img {
+  .discord-profile-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    gap: $spacing-unit * 2;
+  }
+
+  .discord-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .discord-user-details {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .discord-username {
+    font-weight: 500;
+    color: $text-color;
   }
 }
 
-.discord-user-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.discord-username {
-  font-weight: 500;
-  color: $text-color;
-}
-
-.discord-id {
-  color: #666;
-  font-size: 14px;
-}
-
-.discord-disconnect-button {
+.secondary-button {
   background-color: transparent;
-  color: #f44336;
-  border: 1px solid #f44336;
-  border-radius: $spacing-unit;
-  padding: $spacing-unit $spacing-unit * 2;
-  cursor: pointer;
-  transition: $transition;
+  color: $primary-color;
+  border: 1px solid $primary-color;
 
-  &:hover {
-    background-color: rgba(#f44336, 0.05);
+  &:hover:not(:disabled) {
+    background-color: rgba($primary-color, 0.1);
   }
+}
+
+.discord-unlink-button {
+  flex-shrink: 0;
+  padding: $spacing-unit $spacing-unit * 1.5; // 減少內邊距
+  font-size: 13px; // 縮小字體大小
+  width: auto; // 取消 100% 寬度繼承
+  min-width: 80px; // 設定最小寬度
+  height: 32px; // 設定固定高度
 }
 
 // 響應式設計
@@ -1224,15 +1156,17 @@ $discord-color: #5865f2;
   }
 
   .settings-section {
-    max-width: 420px;
+    max-width: 450px; // 縮小寬度
+    width: 100%;
     margin: 0 auto;
-    padding: $spacing-unit * 2;
+    padding: 0 $spacing-unit * 2; // 增加側邊留白
   }
 
   .user-form {
     .form-group {
       input {
-        font-size: 16px; // 防止iOS自動縮放
+        font-size: 15px; // 微調字體大小
+        padding: $spacing-unit * 1.5; // 稍微縮小內距
       }
     }
   }
@@ -1290,6 +1224,13 @@ $discord-color: #5865f2;
     max-width: 300px;
     padding: $spacing-unit * 2;
     font-size: 14px;
+  }
+
+  .discord-unlink-button {
+    padding: $spacing-unit * 0.75 $spacing-unit;
+    font-size: 12px;
+    min-width: 70px;
+    height: 28px;
   }
 }
 </style>

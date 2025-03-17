@@ -44,7 +44,6 @@ async function handleLogin() {
       password: password.value,
     }))
 
-    localStorage.setItem('shouldReload', 'true')
     router.push('/')
   } catch (error: unknown) {
     const apiError = error as ApiError

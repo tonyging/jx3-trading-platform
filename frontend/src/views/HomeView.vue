@@ -247,13 +247,6 @@ onMounted(async () => {
     return
   }
 
-  const shouldReload = localStorage.getItem('shouldReload')
-  if (shouldReload) {
-    localStorage.removeItem('shouldReload')
-    window.location.reload()
-    return
-  }
-
   const defaultTab = localStorage.getItem('defaultTab')
   if (defaultTab === 'trading') {
     await switchTab('trading')
