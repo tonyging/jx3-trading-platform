@@ -517,7 +517,7 @@ watch(currentMenu, (newMenu) => {
                       <p class="discord-status">尚未連結Discord帳號</p>
                       <button
                         type="button"
-                        class="verification-button"
+                        class="discord-connect-button"
                         @click="connectDiscord"
                         :disabled="discordState.isLinking"
                       >
@@ -538,7 +538,7 @@ watch(currentMenu, (newMenu) => {
                         </div>
                         <button
                           type="button"
-                          class="verification-button secondary-button discord-unlink-button"
+                          class="discord-unlink-button"
                           @click="disconnectDiscord"
                         >
                           解除連結
@@ -995,6 +995,22 @@ $discord-color: #5865f2;
 }
 
 /* Discord相關樣式 */
+// Discord 按鈕統一樣式
+.discord-button {
+  flex-shrink: 0;
+  padding: $spacing-unit $spacing-unit * 1.5;
+  font-size: 13px;
+  width: auto;
+  min-width: 80px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $spacing-unit;
+  cursor: pointer;
+  transition: $transition;
+}
+
 .social-accounts-status {
   margin-bottom: $spacing-unit * 3;
   padding: $spacing-unit * 2;
@@ -1012,9 +1028,10 @@ $discord-color: #5865f2;
 
 .discord-connect {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: $spacing-unit * 2;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .discord-status {
@@ -1023,15 +1040,10 @@ $discord-color: #5865f2;
 }
 
 .discord-connect-button {
-  display: flex;
-  align-items: center;
+  @extend .discord-button;
   background-color: $discord-color;
   color: white;
   border: none;
-  border-radius: $spacing-unit;
-  padding: $spacing-unit * 1.5 $spacing-unit * 2;
-  cursor: pointer;
-  transition: $transition;
 
   &:hover:not(:disabled) {
     background-color: darken($discord-color, 5%);
@@ -1045,7 +1057,7 @@ $discord-color: #5865f2;
 
 .discord-icon {
   margin-right: $spacing-unit;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .discord-info {
@@ -1094,12 +1106,20 @@ $discord-color: #5865f2;
 }
 
 .discord-unlink-button {
-  flex-shrink: 0;
-  padding: $spacing-unit $spacing-unit * 1.5; // 減少內邊距
-  font-size: 13px; // 縮小字體大小
-  width: auto; // 取消 100% 寬度繼承
-  min-width: 80px; // 設定最小寬度
-  height: 32px; // 設定固定高度
+  @extend .discord-button;
+  background-color: transparent;
+  color: $primary-color;
+  border: 1px solid $primary-color;
+
+  &:hover:not(:disabled) {
+    background-color: rgba($primary-color, 0.1);
+  }
+
+  &:disabled {
+    border-color: #ccc;
+    color: #ccc;
+    cursor: not-allowed;
+  }
 }
 
 // 響應式設計
@@ -1231,6 +1251,19 @@ $discord-color: #5865f2;
     font-size: 12px;
     min-width: 70px;
     height: 28px;
+  }
+
+  .discord-button {
+    padding: $spacing-unit * 0.75 $spacing-unit;
+    font-size: 12px;
+    min-width: 70px;
+    height: 28px;
+  }
+
+  .discord-connect {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-unit * 2;
   }
 }
 </style>
