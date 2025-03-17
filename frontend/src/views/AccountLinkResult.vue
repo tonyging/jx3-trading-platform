@@ -172,6 +172,24 @@ const goToMemberProfile = () => {
             </div>
           </div>
 
+          <!-- Discord 帳號已被其他用戶綁定 -->
+          <div v-else-if="discordStatus === 'dcisalreadyused'" class="result-card error">
+            <div class="result-icon">✗</div>
+            <h2>Discord 帳號綁定失敗</h2>
+            <p class="result-description">此 Discord 帳號已被其他用戶綁定，請使用其他帳號。</p>
+            <div class="discord-requirement">
+              <div class="requirement-icon">🔒</div>
+              <div class="requirement-text">
+                <h3>帳號使用限制</h3>
+                <p>為了維護平台安全與交易品質，每個 Discord 帳號只能綁定一個平台用戶。</p>
+              </div>
+            </div>
+            <p class="additional-info">您可以使用其他 Discord 帳號嘗試綁定，或聯繫客服尋求協助。</p>
+            <div class="action-buttons">
+              <button class="primary-button" @click="goToMemberProfile">返回會員中心</button>
+            </div>
+          </div>
+
           <!-- 未知狀態 -->
           <div v-else class="result-card neutral">
             <div class="result-icon">?</div>

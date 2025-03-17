@@ -1045,6 +1045,12 @@ class UserController {
             `${process.env.FRONTEND_URL}/account-links?discord=account_too_new`
           );
         }
+
+        if (error.message === "此 Discord 帳號已被其他用戶綁定") {
+          return res.redirect(
+            `${process.env.FRONTEND_URL}/account-links?discord=dcisalreadyused`
+          );
+        }
       }
 
       res.redirect(`${process.env.FRONTEND_URL}/account-links?discord=error`);
