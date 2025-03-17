@@ -4,6 +4,7 @@ import { Document } from "mongoose";
 import crypto from "crypto";
 import { sendVerificationEmail } from "../services/emailService";
 import { OAuth2Client } from "google-auth-library";
+import axios from "axios";
 
 // 初始化 Google OAuth client
 const client = new OAuth2Client(
@@ -332,6 +333,141 @@ class UserService {
     resetCodes.delete(email);
 
     return true;
+  }
+
+  // 獲取 Discord 授權 URL
+  getDiscordAuthUrl(userId: string): string {
+    const url = new URL("https://discord.com/oauth2/authorize");
+
+    // 原有的基本參數設置
+    url.searchParams.append(
+      "client_id",
+      process.env.DISCORD_CLIENT_ID as string
+    );
+    url.searchParams.append("response_type", "code");
+    url.searchParams.append(
+      "redirect_uri",
+      process.env.DISCORD_REDIRECT_URI as string
+    );
+    url.searchParams.append("scope", process.env.DISCORD_SCOPE as string);
+
+    // 新增 state 參數攜帶用戶 ID
+    url.searchParams.append("state", userId);
+
+    return url.toString();
+  }
+
+  // 處理 Discord 回調
+  async handleDiscordCallback(code: string, userId: string): Promise<any> {
+    try {
+      // 步驟 1: 交換 code 獲取訪問令牌
+      const tokenResponse = await axios.post(
+        "https://discord.com/api/oauth2/token",
+        new URLSearchParams({
+          client_id: process.env.DISCORD_CLIENT_ID as string,
+          client_secret: process.env.DISCORD_CLIENT_SECRET as string,
+          grant_type: "authorization_code",
+          code,
+          redirect_uri: process.env.DISCORD_REDIRECT_URI as string,
+        }),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+
+      const { access_token } = tokenResponse.data;
+
+      // 步驟 2: 使用令牌獲取用戶信息
+      const userResponse = await axios.get(
+        "https://discord.com/api/users/@me",
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        }
+      );
+
+      const discordUser = userResponse.data;
+
+      // 從 Discord ID 提取創建時間戳
+      // Discord ID 是基於 snowflake 算法的，前 42 位是時間戳
+      const discordId = discordUser.id;
+      const discordCreationTimestamp =
+        this.getDiscordAccountCreationDate(discordId);
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+      if (discordCreationTimestamp > oneYearAgo) {
+        throw new Error("DISCORD_ACCOUNT_TOO_NEW");
+      }
+
+      // 檢查該 Discord ID 是否已被其他用戶使用
+      const existingUser = await User.findOne({
+        discordId: discordUser.id,
+        _id: { $ne: userId },
+      });
+
+      if (existingUser) {
+        throw new Error("此 Discord 帳號已被其他用戶綁定");
+      }
+
+      // 更新用戶的 Discord 資料
+      let discordUsername;
+      if (discordUser.discriminator && discordUser.discriminator !== "0") {
+        // 舊系統，有判別號
+        discordUsername = `${discordUser.username}#${discordUser.discriminator}`;
+      } else {
+        // 新系統，沒有判別號
+        discordUsername = discordUser.username;
+      }
+
+      // 構建頭像 URL (如果用戶有頭像)
+      const discordAvatar = discordUser.avatar
+        ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+        : null;
+
+      // 獲取全局顯示名稱 (可能是中文名)
+      const global_name = discordUser.global_name || null;
+
+      const user = await User.findByIdAndUpdate(
+        userId,
+        {
+          "contactInfo.discord": discordUsername,
+          discordId: discordUser.id,
+          discordUsername: discordUsername, // 同時在專屬欄位保存用戶名
+          discordAvatar: discordAvatar,
+          global_name: global_name,
+        },
+        { new: true }
+      );
+
+      if (!user) {
+        throw new Error("更新用戶 Discord 資訊失敗");
+      }
+
+      return {
+        status: "success",
+        discordUsername,
+      };
+    } catch (error) {
+      console.error("Discord 登入失敗:", error);
+      throw error;
+    }
+  }
+
+  private getDiscordAccountCreationDate(discordId: string): Date {
+    // Discord ID 是一個 snowflake ID，包含創建時間信息
+    // 將 ID 轉換為二進制，然後提取時間戳部分
+    const binaryId = BigInt(discordId).toString(2).padStart(64, "0");
+    const timestamp = parseInt(binaryId.substring(0, 42), 2);
+
+    // Discord epoch 是 2015-01-01T00:00:00.000Z
+    const discordEpoch = 1420070400000;
+    const creationTimestamp = timestamp + discordEpoch;
+
+    return new Date(creationTimestamp);
   }
 }
 

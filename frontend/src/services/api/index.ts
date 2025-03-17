@@ -1,6 +1,7 @@
 // src/services/api/index.ts
 import axios from 'axios'
 import { useAppStore } from '@/stores/appState'
+import { useUserStore } from '@/stores/user'
 
 declare module 'axios' {
   interface InternalAxiosRequestConfig {
@@ -124,7 +125,13 @@ api.interceptors.response.use(
       switch (error.response.status) {
         case 401:
           // 處理未授權錯誤
+          console.log('收到 401 未授权响应，清除用户状态')
+
           localStorage.removeItem('token')
+
+          const userStore = useUserStore()
+          userStore.logout()
+
           window.location.href = '/login'
           break
         case 403:

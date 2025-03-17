@@ -1,12 +1,12 @@
 <!-- MemberProfile.vue -->
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted, nextTick, watch, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { userService } from '@/services/api/user'
 import { auth } from '@/firebase/init'
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'
-import type { UpdateProfileData } from '@/types/user'
+import type { UpdateProfileData, UpdateContactInfoData } from '@/types/user'
 
 // 定義可能的錯誤類型
 interface ApiError {
@@ -28,6 +28,7 @@ declare global {
 
 // 初始化路由和用戶狀態管理
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 // 當前選中的菜單項目
@@ -66,7 +67,6 @@ const userEmail = ref('')
 
 // 聯絡資訊表單
 const contactForm = reactive({
-  line: '',
   facebook: '',
   discord: '',
   phone: '',
@@ -87,6 +87,27 @@ const phoneVerificationState = reactive({
   isVerifying: false,
   isCodeSent: false,
   isVerified: false,
+})
+
+// Discord相關的狀態
+const discordState = reactive({
+  isLinked: false,
+  username: '',
+  id: '',
+  avatar: '',
+  isLinking: false,
+  global_name: '',
+})
+
+// 計算社交帳號連結狀態 - 已修改為只計算兩個社交账号
+const socialAccountsStatus = computed(() => {
+  let linked = 0
+  const total = 2 // Facebook, Discord (移除了 Line)
+
+  if (contactForm.facebook) linked++
+  if (discordState.isLinked) linked++
+
+  return `${linked}/${total}`
 })
 
 // 顯示通知的方法
@@ -110,9 +131,30 @@ const loadUserInfo = async () => {
       userName.value = response.data.name
       userEmail.value = response.data.email
 
+      // 載入手機資訊
       if (response.data.phoneNumber) {
         phoneVerificationState.phoneNumber = response.data.phoneNumber
         phoneVerificationState.isVerified = !!response.data.isPhoneVerified
+      }
+
+      // 載入Discord資訊
+      if (response.data.discordId && response.data.discordUsername) {
+        discordState.isLinked = true
+        discordState.id = response.data.discordId
+        discordState.username = response.data.discordUsername
+        discordState.avatar = response.data.discordAvatar || ''
+        discordState.global_name = response.data.global_name || ''
+        // 將Discord資訊同步到表單中
+        contactForm.discord = response.data.discordUsername
+      }
+
+      // 載入聯絡資訊
+      if (response.data.contactInfo) {
+        contactForm.facebook = response.data.contactInfo.facebook || ''
+        // 如果Discord欄位為空，但用戶已連結Discord，則使用Discord用戶名
+        if (!contactForm.discord && discordState.isLinked) {
+          contactForm.discord = discordState.username
+        }
       }
     }
     console.log(
@@ -121,6 +163,7 @@ const loadUserInfo = async () => {
       '驗證狀態: ',
       phoneVerificationState.isVerified,
     )
+    console.log('Discord連結狀態:', discordState)
   } catch (error: unknown) {
     const apiError = error as ApiError
     showNotification(
@@ -159,12 +202,113 @@ const updateUserInfo = async () => {
   }
 }
 
+// 更新聯絡資訊
+const updateContactInfo = async () => {
+  try {
+    const updateData: UpdateContactInfoData = {
+      contactInfo: {
+        facebook: contactForm.facebook.trim(),
+      },
+    }
+
+    const response = await userService.updateContactInfo(updateData)
+
+    if (response.status === 'success') {
+      await userStore.fetchCurrentUser()
+      showNotification('聯絡資訊更新成功')
+    }
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    showNotification(
+      apiError.response?.data?.message || (apiError.message as string) || '更新聯絡資訊失敗',
+      'error',
+    )
+    console.error('更新聯絡資訊失敗:', error)
+  }
+}
+
+// 檢查URL參數是否包含Discord相關信息
+const checkDiscordCallback = () => {
+  // 檢查URL中是否有Discord相關參數
+  const discordStatus = route.query.discord as string
+
+  if (discordStatus === 'success') {
+    showNotification('Discord帳號連結成功', 'success')
+    // 清除URL參數
+    router.replace({ query: {} })
+  } else if (discordStatus === 'error') {
+    showNotification('Discord帳號連結失敗，請稍後再試', 'error')
+    // 清除URL參數
+    router.replace({ query: {} })
+  }
+}
+
+// 獲取Discord授權URL並跳轉
+const connectDiscord = async () => {
+  try {
+    discordState.isLinking = true
+    const response = await userService.getDiscordAuthUrl()
+
+    if (response.url) {
+      // 將當前頁面URL儲存到localStorage，以便授權後返回
+      localStorage.setItem('discordRedirectUrl', window.location.href)
+
+      // 跳轉到Discord授權頁面
+      window.location.href = response.url
+    } else {
+      throw new Error('獲取Discord授權URL失敗')
+    }
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    showNotification(
+      apiError.response?.data?.message || (apiError.message as string) || '連接Discord時發生錯誤',
+      'error',
+    )
+    console.error('連接Discord時發生錯誤:', error)
+  } finally {
+    discordState.isLinking = false
+  }
+}
+
+// 解除Discord綁定
+const disconnectDiscord = async () => {
+  try {
+    const response = await userService.unlinkDiscord()
+
+    if (response.status === 'success') {
+      // 重置Discord狀態
+      discordState.isLinked = false
+      discordState.username = ''
+      discordState.id = ''
+      discordState.avatar = ''
+      discordState.global_name = ''
+      contactForm.discord = ''
+
+      showNotification('已成功解除Discord帳號連結', 'success')
+    }
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    showNotification(
+      apiError.response?.data?.message ||
+        (apiError.message as string) ||
+        '解除Discord連結時發生錯誤',
+      'error',
+    )
+    console.error('解除Discord連結時發生錯誤:', error)
+  }
+}
+
 // 在掛載時載入用戶資訊
 onMounted(async () => {
   if (!userStore.isAuthenticated) {
     router.push('/login')
     return
   }
+
+  // 檢查是否有Discord回調信息
+  checkDiscordCallback()
+
+  // 載入用戶資訊
   await loadUserInfo()
 })
 
@@ -428,11 +572,13 @@ watch(currentMenu, (newMenu) => {
             <!-- 帳號連結 -->
             <div v-else-if="currentMenu === 'account-links'" class="settings-section">
               <h2>帳號連結</h2>
-              <form @submit.prevent="updateUserInfo" class="user-form">
-                <div class="form-group">
-                  <label>Line ID</label>
-                  <input v-model="contactForm.line" type="text" placeholder="請輸入 Line ID" />
-                </div>
+
+              <!-- 社交帳號狀態信息 -->
+              <div class="social-accounts-status">
+                <p>已連結帳號：{{ socialAccountsStatus }}</p>
+              </div>
+
+              <form @submit.prevent="updateContactInfo" class="user-form">
                 <div class="form-group">
                   <label>Facebook 連結</label>
                   <input
@@ -441,15 +587,46 @@ watch(currentMenu, (newMenu) => {
                     placeholder="請輸入 Facebook 連結"
                   />
                 </div>
-                <div class="form-group">
-                  <label>Discord ID</label>
-                  <input
-                    v-model="contactForm.discord"
-                    type="text"
-                    placeholder="請輸入 Discord ID"
-                  />
+
+                <!-- Discord帳號連結 -->
+                <div class="form-group discord-section">
+                  <label>Discord帳號</label>
+
+                  <div v-if="!discordState.isLinked" class="discord-connect">
+                    <p class="discord-status">尚未連結Discord帳號</p>
+                    <button
+                      type="button"
+                      class="discord-connect-button"
+                      @click="connectDiscord"
+                      :disabled="discordState.isLinking"
+                    >
+                      <span class="discord-icon">🎮</span>
+                      {{ discordState.isLinking ? '連結中...' : '連結Discord帳號' }}
+                    </button>
+                  </div>
+
+                  <div v-else class="discord-info">
+                    <div class="discord-profile">
+                      <div v-if="discordState.avatar" class="discord-avatar">
+                        <img :src="discordState.avatar" alt="Discord Avatar" />
+                      </div>
+                      <div class="discord-user-info">
+                        <span class="discord-username">
+                          {{ discordState.global_name || discordState.username }}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      class="discord-disconnect-button"
+                      @click="disconnectDiscord"
+                    >
+                      解除連結
+                    </button>
+                  </div>
                 </div>
-                <button type="submit" class="save-button">儲存連結</button>
+
+                <button type="submit" class="save-button">儲存 Facebook 連結</button>
               </form>
             </div>
           </div>
@@ -473,6 +650,7 @@ $text-color: #333333;
 $spacing-unit: 8px;
 $transition: all 0.3s ease;
 $font-family: 'Microsoft YaHei', '微軟雅黑', sans-serif;
+$discord-color: #5865f2;
 
 // 基礎頁面樣式
 .platform-base {
@@ -890,6 +1068,115 @@ $font-family: 'Microsoft YaHei', '微軟雅黑', sans-serif;
   }
 }
 
+/* Discord相關樣式 */
+.social-accounts-status {
+  margin-bottom: $spacing-unit * 3;
+  padding: $spacing-unit * 2;
+  background-color: rgba($primary-color, 0.05);
+  border-radius: $spacing-unit;
+  border-left: 3px solid $primary-color;
+}
+
+.discord-section {
+  border: 1px solid #e0e0e0;
+  border-radius: $spacing-unit;
+  padding: $spacing-unit * 2;
+  background-color: rgba($discord-color, 0.02);
+  margin-bottom: $spacing-unit * 3;
+}
+
+.discord-connect {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $spacing-unit * 2;
+}
+
+.discord-status {
+  color: #666;
+  margin: 0;
+}
+
+.discord-connect-button {
+  display: flex;
+  align-items: center;
+  background-color: $discord-color;
+  color: white;
+  border: none;
+  border-radius: $spacing-unit;
+  padding: $spacing-unit * 1.5 $spacing-unit * 2;
+  cursor: pointer;
+  transition: $transition;
+
+  &:hover:not(:disabled) {
+    background-color: darken($discord-color, 5%);
+  }
+
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+}
+
+.discord-icon {
+  margin-right: $spacing-unit;
+  font-size: 18px;
+}
+
+.discord-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.discord-profile {
+  display: flex;
+  align-items: center;
+  gap: $spacing-unit * 2;
+}
+
+.discord-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.discord-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.discord-username {
+  font-weight: 500;
+  color: $text-color;
+}
+
+.discord-id {
+  color: #666;
+  font-size: 14px;
+}
+
+.discord-disconnect-button {
+  background-color: transparent;
+  color: #f44336;
+  border: 1px solid #f44336;
+  border-radius: $spacing-unit;
+  padding: $spacing-unit $spacing-unit * 2;
+  cursor: pointer;
+  transition: $transition;
+
+  &:hover {
+    background-color: rgba(#f44336, 0.05);
+  }
+}
+
 // 響應式設計
 @media (max-width: 768px) {
   .settings-container {
@@ -969,6 +1256,17 @@ $font-family: 'Microsoft YaHei', '微軟雅黑', sans-serif;
   // 橫向滾動表格
   .transaction-table-wrapper {
     overflow-x: auto;
+    width: 100%;
+  }
+
+  // Discord部分的響應式調整
+  .discord-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-unit * 2;
+  }
+
+  .discord-disconnect-button {
     width: 100%;
   }
 }

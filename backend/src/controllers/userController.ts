@@ -313,6 +313,16 @@ class UserController {
           role: user.role || "user",
           phoneNumber: user.phoneNumber,
           isPhoneVerified: user.isPhoneVerified,
+          // 添加Discord相關信息
+          discordId: user.discordId,
+          discordUsername: user.discordUsername,
+          discordAvatar: user.discordAvatar,
+          global_name: user.global_name,
+          contactInfo: {
+            line: user.contactInfo?.line,
+            discord: user.contactInfo?.discord,
+            facebook: user.contactInfo?.facebook,
+          },
         },
       });
     } catch (error) {
@@ -983,6 +993,96 @@ class UserController {
       next(error);
     }
   }
+
+  // 獲取 Discord 登入 URL
+  public getDiscordAuthUrl = async (req: Request, res: Response) => {
+    try {
+      const userId = req.user._id;
+      const url = userService.getDiscordAuthUrl(userId);
+      res.json({ url });
+    } catch (error) {
+      console.error("獲取 Discord 登入連結失敗:", error);
+      res.status(500).json({
+        status: "error",
+        message: "獲取 Discord 登入連結失敗",
+      });
+    }
+  };
+
+  // 處理 Discord OAuth 回調
+  public handleDiscordCallback = async (req: Request, res: Response) => {
+    try {
+      const { code, state: userId } = req.query;
+
+      if (!code) {
+        console.error("未收到授權碼");
+        return res.redirect(
+          `${process.env.FRONTEND_URL}/account-links?discord=nocode`
+        );
+      }
+
+      if (!userId) {
+        console.error("無法獲取用戶ID，Discord綁定失敗");
+        return res.redirect(
+          `${process.env.FRONTEND_URL}/account-links?discord=nouser`
+        );
+      }
+
+      await userService.handleDiscordCallback(
+        code as string,
+        (userId as string) || ""
+      );
+
+      // 重定向到前端頁面
+      res.redirect(`${process.env.FRONTEND_URL}/account-links?discord=success`);
+    } catch (error) {
+      console.error("Discord授權回調處理失敗:", error);
+
+      // 處理特定錯誤
+      if (error instanceof Error) {
+        if (error.message === "DISCORD_ACCOUNT_TOO_NEW") {
+          return res.redirect(
+            `${process.env.FRONTEND_URL}/account-links?discord=account_too_new`
+          );
+        }
+      }
+
+      res.redirect(`${process.env.FRONTEND_URL}/account-links?discord=error`);
+    }
+  };
+
+  // 解除 Discord 連結
+  public unlinkDiscord = async (req: Request, res: Response) => {
+    try {
+      const userId = req.user._id;
+      const user = await User.findByIdAndUpdate(
+        userId,
+        {
+          "contactInfo.discord": null,
+          discordId: null,
+        },
+        { new: true }
+      );
+
+      if (!user) {
+        return res.status(404).json({
+          status: "error",
+          message: "找不到使用者",
+        });
+      }
+
+      res.status(200).json({
+        status: "success",
+        message: "Discord 帳號解除連結成功",
+      });
+    } catch (error) {
+      console.error("解除 Discord 連結失敗:", error);
+      res.status(500).json({
+        status: "error",
+        message: "解除 Discord 連結失敗",
+      });
+    }
+  };
 }
 
 export default new UserController();

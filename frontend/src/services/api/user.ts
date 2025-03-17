@@ -1,3 +1,4 @@
+// services/api/user.ts
 import api from './index'
 import type {
   User,
@@ -9,6 +10,9 @@ import type {
   ResetPasswordData,
   LoginHistoryEntry,
   GoogleAuthResponse,
+  // Discord相關的介面
+  DiscordAuthUrlResponse,
+  DiscordUnlinkResponse,
 } from '@/types/user'
 
 interface ApiError {
@@ -156,6 +160,35 @@ export const userService = {
     } catch (error: unknown) {
       const apiError = error as ApiError
       throw new Error(apiError.message || '獲取驗證狀態失敗')
+    }
+  },
+
+  // Discord相關方法
+  // 獲取Discord授權URL
+  getDiscordAuthUrl: async (): Promise<DiscordAuthUrlResponse> => {
+    try {
+      const response = await api.get<DiscordAuthUrlResponse>('/api/users/auth/discord')
+      return response.data
+    } catch (error: unknown) {
+      const apiError = error as ApiError
+      throw new Error(apiError.response?.data?.message || '獲取Discord授權URL失敗')
+    }
+  },
+
+  // 處理Discord授權回調 - 這個通常不需要直接呼叫，因為重定向會自動處理
+  handleDiscordCallback: async (code: string) => {
+    const response = await api.get(`/api/users/auth/discord/callback?code=${code}`)
+    return response.data
+  },
+
+  // 解除Discord綁定
+  unlinkDiscord: async (): Promise<DiscordUnlinkResponse> => {
+    try {
+      const response = await api.post<DiscordUnlinkResponse>('/api/users/unlink-discord')
+      return response.data
+    } catch (error: unknown) {
+      const apiError = error as ApiError
+      throw new Error(apiError.response?.data?.message || '解除Discord綁定失敗')
     }
   },
 }

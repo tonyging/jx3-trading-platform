@@ -1,3 +1,4 @@
+// types/user.ts
 export interface User {
   id: string
   email: string
@@ -6,6 +7,17 @@ export interface User {
   createdAt?: Date
   phoneNumber?: string
   isPhoneVerified: boolean
+  // Discord相關字段
+  discordId?: string
+  discordUsername?: string
+  discordAvatar?: string
+  global_name?: string
+  // 聯絡資訊
+  contactInfo?: {
+    line?: string
+    discord?: string
+    facebook?: string
+  }
 }
 
 export interface UserResponse {
@@ -18,6 +30,17 @@ export interface UserResponse {
     createdAt: Date
     phoneNumber?: string
     isPhoneVerified: boolean
+    // Discord相關字段
+    discordId?: string
+    discordUsername?: string
+    discordAvatar?: string
+    global_name?: string
+    // 聯絡資訊
+    contactInfo?: {
+      line?: string
+      discord?: string
+      facebook?: string
+    }
   }
 }
 
@@ -94,4 +117,21 @@ export interface GoogleUserData {
   name: string
   googleId: string
   picture?: string
+}
+
+// Discord相關的介面定義
+export interface DiscordAuthUrlResponse {
+  status?: string
+  url: string
+}
+
+// 目前未使用，因為後端通過重定向處理授權回調
+// export interface DiscordLinkResponse {
+//   status: string
+//   discordUsername: string
+// }
+
+export interface DiscordUnlinkResponse {
+  status: string
+  message: string
 }

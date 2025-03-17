@@ -18,6 +18,31 @@ export const authenticate = async (
   next: NextFunction
 ) => {
   try {
+    // 特殊處理 Discord 回調路由
+    if (req.path.includes("/auth/discord/callback")) {
+      // 檢查 state 參數中的用戶 ID
+      const { state: userId } = req.query;
+
+      if (!userId || typeof userId !== "string") {
+        console.warn("Discord 回調：未提供用戶 ID");
+        return next();
+      }
+
+      try {
+        // 驗證用戶 ID 的有效性
+        const user = await User.findById(userId);
+        if (user) {
+          // 將用戶信息掛載到 req 上
+          req.user = user;
+          return next();
+        }
+      } catch (error) {
+        console.error("Discord 回調用戶驗證失敗:", error);
+        // 即使驗證失敗也放行
+        return next();
+      }
+    }
+
     // 1. 從請求標頭中取得 token
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {

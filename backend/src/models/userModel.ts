@@ -31,6 +31,15 @@ export interface IUserDocument {
   phoneNumber?: string;
   isPhoneVerified: boolean;
   phoneVerificationId?: string;
+  // Discord相關欄位
+  discordId: {
+    type: String;
+    unique: true;
+    sparse: true;
+  };
+  discordUsername: String;
+  discordAvatar: String;
+  global_name: String;
 }
 
 // 定義包含 MongoDB 文件特性的完整使用者介面
@@ -146,6 +155,23 @@ const userSchema = new Schema<IUser>(
       default: false,
     },
     phoneVerificationId: String,
+    discordId: {
+      type: String,
+      unique: true,
+      sparse: true, // 允許為空但有值時必須唯一
+    },
+    discordUsername: {
+      type: String,
+      trim: true,
+    },
+    discordAvatar: {
+      type: String,
+      trim: true,
+    },
+    global_name: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,

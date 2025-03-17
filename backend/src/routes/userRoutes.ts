@@ -44,6 +44,14 @@ router.get(
   authenticate,
   userController.checkPhoneVerification
 );
+// 綁定DC功能
+router.get("/auth/discord", authenticate, userController.getDiscordAuthUrl);
+router.get(
+  "/auth/discord/callback",
+  authenticate,
+  userController.handleDiscordCallback
+);
+router.post("/unlink-discord", authenticate, userController.unlinkDiscord);
 
 // 管理員路由
 router.patch(
