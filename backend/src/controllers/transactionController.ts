@@ -14,6 +14,7 @@ class TransactionController {
   ) => {
     try {
       const { id } = req.params;
+      const currentUserId = req.user._id.toString();
 
       const transaction = await Transaction.findById(id)
         .populate("seller", "name email contactInfo")
@@ -24,6 +25,19 @@ class TransactionController {
         return res.status(404).json({
           status: "error",
           message: "找不到該交易",
+        });
+      }
+
+      // 權限檢查
+      const isSeller = transaction.seller._id.toString() === currentUserId;
+      const isBuyer = transaction.buyer._id.toString() === currentUserId;
+      const isAdmin = req.user.role === "admin";
+
+      // 只有買家、賣家或管理員可以訪問
+      if (!isSeller && !isBuyer && !isAdmin) {
+        return res.status(403).json({
+          status: "error",
+          message: "您沒有權限查看此交易",
         });
       }
 

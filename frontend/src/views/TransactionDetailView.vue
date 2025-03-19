@@ -12,15 +12,29 @@ const transaction = ref<Transaction | null>(null)
 const newMessage = ref('')
 const loading = ref(true)
 const error = ref<string | null>(null)
+const permissionDenied = ref(false) // 新增權限被拒絕的狀態
 
 // 載入交易詳情
 const loadTransactionDetails = async () => {
   try {
     loading.value = true
+    error.value = null
+    permissionDenied.value = false
+
     const response = await transactionApi.getTransactionDetails(route.params.id as string)
     transaction.value = response.data
   } catch (err: unknown) {
-    error.value = err instanceof Error ? err.message : '載入交易詳情失敗'
+    console.error('載入交易詳情錯誤:', err)
+
+    const errorMessage = String(err)
+
+    // 檢查是否為權限錯誤
+    if (errorMessage.includes('權限') || errorMessage.includes('沒有權限')) {
+      permissionDenied.value = true
+      error.value = errorMessage
+    } else {
+      error.value = errorMessage
+    }
   } finally {
     loading.value = false
   }
@@ -55,9 +69,23 @@ const formatTime = (timestamp: Date | string) => {
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('zh-TW', {
     style: 'currency',
-    currency: 'TWD',
+    currency: getCurrencyCode(transaction.value?.currency || '台幣'),
     minimumFractionDigits: 0,
   }).format(price)
+}
+
+// 幣種轉換為貨幣代碼
+const getCurrencyCode = (currency: string) => {
+  switch (currency) {
+    case '台幣':
+      return 'TWD'
+    case '人民幣':
+      return 'CNY'
+    case '港幣':
+      return 'HKD'
+    default:
+      return 'TWD'
+  }
 }
 
 onMounted(() => {
@@ -80,6 +108,16 @@ const canCompleteTransaction = computed(() => {
 
   // 只有在特定狀態可以結束
   const isValidStatus = ['reserved', 'pending_payment'].includes(transaction.value.status)
+
+  // 如果是買家且已確認，則不可點擊
+  if (userRole.value === 'buyer' && transaction.value.buyerConfirmed) {
+    return false
+  }
+
+  // 如果是賣家且已確認，則不可點擊
+  if (userRole.value === 'seller' && transaction.value.sellerConfirmed) {
+    return false
+  }
 
   return isParticipant && isValidStatus
 })
@@ -157,12 +195,6 @@ const userRole = computed(() => {
   return null
 })
 
-// 取得對方的資訊
-const counterpartyInfo = computed(() => {
-  if (!transaction.value) return null
-  return userRole.value === 'seller' ? transaction.value.buyer : transaction.value.seller
-})
-
 // 監聽 transaction 的變化
 watch(
   () => transaction.value,
@@ -184,184 +216,189 @@ watch(
   <div class="platform-base">
     <div class="content-wrapper">
       <main class="main-content trade-content">
-        <div class="page-header">
-          <div class="title-status-wrapper">
-            <h1 class="page-title">交易詳情</h1>
-          </div>
-          <div class="page-actions">
-            <button class="back-button" @click="goBackToTradingTab">← 返回交易列表</button>
-            <button
-              v-if="canCompleteTransaction"
-              class="complete-transaction-button"
-              @click="completeTransaction"
-            >
-              完成交易
-            </button>
+        <!-- 權限被拒絕的畫面 -->
+        <div v-if="permissionDenied" class="permission-denied">
+          <div class="permission-denied-content">
+            <h1>權限不足</h1>
+            <p>您沒有權限查看此交易詳情。</p>
+            <p>只有交易的買賣雙方和管理員可以訪問此頁面。</p>
+            <button class="back-button" @click="goBackToTradingTab">返回交易列表</button>
           </div>
         </div>
-        <div v-if="loading" class="status-message">載入中...</div>
-        <div v-else-if="error" class="status-message error">{{ error }}</div>
-        <div v-else-if="transaction" class="transaction-container">
-          <div class="content-grid">
-            <!-- 左側資訊區 -->
-            <div class="left-column">
-              <!-- 交易狀態卡片 -->
-              <section class="card transaction-status">
-                <h2>交易資訊</h2>
-                <div class="status-grid">
-                  <div class="status-item">
+
+        <!-- 正常顯示交易詳情的畫面 -->
+        <template v-else>
+          <div class="page-header">
+            <div class="title-status-wrapper">
+              <h1 class="page-title">交易詳情</h1>
+            </div>
+            <div class="page-actions">
+              <button class="back-button" @click="goBackToTradingTab">← 返回交易列表</button>
+              <button
+                v-if="
+                  transaction &&
+                  transaction.status !== 'completed' &&
+                  transaction.status !== 'cancelled' &&
+                  (canCompleteTransaction ||
+                    (userRole === 'buyer' && transaction?.buyerConfirmed) ||
+                    (userRole === 'seller' && transaction?.sellerConfirmed))
+                "
+                class="complete-transaction-button"
+                :class="{
+                  'waiting-confirmation':
+                    (userRole === 'buyer' && transaction?.buyerConfirmed) ||
+                    (userRole === 'seller' && transaction?.sellerConfirmed),
+                }"
+                :disabled="
+                  (userRole === 'buyer' && transaction?.buyerConfirmed) ||
+                  (userRole === 'seller' && transaction?.sellerConfirmed)
+                "
+                @click="completeTransaction"
+              >
+                {{
+                  (userRole === 'buyer' && transaction?.buyerConfirmed) ||
+                  (userRole === 'seller' && transaction?.sellerConfirmed)
+                    ? '等待對方確認'
+                    : '完成交易'
+                }}
+              </button>
+            </div>
+          </div>
+          <div v-if="loading" class="status-message">載入中...</div>
+          <div v-else-if="error && !permissionDenied" class="status-message error">{{ error }}</div>
+          <div v-else-if="transaction" class="transaction-container">
+            <div class="content-grid">
+              <!-- 左側資訊區 -->
+              <div class="left-column">
+                <!-- 交易狀態卡片 -->
+                <section class="card transaction-status">
+                  <h2>交易資訊</h2>
+                  <!-- 交易狀態獨占一行 -->
+                  <div class="status-item status-row">
                     <span class="label">交易狀態</span>
                     <span class="value" :class="'status-' + transaction.status">
                       {{ formatStatus(transaction.status) }}
                     </span>
                   </div>
-                  <div class="status-item">
-                    <span class="label">交易數量</span>
-                    <span class="value">{{ transaction.amount }}</span>
-                  </div>
-                  <div class="status-item">
-                    <span class="label">交易金額</span>
-                    <span class="value">{{ formatPrice(transaction.price) }}</span>
-                  </div>
-                </div>
-              </section>
 
-              <!-- 只顯示當前用戶的資訊 -->
-              <section class="card contact-card" v-if="userRole">
-                <h2>我的資訊</h2>
-                <div class="contact-info">
-                  <div class="info-item">
-                    <span class="label">名稱</span>
-                    <span class="value">{{
-                      userRole === 'seller' ? transaction.seller.name : transaction.buyer.name
-                    }}</span>
+                  <!-- 遊戲幣數量和金額放在同一行 -->
+                  <div class="status-row-container">
+                    <div class="status-item">
+                      <span class="label">遊戲幣數量</span>
+                      <span class="value">{{ transaction.amount }}</span>
+                    </div>
+                    <div class="status-item">
+                      <span class="label">金額</span>
+                      <span class="value">{{ formatPrice(transaction.price) }}</span>
+                    </div>
                   </div>
-                  <div class="info-item">
-                    <span class="label">LINE ID</span>
-                    <span class="value">
-                      {{
-                        (userRole === 'seller'
-                          ? transaction.seller.contactInfo?.line
-                          : transaction.buyer.contactInfo?.line) || '未提供'
-                      }}
-                    </span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Discord</span>
-                    <span class="value">
-                      {{
-                        (userRole === 'seller'
-                          ? transaction.seller.contactInfo?.discord
-                          : transaction.buyer.contactInfo?.discord) || '未提供'
-                      }}
-                    </span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Facebook</span>
-                    <span class="value">
-                      {{
-                        (userRole === 'seller'
-                          ? transaction.seller.contactInfo?.facebook
-                          : transaction.buyer.contactInfo?.facebook) || '未提供'
-                      }}
-                    </span>
-                  </div>
-                </div>
-              </section>
-            </div>
 
-            <!-- 右側留言板 -->
-            <div class="right-column">
-              <section class="card message-board">
-                <div class="message-header-wrapper">
-                  <h2>交易留言</h2>
-                  <div class="confirmation-status" v-if="transaction">
-                    <span class="status-badge">
-                      賣家確認: {{ transaction.sellerConfirmed ? '✅' : '❌' }}
-                    </span>
-                    <span class="status-badge">
-                      買家確認: {{ transaction.buyerConfirmed ? '✅' : '❌' }}
-                    </span>
+                  <!-- 幣種和交易方式放在同一行 -->
+                  <div class="status-row-container">
+                    <div class="status-item">
+                      <span class="label">幣種</span>
+                      <span class="value">{{ transaction.currency || '台幣' }}</span>
+                    </div>
+                    <div class="status-item">
+                      <span class="label">交易方式</span>
+                      <span class="value">{{ transaction.paymentMethod || '匯款' }}</span>
+                    </div>
                   </div>
-                </div>
+                </section>
 
-                <!-- 對方資訊區域 -->
-                <div class="counterparty-info" v-if="counterpartyInfo">
-                  <h3>{{ userRole === 'seller' ? '買家資訊' : '賣家資訊' }}</h3>
-                  <div class="info-grid">
+                <!-- 賣家資訊 -->
+                <section class="card seller-info">
+                  <h2>賣家資訊</h2>
+                  <div class="contact-info">
                     <div class="info-item">
-                      <span class="label">名稱</span>
-                      <span class="value">{{ counterpartyInfo.name }}</span>
+                      <span class="label">賣家名稱</span>
+                      <span class="value">{{ transaction.seller.name }}</span>
                     </div>
                     <div class="info-item">
+                      <span class="label">角色暱稱</span>
+                      <span class="value">{{ transaction.characterNickname || '未設定' }}</span>
+                    </div>
+                    <div class="info-item" v-if="transaction.seller.contactInfo?.line">
                       <span class="label">LINE ID</span>
-                      <span class="value">{{
-                        counterpartyInfo.contactInfo?.line || '未提供'
-                      }}</span>
+                      <span class="value">{{ transaction.seller.contactInfo?.line }}</span>
                     </div>
-                    <div class="info-item">
+                    <div class="info-item" v-if="transaction.seller.contactInfo?.discord">
                       <span class="label">Discord</span>
-                      <span class="value">{{
-                        counterpartyInfo.contactInfo?.discord || '未提供'
-                      }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="label">Facebook</span>
-                      <span class="value">{{
-                        counterpartyInfo.contactInfo?.facebook || '未提供'
-                      }}</span>
+                      <span class="value">{{ transaction.seller.contactInfo?.discord }}</span>
                     </div>
                   </div>
-                </div>
+                </section>
+              </div>
 
-                <div class="messages">
-                  <div v-for="message in transaction.messages" :key="message._id" class="message">
-                    <div class="message-header">
-                      <span
-                        class="sender"
+              <!-- 右側留言板 -->
+              <div class="right-column">
+                <section class="card message-board">
+                  <div class="message-header-wrapper">
+                    <h2>交易留言</h2>
+                    <div class="confirmation-status" v-if="transaction">
+                      <span class="status-badge">
+                        賣家確認: {{ transaction.sellerConfirmed ? '✅' : '❌' }}
+                      </span>
+                      <span class="status-badge">
+                        買家確認: {{ transaction.buyerConfirmed ? '✅' : '❌' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="messages">
+                    <div v-for="message in transaction.messages" :key="message._id" class="message">
+                      <div class="message-header">
+                        <span
+                          class="sender"
+                          :class="
+                            message.sender === transaction.seller._id
+                              ? 'seller-message'
+                              : 'buyer-message'
+                          "
+                        >
+                          {{
+                            message.sender === transaction.seller._id
+                              ? `${transaction.seller.name} (賣家)`
+                              : `${transaction.buyer.name} (買家)`
+                          }}
+                        </span>
+                        <span class="time">{{ formatTime(message.timestamp) }}</span>
+                      </div>
+                      <div
+                        class="message-content"
                         :class="
                           message.sender === transaction.seller._id
                             ? 'seller-message'
                             : 'buyer-message'
                         "
                       >
-                        {{
-                          message.sender === transaction.seller._id
-                            ? `${transaction.seller.name} (賣家)`
-                            : `${transaction.buyer.name} (買家)`
-                        }}
-                      </span>
-                      <span class="time">{{ formatTime(message.timestamp) }}</span>
-                    </div>
-                    <div
-                      class="message-content"
-                      :class="
-                        message.sender === transaction.seller._id
-                          ? 'seller-message'
-                          : 'buyer-message'
-                      "
-                    >
-                      {{ message.content }}
+                        {{ message.content }}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div class="message-input">
-                  <textarea
-                    v-model="newMessage"
-                    placeholder="輸入訊息..."
-                    @keyup.enter.ctrl="sendMessage"
-                  ></textarea>
-                  <button class="send-button" @click="sendMessage" :disabled="!newMessage.trim()">
-                    發送
-                  </button>
-                </div>
-              </section>
+                  <div class="message-input">
+                    <textarea
+                      v-model="newMessage"
+                      placeholder="輸入訊息..."
+                      @keyup.enter.ctrl="sendMessage"
+                    ></textarea>
+                    <button class="send-button" @click="sendMessage" :disabled="!newMessage.trim()">
+                      發送
+                    </button>
+                  </div>
+                </section>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
       </main>
     </div>
+  </div>
+
+  <!-- 通知組件 -->
+  <div v-if="notification.show" :class="['notification', `notification-${notification.type}`]">
+    {{ notification.message }}
   </div>
 </template>
 
@@ -422,6 +459,31 @@ $error-color: #ff4d4f;
 }
 
 .transaction-status {
+  .status-row {
+    margin-bottom: $spacing-unit * 2;
+    padding-bottom: $spacing-unit;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .status-row-container {
+    display: flex;
+    gap: $spacing-unit * 3;
+    margin-bottom: $spacing-unit * 2;
+
+    .status-item {
+      flex: 1;
+
+      &:first-child {
+        border-right: 1px solid #f0f0f0;
+        padding-right: $spacing-unit * 2;
+      }
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
   .status-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -446,31 +508,27 @@ $error-color: #ff4d4f;
   }
 }
 
-.contact-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: $spacing-unit * 4;
-}
+.seller-info {
+  .contact-info {
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: $spacing-unit 0;
+      border-bottom: 1px solid #eee;
 
-.contact-info {
-  .info-item {
-    display: flex;
-    justify-content: space-between;
-    padding: $spacing-unit 0;
-    border-bottom: 1px solid #eee;
+      &:last-child {
+        border-bottom: none;
+      }
 
-    &:last-child {
-      border-bottom: none;
-    }
+      .label {
+        font-size: 13px;
+        color: #666;
+      }
 
-    .label {
-      font-size: 13px;
-      color: #666;
-    }
-
-    .value {
-      font-size: 14px;
-      font-weight: 500;
+      .value {
+        font-size: 14px;
+        font-weight: 500;
+      }
     }
   }
 }
@@ -615,6 +673,16 @@ $error-color: #ff4d4f;
   display: flex;
   align-items: center;
   gap: $spacing-unit;
+  &.waiting-confirmation {
+    background: #cccccc;
+    cursor: not-allowed;
+    color: #666666;
+
+    &:hover {
+      transform: none;
+      background: #cccccc;
+    }
+  }
 }
 
 // 返回按鈕樣式
@@ -673,27 +741,6 @@ $error-color: #ff4d4f;
   }
 }
 
-.complete-transaction-button {
-  padding: $spacing-unit * 1.5 $spacing-unit * 3;
-  background: linear-gradient(to right, #52c41a, #4caf50);
-  color: white;
-  border: none;
-  border-radius: $spacing-unit;
-  cursor: pointer;
-  transition: $transition;
-  font-weight: 600;
-
-  &:hover {
-    transform: translateY(-1px);
-    background: linear-gradient(to right, #4caf50, #45a049);
-  }
-
-  &:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-  }
-}
-
 .notification {
   position: fixed;
   top: 50%;
@@ -748,102 +795,46 @@ $error-color: #ff4d4f;
   }
 }
 
-.counterparty-info {
-  margin: $spacing-unit * 2 0;
-  padding: $spacing-unit * 2;
-  background: #f7f7f7;
-  border-radius: $spacing-unit;
-  border: 1px solid #eee;
+// 權限被拒絕頁面的樣式
+.permission-denied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+  text-align: center;
 
-  h3 {
-    color: $primary-color;
-    font-size: 14px;
-    margin-bottom: $spacing-unit * 1.5;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: $spacing-unit;
-
-    &::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: #e8e8e8;
-    }
-  }
-
-  .info-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: $spacing-unit * 1.5;
-    padding: 0 $spacing-unit;
-  }
-
-  .info-item {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: $spacing-unit;
-    padding: $spacing-unit;
-    font-size: 13px;
+  .permission-denied-content {
     background: white;
-    border-radius: $spacing-unit;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-    transition: all 0.2s ease;
-    border: 1px solid #f0f0f0;
+    padding: $spacing-unit * 6;
+    border-radius: $spacing-unit * 2;
+    box-shadow: $box-shadow;
+    max-width: 600px;
+    width: 100%;
 
-    &:hover {
-      border-color: #e0e0e0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .label {
-      color: #666;
-      min-width: 60px;
-      font-size: 12px;
-      padding: 2px 8px;
-      background: #f5f5f5;
-      border-radius: 4px;
-    }
-
-    .value {
-      font-weight: 500;
-      color: $text-color;
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    // 特別樣式
-    &:nth-child(1) .value {
-      // 名稱
+    h1 {
       color: $primary-color;
-      font-weight: 600;
+      font-size: 28px;
+      margin-bottom: $spacing-unit * 3;
     }
 
-    &:nth-child(2) .value {
-      // LINE
-      color: #00b900;
+    p {
+      color: $text-color;
+      font-size: 16px;
+      margin-bottom: $spacing-unit * 2;
+      line-height: 1.6;
     }
 
-    &:nth-child(3) .value {
-      // Discord
-      color: #5865f2;
-    }
-
-    &:nth-child(4) .value {
-      // Facebook
-      color: #1877f2;
-    }
-
-    // 未提供的資訊樣式
-    .value:not([href]):not([class])[class='value']:empty + .value:not(:empty),
-    .value:not([href]):not([class])[class='value']:empty,
-    .value[class='value']:contains('未提供') {
-      color: #999;
-      font-weight: normal;
-      font-style: italic;
+    .back-button {
+      margin: $spacing-unit * 4 auto 0;
+      padding: $spacing-unit * 2 $spacing-unit * 4;
+      background: linear-gradient(to right, $primary-color, $primary-hover);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: auto;
+      min-width: 180px;
     }
   }
 }
@@ -909,10 +900,6 @@ $error-color: #ff4d4f;
     margin-top: $spacing-unit * 2;
   }
 
-  .contact-grid {
-    grid-template-columns: 1fr;
-  }
-
   .status-grid {
     grid-template-columns: 1fr !important;
   }
@@ -936,44 +923,6 @@ $error-color: #ff4d4f;
     flex-wrap: wrap;
   }
 
-  .counterparty-info {
-    margin: $spacing-unit 0;
-    padding: $spacing-unit * 1.5;
-
-    h3 {
-      font-size: 14px;
-      margin-bottom: $spacing-unit * 1.5;
-      &::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: #e8e8e8;
-      }
-    }
-
-    .info-grid {
-      grid-template-columns: 1fr;
-      gap: $spacing-unit;
-      padding: 0;
-    }
-
-    .info-item {
-      padding: $spacing-unit * 0.75 $spacing-unit;
-      margin: 0;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-
-      .label {
-        min-width: 55px;
-        padding: 2px 6px;
-        font-size: 12px;
-      }
-
-      .value {
-        font-size: 13px;
-      }
-    }
-  }
-
   .message-board {
     .message-header-wrapper {
       flex-direction: column;
@@ -988,6 +937,26 @@ $error-color: #ff4d4f;
           flex: 1;
           justify-content: center;
         }
+      }
+    }
+  }
+
+  // 權限被拒絕頁面的響應式設計
+  .permission-denied {
+    .permission-denied-content {
+      padding: $spacing-unit * 3;
+      margin: 0 $spacing-unit;
+
+      h1 {
+        font-size: 22px;
+      }
+
+      p {
+        font-size: 14px;
+      }
+
+      .back-button {
+        width: 100%;
       }
     }
   }

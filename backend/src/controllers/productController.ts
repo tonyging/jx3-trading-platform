@@ -382,7 +382,6 @@ class ProductController {
     }
   };
 
-  // 刪除商品
   public deleteProduct = async (
     req: Request,
     res: Response,
@@ -401,20 +400,57 @@ class ProductController {
         });
       }
 
-      if (currentUser.role !== "admin") {
-        if (product.userId.toString() !== req.user._id.toString()) {
-          return res.status(403).json({
-            status: "error",
-            message: "沒有權限刪除此商品",
-          });
-        }
+      // 如果是管理員，允許無條件刪除
+      if (currentUser.role === "admin") {
+        // 使用 findByIdAndUpdate 繞過 Mongoose 驗證
+        const deletedProduct = await Product.findByIdAndUpdate(
+          id,
+          {
+            status: "deleted",
+            adminDeletedAt: new Date(),
+            adminDeletedBy: currentUser._id,
+          },
+          {
+            new: true,
+            runValidators: false,
+          }
+        );
 
-        if (product.status !== "active") {
-          return res.status(400).json({
-            status: "error",
-            message: "只有狀態為 active 的商品可以被刪除",
-          });
-        }
+        // 追蹤管理員刪除行為
+        await activityTrackingService.trackActivity(
+          req.user._id,
+          "ADMIN_DELETE_PRODUCT",
+          "product",
+          product._id,
+          {
+            reason: "管理員強制刪除",
+            previousStatus: product.status,
+          },
+          req
+        );
+
+        return res.status(200).json({
+          status: "success",
+          message: "管理員已成功刪除商品",
+          data: {
+            product: deletedProduct,
+          },
+        });
+      }
+
+      // 非管理員的原有邏輯
+      if (product.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({
+          status: "error",
+          message: "沒有權限刪除此商品",
+        });
+      }
+
+      if (product.status !== "active") {
+        return res.status(400).json({
+          status: "error",
+          message: "只有狀態為 active 的商品可以被刪除",
+        });
       }
 
       product.status = "deleted";

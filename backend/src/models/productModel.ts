@@ -43,6 +43,8 @@ export interface IProduct extends Document {
   paymentMethods: PaymentMethod[]; // 支援多種交易方式
   characterNickname: string; // 角色暱稱
   currency: Currency; // 幣別
+  adminDeletedAt?: Date;
+  adminDeletedBy?: Types.ObjectId;
 }
 
 const partialReservedTransactionSchema =
@@ -141,6 +143,15 @@ const productSchema = new Schema<IProduct>(
       enum: ["台幣", "人民幣", "港幣"],
       default: "台幣",
       required: [true, "幣別是必須的"],
+    },
+    adminDeletedAt: {
+      type: Date,
+      required: false,
+    },
+    adminDeletedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
     },
   },
   {
