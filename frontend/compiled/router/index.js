@@ -102,6 +102,17 @@ const router = createRouter({
                 title: '隱私政策 - 劍三交易平台',
             },
         },
+        // 新增管理員儀表板路由
+        {
+            path: '/admin-dashboard',
+            name: 'admin-dashboard',
+            component: () => import('@/views/AdminDashboard.vue'),
+            meta: {
+                requiresAuth: true,
+                requiresAdmin: true,
+                title: '管理員儀表板 - 劍三交易平台',
+            },
+        },
     ],
 });
 router.beforeEach(async (to, from, next) => {
@@ -130,6 +141,12 @@ router.beforeEach(async (to, from, next) => {
     if (to.meta.requiresAuth && !userStore.isAuthenticated) {
         console.log('重定向到登入頁');
         next('/login');
+        return;
+    }
+    // 檢查管理員權限
+    if (to.meta.requiresAdmin && userStore.currentUser?.role !== 'admin') {
+        console.log('需要管理員權限，重定向到首頁');
+        next('/');
         return;
     }
     // 其他情況正常放行

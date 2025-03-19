@@ -487,10 +487,10 @@ const handleMemberInfo = () => {
         <div class="table-header">
           <div class="tabs">
             <button :class="['tab', { active: currentTab === 'all' }]" @click="switchTab('all')">
-              全部商品
+              我要買幣
             </button>
             <button :class="['tab', { active: currentTab === 'my' }]" @click="switchTab('my')">
-              我的商品
+              我的賣幣
             </button>
             <button
               :class="['tab', { active: currentTab === 'trading' }]"
@@ -506,7 +506,7 @@ const handleMemberInfo = () => {
               管理員
             </button>
           </div>
-          <button class="create-button" @click="handleCreateProduct">建立商品</button>
+          <button class="create-button" @click="handleCreateProduct">我要賣幣</button>
         </div>
         <!-- 商品列表區域 -->
         <div class="trade-table">

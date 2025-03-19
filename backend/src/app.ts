@@ -6,6 +6,7 @@ import ratingRoutes from "./routes/ratingRoutes";
 import productRoutes from "./routes/productRoutes";
 import transactionRoutes from "./routes/transactionRoutes";
 import activityRoutes from "./routes/activityRoutes";
+import adminRoutes from "./routes/adminRoutes";
 
 class App {
   public app: Express;
@@ -82,6 +83,7 @@ class App {
     this.app.use("/api/products", productRoutes);
     this.app.use("/api/transactions", transactionRoutes);
     this.app.use("/api/activities", activityRoutes);
+    this.app.use("/api/admin", adminRoutes);
   }
 }
 

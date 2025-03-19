@@ -120,7 +120,7 @@ const handleSubmit = async () => {
       <!-- 添加關閉按鈕 -->
       <button class="modal-close-btn" @click="handleClose">✕</button>
 
-      <h3>建立商品</h3>
+      <h3>出售遊戲幣</h3>
 
       <form @submit.prevent="handleSubmit" class="create-form">
         <!-- 角色暱稱 -->
