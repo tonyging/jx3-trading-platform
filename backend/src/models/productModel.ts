@@ -7,6 +7,14 @@ interface IPartialReservedTransaction {
   reservedAmount: number;
 }
 
+export type PaymentMethod =
+  | "匯款"
+  | "Line Pay"
+  | "街口支付"
+  | "支付寶"
+  | "微信";
+export type Currency = "台幣" | "人民幣" | "港幣";
+
 export interface IProduct extends Document {
   _id: Types.ObjectId;
   userId:
@@ -32,6 +40,9 @@ export interface IProduct extends Document {
   createdAt: Date;
   updatedAt: Date;
   partialReservedTransactions: IPartialReservedTransaction[];
+  paymentMethods: PaymentMethod[]; // 支援多種交易方式
+  characterNickname: string; // 角色暱稱
+  currency: Currency; // 幣別
 }
 
 const partialReservedTransactionSchema =
@@ -107,6 +118,29 @@ const productSchema = new Schema<IProduct>(
       type: Schema.Types.ObjectId,
       ref: "Transaction",
       required: false,
+    },
+    paymentMethods: {
+      type: [String],
+      enum: ["匯款", "Line Pay", "街口支付", "支付寶", "微信"],
+      required: [true, "至少需要提供一種交易方式"],
+      validate: {
+        validator: function (v: string[]) {
+          return v.length > 0;
+        },
+        message: "至少需要提供一種交易方式",
+      },
+    },
+    characterNickname: {
+      type: String,
+      required: [true, "角色暱稱是必須的"],
+      trim: true,
+      maxlength: [10, "角色暱稱不能超過10個字"],
+    },
+    currency: {
+      type: String,
+      enum: ["台幣", "人民幣", "港幣"],
+      default: "台幣",
+      required: [true, "幣別是必須的"],
     },
   },
   {

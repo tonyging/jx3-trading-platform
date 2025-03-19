@@ -8,14 +8,46 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:isOpen': [value: boolean]
-  submit: [data: { amount: number; price: number }]
+  submit: [
+    data: {
+      amount: number
+      price: number
+      paymentMethods: string[]
+      characterNickname: string
+      currency: string
+    },
+  ]
 }>()
 
 // 表單資料
 const amount = ref('')
 const price = ref('')
+const characterNickname = ref('')
+const currency = ref('台幣')
 const errorMessage = ref('')
 const isSubmitting = ref(false)
+
+// 可用的支付方式選項
+const paymentOptions = ['匯款', 'Line Pay', '街口支付', '支付寶', '微信']
+
+// 可用的幣別選項
+const currencyOptions = ['台幣', '人民幣', '港幣']
+
+// 選擇的支付方式
+const selectedPaymentMethods = ref<string[]>(['匯款'])
+
+// 切換支付方式選擇
+const togglePaymentMethod = (method: string) => {
+  const index = selectedPaymentMethods.value.indexOf(method)
+  if (index === -1) {
+    selectedPaymentMethods.value.push(method)
+  } else {
+    // 確保至少保留一種支付方式
+    if (selectedPaymentMethods.value.length > 1) {
+      selectedPaymentMethods.value.splice(index, 1)
+    }
+  }
+}
 
 // 關閉 Modal
 const handleClose = () => {
@@ -23,6 +55,9 @@ const handleClose = () => {
   // 重置表單
   amount.value = ''
   price.value = ''
+  characterNickname.value = ''
+  currency.value = '台幣'
+  selectedPaymentMethods.value = ['匯款']
   errorMessage.value = ''
 }
 
@@ -32,8 +67,14 @@ const handleSubmit = async () => {
   errorMessage.value = ''
 
   // 基本驗證
-  if (!amount.value || !price.value) {
+  if (!amount.value || !price.value || !characterNickname.value) {
     errorMessage.value = '請填寫所有必填欄位'
+    return
+  }
+
+  // 角色暱稱長度驗證
+  if (characterNickname.value.length > 10) {
+    errorMessage.value = '角色暱稱不能超過10個字元'
     return
   }
 
@@ -51,12 +92,21 @@ const handleSubmit = async () => {
     return
   }
 
+  // 確認至少有一種交易方式
+  if (selectedPaymentMethods.value.length === 0) {
+    errorMessage.value = '請至少選擇一種交易方式'
+    return
+  }
+
   // 提交表單
   isSubmitting.value = true
   try {
     emit('submit', {
       amount: amountNum,
       price: priceNum,
+      paymentMethods: selectedPaymentMethods.value,
+      characterNickname: characterNickname.value.trim(),
+      currency: currency.value,
     })
   } finally {
     isSubmitting.value = false
@@ -73,8 +123,23 @@ const handleSubmit = async () => {
       <h3>建立商品</h3>
 
       <form @submit.prevent="handleSubmit" class="create-form">
+        <!-- 角色暱稱 -->
         <div class="input-group">
-          <label for="amount">數量</label>
+          <label for="characterNickname">角色暱稱 <span class="required">*</span></label>
+          <input
+            id="characterNickname"
+            v-model="characterNickname"
+            type="text"
+            required
+            placeholder="請輸入您在遊戲中的角色暱稱"
+            maxlength="10"
+          />
+          <div class="character-count">{{ characterNickname.length }}/10</div>
+        </div>
+
+        <!-- 數量 -->
+        <div class="input-group">
+          <label for="amount">數量 <span class="required">*</span></label>
           <input
             id="amount"
             v-model="amount"
@@ -86,8 +151,9 @@ const handleSubmit = async () => {
           />
         </div>
 
+        <!-- 價格 -->
         <div class="input-group">
-          <label for="price">價格（TWD）</label>
+          <label for="price">價格 <span class="required">*</span></label>
           <input
             id="price"
             v-model="price"
@@ -96,6 +162,33 @@ const handleSubmit = async () => {
             required
             placeholder="請輸入價格"
           />
+        </div>
+
+        <!-- 幣別 -->
+        <div class="input-group">
+          <label>幣別 <span class="required">*</span></label>
+          <div class="currency-options">
+            <label v-for="option in currencyOptions" :key="option" class="currency-option">
+              <input type="radio" name="currency" :value="option" v-model="currency" />
+              <span>{{ option }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 交易方式 -->
+        <div class="input-group">
+          <label>交易方式 <span class="required">*</span></label>
+          <div class="payment-options">
+            <label v-for="method in paymentOptions" :key="method" class="payment-option">
+              <input
+                type="checkbox"
+                :value="method"
+                :checked="selectedPaymentMethods.includes(method)"
+                @change="togglePaymentMethod(method)"
+              />
+              <span>{{ method }}</span>
+            </label>
+          </div>
         </div>
 
         <div v-if="errorMessage" class="error-message">
@@ -141,8 +234,10 @@ $transition: all 0.3s ease;
   border-radius: $spacing-unit;
   padding: $spacing-unit * 3;
   width: 90%;
-  max-width: 400px;
+  max-width: 450px; // 稍微加寬一點以適應更多內容
   box-shadow: $box-shadow;
+  max-height: 90vh; // 添加最大高度
+  overflow-y: auto; // 確保內容太多時可以滾動
 
   h3 {
     font-size: 20px;
@@ -179,11 +274,16 @@ $transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   gap: $spacing-unit;
+  position: relative;
 
   label {
     font-size: 14px;
     color: $text-color;
     font-weight: 500;
+
+    .required {
+      color: $error-color;
+    }
   }
 
   input {
@@ -198,6 +298,39 @@ $transition: all 0.3s ease;
       outline: none;
       box-shadow: 0 0 0 2px rgba($primary-color, 0.1);
     }
+  }
+
+  .character-count {
+    position: absolute;
+    right: $spacing-unit;
+    top: calc(50% + 10px);
+    font-size: 12px;
+    color: #999;
+  }
+}
+
+.currency-options,
+.payment-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-unit * 2;
+}
+
+.currency-option,
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: $spacing-unit;
+  cursor: pointer;
+  font-weight: normal;
+  margin-bottom: $spacing-unit;
+
+  input {
+    cursor: pointer;
+  }
+
+  span {
+    font-size: 14px;
   }
 }
 

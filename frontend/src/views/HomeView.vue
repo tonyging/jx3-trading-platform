@@ -50,7 +50,7 @@ const isAdmin = computed(() => {
 // 計算表格的總列數
 const totalColumns = computed(() => {
   // 基礎列數（賣家、數量、價格、幣值、操作）
-  let baseColumns = 5
+  let baseColumns = 8
   // 如果是管理員，加上狀態列
   if (isAdmin.value) {
     baseColumns += 1
@@ -217,6 +217,12 @@ const formatPrice = (price: number) => {
   }).format(price)
 }
 
+// 格式化交易方式顯示
+const formatPaymentMethods = (methods: string[] | undefined) => {
+  if (!methods || methods.length === 0) return '未設定'
+  return methods.join(', ')
+}
+
 // 計算幣值（每萬遊戲幣的價格）
 const calculateValue = (amount: number, price: number) => {
   return (price / amount).toFixed(2)
@@ -274,7 +280,13 @@ const handleCreateProduct = () => {
 }
 
 // 處理表單提交
-const handleSubmitProduct = async (data: { amount: number; price: number }) => {
+const handleSubmitProduct = async (data: {
+  amount: number
+  price: number
+  paymentMethods: string[]
+  characterNickname: string
+  currency: string
+}) => {
   try {
     await productApi.createProduct(data)
     isCreateModalOpen.value = false
@@ -310,7 +322,13 @@ const handleEditProduct = (product: Product) => {
 }
 
 // 提交編輯商品
-const handleSubmitEditProduct = async (data: { amount: number; price: number }) => {
+const handleSubmitEditProduct = async (data: {
+  amount: number
+  price: number
+  paymentMethods: string[]
+  characterNickname: string
+  currency: string
+}) => {
   if (!currentEditProduct.value) return
   try {
     await productApi.updateProduct(currentEditProduct.value._id, data)
@@ -325,12 +343,17 @@ const handleSubmitEditProduct = async (data: { amount: number; price: number }) 
 }
 
 // 確認購買商品頁面
-const handleConfirmPurchase = async (purchaseData: { amount: number; totalPrice: number }) => {
+const handleConfirmPurchase = async (purchaseData: {
+  amount: number
+  totalPrice: number
+  paymentMethod: string
+}) => {
   if (selectedProduct.value) {
     try {
       const response = await productApi.reserveProduct(
         selectedProduct.value._id,
         purchaseData.amount,
+        purchaseData.paymentMethod,
       )
 
       // 確保我們有收到交易資料
@@ -469,6 +492,7 @@ const handleMemberInfo = () => {
             <thead>
               <tr>
                 <th>賣家</th>
+                <th>角色暱稱</th>
                 <th>
                   <div class="sort-header" @click="handleSort('amount')">
                     數量
@@ -487,6 +511,8 @@ const handleMemberInfo = () => {
                     <span :class="getSortIconClass('value')" />
                   </div>
                 </th>
+                <th>幣別</th>
+                <th>交易方式</th>
                 <!-- 管理員的狀態欄位 -->
                 <th v-if="isAdmin">狀態</th>
                 <th>操作</th>
@@ -501,9 +527,12 @@ const handleMemberInfo = () => {
               </tr>
               <tr v-else v-for="product in products" :key="product._id">
                 <td>{{ typeof product.userId === 'object' ? product.userId.name : '未知賣家' }}</td>
+                <td>{{ product.characterNickname || '未設定' }}</td>
                 <td>{{ product.amount }}</td>
                 <td>{{ formatPrice(product.price) }}</td>
                 <td>{{ calculateValue(product.price, product.amount) }}</td>
+                <td>{{ product.currency || '台幣' }}</td>
+                <td>{{ formatPaymentMethods(product.paymentMethods) }}</td>
                 <td v-if="isAdmin">
                   <span
                     :class="['status-tag', getStatusClass(product.status)]"

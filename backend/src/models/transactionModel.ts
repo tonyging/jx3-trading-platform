@@ -29,6 +29,9 @@ export interface ITransaction extends Document {
   updatedAt: Date;
   sellerConfirmed: boolean;
   buyerConfirmed: boolean;
+  paymentMethod: string; // 實際使用的交易方式
+  characterNickname: string; // 角色暱稱
+  currency: string; // 幣別
 }
 
 const transactionSchema = new Schema<ITransaction>(
@@ -111,6 +114,20 @@ const transactionSchema = new Schema<ITransaction>(
     buyerConfirmed: {
       type: Boolean,
       default: false,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["匯款", "Line Pay", "街口支付", "支付寶", "微信"],
+      required: [true, "必須選擇一種交易方式"],
+    },
+    characterNickname: {
+      type: String,
+      required: [true, "角色暱稱是必須的"],
+    },
+    currency: {
+      type: String,
+      enum: ["台幣", "人民幣", "港幣"],
+      required: [true, "幣別是必須的"],
     },
   },
   {

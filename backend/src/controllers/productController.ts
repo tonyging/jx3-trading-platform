@@ -16,19 +16,40 @@ interface IProductQueryParams {
 }
 
 class ProductController {
-  // 建立新商品
   public createProduct = async (
     req: Request,
     res: Response,
     next: NextFunction
   ) => {
     try {
-      const { amount, price } = req.body;
+      const { amount, price, paymentMethods, characterNickname, currency } =
+        req.body;
+
+      if (
+        !paymentMethods ||
+        !Array.isArray(paymentMethods) ||
+        paymentMethods.length === 0
+      ) {
+        return res.status(400).json({
+          status: "error",
+          message: "至少需要提供一種交易方式",
+        });
+      }
+
+      if (!characterNickname) {
+        return res.status(400).json({
+          status: "error",
+          message: "角色暱稱是必須的",
+        });
+      }
 
       const product = await Product.create({
         userId: Types.ObjectId.createFromHexString(req.user._id.toString()),
         amount,
         price,
+        paymentMethods,
+        characterNickname,
+        currency: currency || "台幣", // 預設為台幣
       });
 
       // 追蹤商品創建行為
@@ -40,6 +61,9 @@ class ProductController {
         {
           amount,
           price,
+          paymentMethods,
+          characterNickname,
+          currency,
         },
         req
       );
@@ -204,6 +228,10 @@ class ProductController {
         amount: existingProduct.amount,
         price: existingProduct.price,
         status: "reserved",
+        paymentMethod:
+          req.body.paymentMethod || existingProduct.paymentMethods[0], // 默認使用第一個支付方式
+        characterNickname: existingProduct.characterNickname,
+        currency: existingProduct.currency,
       });
 
       // 分兩步驟更新商品資訊
@@ -266,7 +294,6 @@ class ProductController {
     }
   };
 
-  // 更新商品
   public updateProduct = async (
     req: Request,
     res: Response,
@@ -274,7 +301,14 @@ class ProductController {
   ) => {
     try {
       const { id } = req.params;
-      const { amount, price, status } = req.body;
+      const {
+        amount,
+        price,
+        status,
+        paymentMethods,
+        characterNickname,
+        currency,
+      } = req.body;
 
       const product = await Product.findById(id);
 
@@ -297,6 +331,20 @@ class ProductController {
       if (price !== undefined) updates.price = price;
       if (status !== undefined) updates.status = status;
 
+      if (paymentMethods !== undefined) {
+        if (!Array.isArray(paymentMethods) || paymentMethods.length === 0) {
+          return res.status(400).json({
+            status: "error",
+            message: "至少需要提供一種交易方式",
+          });
+        }
+        updates.paymentMethods = paymentMethods;
+      }
+
+      if (characterNickname !== undefined)
+        updates.characterNickname = characterNickname;
+      if (currency !== undefined) updates.currency = currency;
+
       const updatedProduct = (await Product.findByIdAndUpdate(
         id,
         { $set: updates },
@@ -315,6 +363,9 @@ class ProductController {
             amount: product.amount,
             price: product.price,
             status: product.status,
+            paymentMethods: product.paymentMethods,
+            characterNickname: product.characterNickname,
+            currency: product.currency,
           },
         },
         req

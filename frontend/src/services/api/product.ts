@@ -12,6 +12,9 @@ import type {
 export interface CreateProductRequest {
   amount: number
   price: number
+  paymentMethods: string[]
+  characterNickname: string
+  currency: string
 }
 
 // 商品相關的 API
@@ -40,9 +43,10 @@ export const productApi = {
   },
 
   // 保留商品 - 需要認證
-  reserveProduct: async (productId: string, amount: number) => {
+  reserveProduct: async (productId: string, amount: number, paymentMethod?: string) => {
     const response = await api.post<TransactionResponse>(`/api/products/${productId}/reserve`, {
       amount,
+      paymentMethod,
     })
     return response.data
   },
@@ -54,6 +58,9 @@ export const productApi = {
       amount: number
       price: number
       status: ProductStatus
+      paymentMethods: string[]
+      characterNickname: string
+      currency: string
     }>,
   ) => {
     const response = await api.patch<ProductResponse>(`/api/products/${id}`, data)
