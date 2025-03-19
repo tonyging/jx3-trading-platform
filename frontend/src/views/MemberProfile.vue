@@ -245,6 +245,11 @@ onMounted(async () => {
     return
   }
 
+  // 檢查是否有特定參數來切換到交易安全頁籤
+  if (route.query.tab === 'security') {
+    currentMenu.value = 'security'
+  }
+
   // 檢查是否有Discord回調信息
   checkDiscordCallback()
 

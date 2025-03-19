@@ -25,6 +25,8 @@ const products = ref<Product[]>([])
 const loading = ref(true)
 const showPurchaseModal = ref(false)
 const selectedProduct = ref<Product | null>(null)
+const showAccountVerificationModal = ref(false)
+const verificationMessage = ref('')
 
 // 定義狀態映射
 const statusMap: Record<Product['status'], string> = {
@@ -42,8 +44,6 @@ const roleMap: Record<UserRole, string> = {
 }
 
 const isAdmin = computed(() => {
-  console.log('Current user:', userStore.currentUser)
-  console.log('Current user role:', userStore.currentUser?.role)
   return userStore.currentUser?.role === 'admin'
 })
 
@@ -60,8 +60,10 @@ const totalColumns = computed(() => {
 
 // 處理購買點擊
 const handleBuyProduct = (product: Product) => {
-  selectedProduct.value = product
-  showPurchaseModal.value = true
+  checkAccountVerification(() => {
+    selectedProduct.value = product
+    showPurchaseModal.value = true
+  })
 }
 
 // 初始化路由和用戶狀態管理
@@ -126,7 +128,6 @@ const loadProducts = async () => {
           requestParams.userId = userStore.currentUser.id
           requestParams.status = 'active' as ProductStatus
         } else {
-          console.warn('無法獲取用戶 ID')
           showNotification('無法取得用戶資訊', 'error')
           products.value = []
           loading.value = false
@@ -141,7 +142,6 @@ const loadProducts = async () => {
     }
 
     const response = await productApi.getProducts(requestParams)
-    console.log('Loaded products:', response.data.products)
     products.value = response.data.products
   } catch (error: unknown) {
     const apiError = error as ApiError
@@ -149,11 +149,36 @@ const loadProducts = async () => {
       apiError.response?.data?.message || (apiError.message as string) || '載入商品列表失敗',
       'error',
     )
-    console.error('載入商品列表失敗:', error)
     products.value = []
   } finally {
     loading.value = false
   }
+}
+
+// 帳號驗證機制
+const checkAccountVerification = async (action: () => void) => {
+  await userStore.fetchCurrentUser()
+  const currentUser = userStore.currentUser
+
+  if (!currentUser?.isPhoneVerified && !currentUser?.discordId) {
+    verificationMessage.value = '您需要先驗證手機號碼和綁定 Discord 帳號'
+    showAccountVerificationModal.value = true
+    return
+  }
+
+  if (!currentUser?.isPhoneVerified) {
+    verificationMessage.value = '您需要先驗證手機號碼'
+    showAccountVerificationModal.value = true
+    return
+  }
+
+  if (!currentUser?.discordId) {
+    verificationMessage.value = '您需要先綁定 Discord 帳號'
+    showAccountVerificationModal.value = true
+    return
+  }
+
+  action()
 }
 
 // 切換頁籤的方法
@@ -168,7 +193,6 @@ const switchTab = async (tab: ProductListType) => {
       await userStore.fetchCurrentUser()
     } catch (error: unknown) {
       const apiError = error as ApiError
-      console.error('Failed to load user info:', error)
       showNotification((apiError.message as string) || '載入用戶資訊失敗', 'error')
     }
   }
@@ -276,7 +300,9 @@ const isCreateModalOpen = ref(false)
 
 // 處理建立商品的點擊事件
 const handleCreateProduct = () => {
-  isCreateModalOpen.value = true
+  checkAccountVerification(() => {
+    isCreateModalOpen.value = true
+  })
 }
 
 // 處理表單提交
@@ -295,30 +321,33 @@ const handleSubmitProduct = async (data: {
   } catch (error: unknown) {
     const apiError = error as ApiError
     showNotification((apiError.message as string) || '建立商品失敗，請稍後再試', 'error')
-    console.error('建立商品失敗:', error)
   }
 }
 
 // 刪除商品的方法
 const handleDeleteProduct = async (product: Product) => {
-  try {
-    await productApi.deleteProduct(product._id)
-    showNotification('商品已成功刪除')
-    await loadProducts() // 重新載入商品列表
-  } catch (error: unknown) {
-    const apiError = error as ApiError
-    showNotification((apiError.message as string) || '刪除商品失敗，請稍後再試', 'error')
-    console.error('刪除商品失敗:', error)
-  }
+  checkAccountVerification(async () => {
+    try {
+      await productApi.deleteProduct(product._id)
+      showNotification('商品已成功刪除')
+      await loadProducts()
+    } catch (error: unknown) {
+      const apiError = error as ApiError
+      showNotification((apiError.message as string) || '刪除商品失敗，請稍後再試', 'error')
+    }
+  })
 }
+
 // 編輯商品相關狀態和方法
 const isEditModalOpen = ref(false)
 const currentEditProduct = ref<Product | null>(null)
 
 // 打開編輯商品彈窗
 const handleEditProduct = (product: Product) => {
-  currentEditProduct.value = product
-  isEditModalOpen.value = true
+  checkAccountVerification(() => {
+    currentEditProduct.value = product
+    isEditModalOpen.value = true
+  })
 }
 
 // 提交編輯商品
@@ -338,7 +367,6 @@ const handleSubmitEditProduct = async (data: {
   } catch (error: unknown) {
     const apiError = error as ApiError
     showNotification((apiError.message as string) || '更新商品失敗，請稍後再試', 'error')
-    console.error('更新商品失敗:', error)
   }
 }
 
@@ -375,8 +403,6 @@ const handleConfirmPurchase = async (purchaseData: {
       const errorMessage = (apiError.message as string) || '購買失敗，請稍後再試'
 
       showNotification(errorMessage, 'error')
-      console.error('購買失敗詳情:', error)
-      console.error('選擇的商品:', selectedProduct.value)
     }
   }
 }
@@ -393,15 +419,11 @@ const handleViewTransaction = (product: Product) => {
     }
 
     if (!transactionId) {
-      console.error('交易 ID 無效:', product.transactionId)
       showNotification('交易資訊異常', 'error')
       return
     }
-
-    console.log('Resolved Transaction ID:', transactionId)
     router.push(`/transactions/${transactionId}`)
   } else {
-    console.error('找不到交易ID:', product)
     showNotification('找不到相關交易資訊', 'error')
   }
 }
@@ -428,7 +450,7 @@ const getRoleDisplay = (role: UserRole | undefined) => {
 }
 
 const handleMemberInfo = () => {
-  router.push('/member-info')
+  router.push('/member-info?tab=security')
   closeUserMenu()
 }
 </script>
@@ -597,6 +619,12 @@ const handleMemberInfo = () => {
         </div>
       </main>
     </div>
+    <div class="disclaimer">
+      <span
+        >免責聲明:
+        本平台僅提供劍三交易資訊的媒合服務,不涉及任何金流操作。交易過程中請務必提高警惕,謹防詐騙。所有交易風險由買賣雙方自行承擔,本平台不承擔任何法律責任。</span
+      >
+    </div>
   </div>
   <CreateProductModal v-model:isOpen="isCreateModalOpen" @submit="handleSubmitProduct" />
   <EditProductModal
@@ -611,6 +639,29 @@ const handleMemberInfo = () => {
     @confirm="handleConfirmPurchase"
     @cancel="showPurchaseModal = false"
   />
+  <!-- 帳號驗證 Modal -->
+  <div v-if="showAccountVerificationModal" class="verification-modal-overlay">
+    <div class="verification-modal">
+      <div class="verification-modal-content">
+        <h2>帳號未完成驗證</h2>
+        <p>{{ verificationMessage }}</p>
+        <div class="verification-modal-actions">
+          <button class="cancel-button" @click="showAccountVerificationModal = false">取消</button>
+          <button
+            class="verify-button"
+            @click="
+              () => {
+                showAccountVerificationModal = false
+                router.push('/member-info?tab=security')
+              }
+            "
+          >
+            前往驗證
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- 通知組件 -->
   <div v-if="notification.show" :class="['notification', `notification-${notification.type}`]">
     {{ notification.message }}
@@ -631,6 +682,8 @@ $transition: all 0.3s ease;
 
 // 基礎頁面容器
 .platform-base {
+  display: flex;
+  flex-direction: column;
   height: 100%;
   width: 100%;
   position: fixed;
@@ -639,6 +692,20 @@ $transition: all 0.3s ease;
   background-color: $background-color;
   background-image: linear-gradient(135deg, #ffffff, #f0f0f0);
   overflow-y: auto;
+}
+
+.disclaimer {
+  margin-top: auto;
+  padding: $spacing-unit * 2;
+  background: #fff5f5;
+  text-align: center;
+  font-size: 12px;
+  color: #f5222d;
+
+  span {
+    display: inline-block;
+    line-height: 1.6;
+  }
 }
 
 // 頁面頂部結構
@@ -663,13 +730,14 @@ $transition: all 0.3s ease;
 
 // 內容區域包裝容器
 .content-wrapper {
-  min-height: 100vh;
+  min-height: auto;
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding-top: $spacing-unit * 10;
   overflow: auto;
+  padding-bottom: $spacing-unit * 4;
 }
 
 // 主要內容區域 - 交易頁面特定樣式
@@ -1049,6 +1117,77 @@ td {
   &:hover {
     transform: translateY(-1px);
     background: linear-gradient(to right, #777, #555);
+  }
+}
+
+.verification-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.verification-modal {
+  background: white;
+  border-radius: $spacing-unit * 2;
+  width: 90%;
+  max-width: 500px;
+  padding: $spacing-unit * 4;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+  .verification-modal-content {
+    text-align: center;
+
+    h2 {
+      color: $primary-color;
+      margin-bottom: $spacing-unit * 3;
+    }
+
+    p {
+      color: $text-color;
+      margin-bottom: $spacing-unit * 4;
+      line-height: 1.6;
+    }
+
+    .verification-modal-actions {
+      display: flex;
+      justify-content: center;
+      gap: $spacing-unit * 3;
+
+      .cancel-button,
+      .verify-button {
+        padding: $spacing-unit * 1.5 $spacing-unit * 3;
+        border: none;
+        border-radius: $spacing-unit;
+        cursor: pointer;
+        transition: $transition;
+        font-weight: 600;
+      }
+
+      .cancel-button {
+        background: #f5f5f5;
+        color: $text-color;
+
+        &:hover {
+          background: #e0e0e0;
+        }
+      }
+
+      .verify-button {
+        background: linear-gradient(to right, $primary-color, $primary-hover);
+        color: white;
+
+        &:hover {
+          transform: translateY(-2px);
+        }
+      }
+    }
   }
 }
 

@@ -394,6 +394,12 @@ watch(
         </template>
       </main>
     </div>
+    <div class="disclaimer">
+      <span>
+        免責聲明:
+        本平台僅提供劍三交易資訊的媒合服務,不涉及任何金流操作。交易過程中請務必提高警惕,謹防詐騙。所有交易風險由買賣雙方自行承擔,本平台不承擔任何法律責任。
+      </span>
+    </div>
   </div>
 
   <!-- 通知組件 -->
@@ -424,11 +430,26 @@ $error-color: #ff4d4f;
 }
 
 .content-wrapper {
-  min-height: 100vh;
   width: 100%;
   display: flex;
   justify-content: center;
   padding: $spacing-unit * 4;
+  padding-bottom: $spacing-unit * 6;
+}
+
+.disclaimer {
+  margin-top: auto; /* 推到底部 */
+  padding: $spacing-unit * 2;
+  background: #fff5f5;
+  text-align: center;
+  font-size: 12px;
+  color: #f5222d;
+  width: 100%;
+
+  span {
+    display: inline-block;
+    line-height: 1.6;
+  }
 }
 
 .main-content {

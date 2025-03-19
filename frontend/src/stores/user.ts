@@ -60,7 +60,6 @@ export const useUserStore = defineStore(
         if (response.status === 'success' && response.data) {
           token.value = response.data.token
           currentUser.value = response.data.user
-          console.log('currentUser的值', currentUser.value)
           localStorage.setItem('token', response.data.token)
           return response
         } else {
@@ -103,16 +102,12 @@ export const useUserStore = defineStore(
 
     // 取得當前用戶資料
     async function fetchCurrentUser() {
-      console.log('開始獲取用戶資訊', token.value ? '有 token' : '無 token')
       if (!token.value) {
-        console.log('無 token，中止獲取用戶資訊')
         return null
       }
 
       try {
         const userData = await userService.getProfile()
-        console.log('成功獲取用戶資訊', userData.data)
-
         if (userData) {
           // 顯式轉換為 User 型別
           const userDataWithRole: User = {
@@ -121,18 +116,22 @@ export const useUserStore = defineStore(
             name: userData.data.name,
             role: userData.data.role || 'user', // 提供預設值
             createdAt: userData.data.createdAt,
+            phoneNumber: userData.data.phoneNumber,
             isPhoneVerified: userData.data.isPhoneVerified,
+            discordId: userData.data.discordId,
+            discordUsername: userData.data.discordUsername,
+            discordAvatar: userData.data.discordAvatar,
+            global_name: userData.data.global_name,
+            contactInfo: userData.data.contactInfo,
           }
 
           currentUser.value = userDataWithRole
           return userData
         } else {
-          console.warn('獲取的用戶資訊為空')
           logout()
           return null
         }
       } catch (err) {
-        console.error('獲取用戶資訊失敗:', err)
         logout()
         return null
       }
@@ -212,7 +211,6 @@ export const useUserStore = defineStore(
         return response
       } catch (err: unknown) {
         const apiError = err as ApiError
-        console.error('發送驗證碼錯誤:', err)
         if (apiError.response?.data?.message) {
           error.value = apiError.response.data.message
           throw new Error(apiError.response.data.message)
@@ -264,8 +262,6 @@ export const useUserStore = defineStore(
       localStorage.setItem('token', userData.token)
       // 也將 token 存儲到 Pinia store 中
       token.value = userData.token
-
-      console.log('用戶已登入:', userData)
     }
     // 返回所有需要在組件中使用的狀態和方法
     return {
