@@ -10,6 +10,7 @@
   background-color: $background-color;
   background-image: linear-gradient(135deg, #ffffff, #f0f0f0);
   overflow-y: auto;
+  padding-bottom: $spacing-unit * 4;
 }
 
 .site-header {
