@@ -15,9 +15,10 @@ export const productApi = {
         return response.data;
     },
     // 保留商品 - 需要認證
-    reserveProduct: async (productId, amount) => {
+    reserveProduct: async (productId, amount, paymentMethod) => {
         const response = await api.post(`/api/products/${productId}/reserve`, {
             amount,
+            paymentMethod,
         });
         return response.data;
     },

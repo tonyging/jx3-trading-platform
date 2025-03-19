@@ -1,6 +1,6 @@
 <!-- MemberProfile.vue -->
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick, watch, computed } from 'vue'
+import { ref, reactive, onMounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { userService } from '@/services/api/user'

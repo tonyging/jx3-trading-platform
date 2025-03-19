@@ -4,14 +4,38 @@ const emit = defineEmits();
 // 表單資料
 const amount = ref('');
 const price = ref('');
+const characterNickname = ref('');
+const currency = ref('台幣');
 const errorMessage = ref('');
 const isSubmitting = ref(false);
+// 可用的支付方式選項
+const paymentOptions = ['匯款', 'Line Pay', '街口支付', '支付寶', '微信'];
+// 可用的幣別選項
+const currencyOptions = ['台幣', '人民幣', '港幣'];
+// 選擇的支付方式
+const selectedPaymentMethods = ref(['匯款']);
+// 切換支付方式選擇
+const togglePaymentMethod = (method) => {
+    const index = selectedPaymentMethods.value.indexOf(method);
+    if (index === -1) {
+        selectedPaymentMethods.value.push(method);
+    }
+    else {
+        // 確保至少保留一種支付方式
+        if (selectedPaymentMethods.value.length > 1) {
+            selectedPaymentMethods.value.splice(index, 1);
+        }
+    }
+};
 // 關閉 Modal
 const handleClose = () => {
     emit('update:isOpen', false);
     // 重置表單
     amount.value = '';
     price.value = '';
+    characterNickname.value = '';
+    currency.value = '台幣';
+    selectedPaymentMethods.value = ['匯款'];
     errorMessage.value = '';
 };
 // 驗證和提交表單
@@ -19,8 +43,13 @@ const handleSubmit = async () => {
     // 清除錯誤訊息
     errorMessage.value = '';
     // 基本驗證
-    if (!amount.value || !price.value) {
+    if (!amount.value || !price.value || !characterNickname.value) {
         errorMessage.value = '請填寫所有必填欄位';
+        return;
+    }
+    // 角色暱稱長度驗證
+    if (characterNickname.value.length > 10) {
+        errorMessage.value = '角色暱稱不能超過10個字元';
         return;
     }
     // 數值驗證
@@ -34,12 +63,20 @@ const handleSubmit = async () => {
         errorMessage.value = '請輸入有效的價格';
         return;
     }
+    // 確認至少有一種交易方式
+    if (selectedPaymentMethods.value.length === 0) {
+        errorMessage.value = '請至少選擇一種交易方式';
+        return;
+    }
     // 提交表單
     isSubmitting.value = true;
     try {
         emit('submit', {
             amount: amountNum,
             price: priceNum,
+            paymentMethods: selectedPaymentMethods.value,
+            characterNickname: characterNickname.value.trim(),
+            currency: currency.value,
         });
     }
     finally {
@@ -75,7 +112,31 @@ function __VLS_template() {
             ...{ class: ("input-group") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            for: ("characterNickname"),
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: ("required") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
+            id: ("characterNickname"),
+            value: ((__VLS_ctx.characterNickname)),
+            type: ("text"),
+            required: (true),
+            placeholder: ("請輸入您在遊戲中的角色暱稱"),
+            maxlength: ("10"),
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("character-count") },
+        });
+        (__VLS_ctx.characterNickname.length);
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("input-group") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
             for: ("amount"),
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: ("required") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             id: ("amount"),
@@ -92,6 +153,9 @@ function __VLS_template() {
         __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
             for: ("price"),
         });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: ("required") },
+        });
         __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
             id: ("price"),
             type: ("number"),
@@ -100,6 +164,58 @@ function __VLS_template() {
             placeholder: ("請輸入價格"),
         });
         (__VLS_ctx.price);
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("input-group") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({});
+        __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: ("required") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("currency-options") },
+        });
+        for (const [option] of __VLS_getVForSourceType((__VLS_ctx.currencyOptions))) {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                key: ((option)),
+                ...{ class: ("currency-option") },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
+                type: ("radio"),
+                name: ("currency"),
+                value: ((option)),
+            });
+            (__VLS_ctx.currency);
+            __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            (option);
+        }
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("input-group") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({});
+        __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: ("required") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("payment-options") },
+        });
+        for (const [method] of __VLS_getVForSourceType((__VLS_ctx.paymentOptions))) {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                key: ((method)),
+                ...{ class: ("payment-option") },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
+                ...{ onChange: (...[$event]) => {
+                        if (!((props.isOpen)))
+                            return;
+                        __VLS_ctx.togglePaymentMethod(method);
+                    } },
+                type: ("checkbox"),
+                value: ((method)),
+                checked: ((__VLS_ctx.selectedPaymentMethods.includes(method))),
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            (method);
+        }
         if (__VLS_ctx.errorMessage) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: ("error-message") },
@@ -121,7 +237,7 @@ function __VLS_template() {
         });
         (__VLS_ctx.isSubmitting ? '處理中...' : '確認');
     }
-    ['modal-overlay', 'modal-content', 'modal-close-btn', 'create-form', 'input-group', 'input-group', 'error-message', 'button-group', 'cancel-button', 'submit-button',];
+    ['modal-overlay', 'modal-content', 'modal-close-btn', 'create-form', 'input-group', 'required', 'character-count', 'input-group', 'required', 'input-group', 'required', 'input-group', 'required', 'currency-options', 'currency-option', 'input-group', 'required', 'payment-options', 'payment-option', 'error-message', 'button-group', 'cancel-button', 'submit-button',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -142,8 +258,14 @@ const __VLS_self = (await import('vue')).defineComponent({
         return {
             amount: amount,
             price: price,
+            characterNickname: characterNickname,
+            currency: currency,
             errorMessage: errorMessage,
             isSubmitting: isSubmitting,
+            paymentOptions: paymentOptions,
+            currencyOptions: currencyOptions,
+            selectedPaymentMethods: selectedPaymentMethods,
+            togglePaymentMethod: togglePaymentMethod,
             handleClose: handleClose,
             handleSubmit: handleSubmit,
         };

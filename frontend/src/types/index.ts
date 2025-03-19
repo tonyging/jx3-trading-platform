@@ -10,6 +10,8 @@ export type TransactionStatus =
   | 'completed'
   | 'cancelled'
 export type ProductListType = 'all' | 'my' | 'trading' | 'admin'
+export type PaymentMethod = '匯款' | 'Line Pay' | '街口支付' | '支付寶' | '微信'
+export type Currency = '台幣' | '人民幣' | '港幣'
 
 // 用戶相關型別
 export interface User {
@@ -61,7 +63,10 @@ export interface Product {
   createdAt: string
   updatedAt: string
   partialReservedTransactions: PartialReservedTransaction[]
-  originalProductId?: string // 添加此欄位
+  originalProductId?: string
+  paymentMethods: PaymentMethod[] // 支援多種交易方式
+  characterNickname: string // 角色暱稱
+  currency: Currency // 幣別
 }
 
 // 交易訊息
@@ -94,6 +99,9 @@ export interface Transaction {
   updatedAt: Date
   sellerConfirmed: boolean
   buyerConfirmed: boolean
+  paymentMethods: PaymentMethod[] // 支援多種交易方式
+  characterNickname: string // 角色暱稱
+  currency: Currency // 幣別
 }
 
 // 響應型別

@@ -1,5 +1,8 @@
 import api from './index'
 
+export type PaymentMethod = '匯款' | 'Line Pay' | '街口支付' | '支付寶' | '微信'
+export type Currency = '台幣' | '人民幣' | '港幣'
+
 // 用戶聯繫資訊介面
 export interface UserContactInfo {
   line?: string
@@ -45,6 +48,9 @@ export interface Transaction {
   updatedAt: Date
   sellerConfirmed: boolean
   buyerConfirmed: boolean
+  paymentMethod: PaymentMethod // 交易方式
+  characterNickname: string // 角色暱稱
+  currency: Currency // 幣別
 }
 
 // API 響應介面

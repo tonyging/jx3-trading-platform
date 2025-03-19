@@ -26,7 +26,6 @@ async function handleLogin() {
             email: email.value,
             password: password.value,
         }));
-        localStorage.setItem('shouldReload', 'true');
         router.push('/');
     }
     catch (error) {

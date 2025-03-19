@@ -11,6 +11,8 @@ const products = ref([]);
 const loading = ref(true);
 const showPurchaseModal = ref(false);
 const selectedProduct = ref(null);
+const showAccountVerificationModal = ref(false);
+const verificationMessage = ref('');
 // 定義狀態映射
 const statusMap = {
     active: '可購買',
@@ -25,14 +27,12 @@ const roleMap = {
     banned: '停權會員',
 };
 const isAdmin = computed(() => {
-    console.log('Current user:', userStore.currentUser);
-    console.log('Current user role:', userStore.currentUser?.role);
     return userStore.currentUser?.role === 'admin';
 });
 // 計算表格的總列數
 const totalColumns = computed(() => {
     // 基礎列數（賣家、數量、價格、幣值、操作）
-    let baseColumns = 5;
+    let baseColumns = 8;
     // 如果是管理員，加上狀態列
     if (isAdmin.value) {
         baseColumns += 1;
@@ -41,8 +41,10 @@ const totalColumns = computed(() => {
 });
 // 處理購買點擊
 const handleBuyProduct = (product) => {
-    selectedProduct.value = product;
-    showPurchaseModal.value = true;
+    checkAccountVerification(() => {
+        selectedProduct.value = product;
+        showPurchaseModal.value = true;
+    });
 };
 // 初始化路由和用戶狀態管理
 const router = useRouter();
@@ -92,7 +94,6 @@ const loadProducts = async () => {
                     requestParams.status = 'active';
                 }
                 else {
-                    console.warn('無法獲取用戶 ID');
                     showNotification('無法取得用戶資訊', 'error');
                     products.value = [];
                     loading.value = false;
@@ -106,18 +107,37 @@ const loadProducts = async () => {
                 requestParams.status = 'active';
         }
         const response = await productApi.getProducts(requestParams);
-        console.log('Loaded products:', response.data.products);
         products.value = response.data.products;
     }
     catch (error) {
         const apiError = error;
         showNotification(apiError.response?.data?.message || apiError.message || '載入商品列表失敗', 'error');
-        console.error('載入商品列表失敗:', error);
         products.value = [];
     }
     finally {
         loading.value = false;
     }
+};
+// 帳號驗證機制
+const checkAccountVerification = async (action) => {
+    await userStore.fetchCurrentUser();
+    const currentUser = userStore.currentUser;
+    if (!currentUser?.isPhoneVerified && !currentUser?.discordId) {
+        verificationMessage.value = '您需要先驗證手機號碼和綁定 Discord 帳號';
+        showAccountVerificationModal.value = true;
+        return;
+    }
+    if (!currentUser?.isPhoneVerified) {
+        verificationMessage.value = '您需要先驗證手機號碼';
+        showAccountVerificationModal.value = true;
+        return;
+    }
+    if (!currentUser?.discordId) {
+        verificationMessage.value = '您需要先綁定 Discord 帳號';
+        showAccountVerificationModal.value = true;
+        return;
+    }
+    action();
 };
 // 切換頁籤的方法
 const switchTab = async (tab) => {
@@ -132,7 +152,6 @@ const switchTab = async (tab) => {
         }
         catch (error) {
             const apiError = error;
-            console.error('Failed to load user info:', error);
             showNotification(apiError.message || '載入用戶資訊失敗', 'error');
         }
     }
@@ -172,6 +191,12 @@ const formatPrice = (price) => {
         minimumFractionDigits: 0,
     }).format(price);
 };
+// 格式化交易方式顯示
+const formatPaymentMethods = (methods) => {
+    if (!methods || methods.length === 0)
+        return '未設定';
+    return methods.join(', ');
+};
 // 計算幣值（每萬遊戲幣的價格）
 const calculateValue = (amount, price) => {
     return (price / amount).toFixed(2);
@@ -199,12 +224,6 @@ onMounted(async () => {
         router.push('/login');
         return;
     }
-    const shouldReload = localStorage.getItem('shouldReload');
-    if (shouldReload) {
-        localStorage.removeItem('shouldReload');
-        window.location.reload();
-        return;
-    }
     const defaultTab = localStorage.getItem('defaultTab');
     if (defaultTab === 'trading') {
         await switchTab('trading');
@@ -225,7 +244,9 @@ onMounted(async () => {
 const isCreateModalOpen = ref(false);
 // 處理建立商品的點擊事件
 const handleCreateProduct = () => {
-    isCreateModalOpen.value = true;
+    checkAccountVerification(() => {
+        isCreateModalOpen.value = true;
+    });
 };
 // 處理表單提交
 const handleSubmitProduct = async (data) => {
@@ -238,29 +259,31 @@ const handleSubmitProduct = async (data) => {
     catch (error) {
         const apiError = error;
         showNotification(apiError.message || '建立商品失敗，請稍後再試', 'error');
-        console.error('建立商品失敗:', error);
     }
 };
 // 刪除商品的方法
 const handleDeleteProduct = async (product) => {
-    try {
-        await productApi.deleteProduct(product._id);
-        showNotification('商品已成功刪除');
-        await loadProducts(); // 重新載入商品列表
-    }
-    catch (error) {
-        const apiError = error;
-        showNotification(apiError.message || '刪除商品失敗，請稍後再試', 'error');
-        console.error('刪除商品失敗:', error);
-    }
+    checkAccountVerification(async () => {
+        try {
+            await productApi.deleteProduct(product._id);
+            showNotification('商品已成功刪除');
+            await loadProducts();
+        }
+        catch (error) {
+            const apiError = error;
+            showNotification(apiError.message || '刪除商品失敗，請稍後再試', 'error');
+        }
+    });
 };
 // 編輯商品相關狀態和方法
 const isEditModalOpen = ref(false);
 const currentEditProduct = ref(null);
 // 打開編輯商品彈窗
 const handleEditProduct = (product) => {
-    currentEditProduct.value = product;
-    isEditModalOpen.value = true;
+    checkAccountVerification(() => {
+        currentEditProduct.value = product;
+        isEditModalOpen.value = true;
+    });
 };
 // 提交編輯商品
 const handleSubmitEditProduct = async (data) => {
@@ -275,14 +298,13 @@ const handleSubmitEditProduct = async (data) => {
     catch (error) {
         const apiError = error;
         showNotification(apiError.message || '更新商品失敗，請稍後再試', 'error');
-        console.error('更新商品失敗:', error);
     }
 };
 // 確認購買商品頁面
 const handleConfirmPurchase = async (purchaseData) => {
     if (selectedProduct.value) {
         try {
-            const response = await productApi.reserveProduct(selectedProduct.value._id, purchaseData.amount);
+            const response = await productApi.reserveProduct(selectedProduct.value._id, purchaseData.amount, purchaseData.paymentMethod);
             // 確保我們有收到交易資料
             if (!response.data?.transaction?._id) {
                 throw new Error('未收到有效的交易資訊');
@@ -299,8 +321,6 @@ const handleConfirmPurchase = async (purchaseData) => {
             // 提供更詳細的錯誤訊息
             const errorMessage = apiError.message || '購買失敗，請稍後再試';
             showNotification(errorMessage, 'error');
-            console.error('購買失敗詳情:', error);
-            console.error('選擇的商品:', selectedProduct.value);
         }
     }
 };
@@ -315,15 +335,12 @@ const handleViewTransaction = (product) => {
             transactionId = product.transactionId;
         }
         if (!transactionId) {
-            console.error('交易 ID 無效:', product.transactionId);
             showNotification('交易資訊異常', 'error');
             return;
         }
-        console.log('Resolved Transaction ID:', transactionId);
         router.push(`/transactions/${transactionId}`);
     }
     else {
-        console.error('找不到交易ID:', product);
         showNotification('找不到相關交易資訊', 'error');
     }
 };
@@ -347,14 +364,14 @@ const getRoleDisplay = (role) => {
     return roleMap[role] || '未知角色';
 };
 const handleMemberInfo = () => {
-    router.push('/member-info');
+    router.push('/member-info?tab=security');
     closeUserMenu();
 }; /* PartiallyEnd: #3632/scriptSetup.vue */
 function __VLS_template() {
     const __VLS_ctx = {};
     let __VLS_components;
     let __VLS_directives;
-    ['delete-button', 'site-header', 'content-wrapper', 'main-content', 'trade-content', 'trade-table', 'sort-header', 'view-button',];
+    ['delete-button', 'cancel-button', 'verify-button', 'site-header', 'content-wrapper', 'main-content', 'trade-content', 'trade-table', 'sort-header', 'view-button',];
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -457,6 +474,7 @@ function __VLS_template() {
     __VLS_elementAsFunction(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
+    __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ onClick: (...[$event]) => {
                 __VLS_ctx.handleSort('amount');
@@ -486,6 +504,8 @@ function __VLS_template() {
     __VLS_elementAsFunction(__VLS_intrinsicElements.span)({
         ...{ class: ((__VLS_ctx.getSortIconClass('value'))) },
     });
+    __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
+    __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
     if (__VLS_ctx.isAdmin) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
     }
@@ -513,11 +533,17 @@ function __VLS_template() {
             __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
             (typeof product.userId === 'object' ? product.userId.name : '未知賣家');
             __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
+            (product.characterNickname || '未設定');
+            __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
             (product.amount);
             __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
             (__VLS_ctx.formatPrice(product.price));
             __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
             (__VLS_ctx.calculateValue(product.price, product.amount));
+            __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
+            (product.currency || '台幣');
+            __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
+            (__VLS_ctx.formatPaymentMethods(product.paymentMethods));
             if (__VLS_ctx.isAdmin) {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
                 __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
@@ -643,6 +669,10 @@ function __VLS_template() {
             }
         }
     }
+    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: ("disclaimer") },
+    });
+    __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     // @ts-ignore
     /** @type { [typeof CreateProductModal, ] } */ ;
     // @ts-ignore
@@ -712,13 +742,45 @@ function __VLS_template() {
         let __VLS_17;
         var __VLS_18;
     }
+    if (__VLS_ctx.showAccountVerificationModal) {
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("verification-modal-overlay") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("verification-modal") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("verification-modal-content") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
+        __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+        (__VLS_ctx.verificationMessage);
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("verification-modal-actions") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (...[$event]) => {
+                    if (!((__VLS_ctx.showAccountVerificationModal)))
+                        return;
+                    __VLS_ctx.showAccountVerificationModal = false;
+                } },
+            ...{ class: ("cancel-button") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (() => {
+                    __VLS_ctx.showAccountVerificationModal = false;
+                    __VLS_ctx.router.push('/member-info?tab=security');
+                }) },
+            ...{ class: ("verify-button") },
+        });
+    }
     if (__VLS_ctx.notification.show) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: ((['notification', `notification-${__VLS_ctx.notification.type}`])) },
         });
         (__VLS_ctx.notification.message);
     }
-    ['platform-base', 'site-header', 'user-menu-container', 'user-avatar', 'user-dropdown-menu', 'user-info', 'user-name', 'role-tag', 'user-email', 'user-actions', 'menu-button', 'profile-button', 'menu-button', 'logout-button', 'content-wrapper', 'main-content', 'trade-content', 'table-header', 'tabs', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'create-button', 'trade-table', 'sort-header', 'sort-header', 'sort-header', 'status-message', 'status-message', 'status-tag', 'view-button', 'admin-actions', 'view-button', 'delete-button', 'product-actions', 'edit-button', 'delete-button', 'buy-button', 'notification',];
+    ['platform-base', 'site-header', 'user-menu-container', 'user-avatar', 'user-dropdown-menu', 'user-info', 'user-name', 'role-tag', 'user-email', 'user-actions', 'menu-button', 'profile-button', 'menu-button', 'logout-button', 'content-wrapper', 'main-content', 'trade-content', 'table-header', 'tabs', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'create-button', 'trade-table', 'sort-header', 'sort-header', 'sort-header', 'status-message', 'status-message', 'status-tag', 'view-button', 'admin-actions', 'view-button', 'delete-button', 'product-actions', 'edit-button', 'delete-button', 'buy-button', 'disclaimer', 'verification-modal-overlay', 'verification-modal', 'verification-modal-content', 'verification-modal-actions', 'cancel-button', 'verify-button', 'notification',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -744,9 +806,12 @@ const __VLS_self = (await import('vue')).defineComponent({
             loading: loading,
             showPurchaseModal: showPurchaseModal,
             selectedProduct: selectedProduct,
+            showAccountVerificationModal: showAccountVerificationModal,
+            verificationMessage: verificationMessage,
             isAdmin: isAdmin,
             totalColumns: totalColumns,
             handleBuyProduct: handleBuyProduct,
+            router: router,
             userStore: userStore,
             currentTab: currentTab,
             notification: notification,
@@ -756,6 +821,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             toggleUserMenu: toggleUserMenu,
             handleLogout: handleLogout,
             formatPrice: formatPrice,
+            formatPaymentMethods: formatPaymentMethods,
             calculateValue: calculateValue,
             handleSort: handleSort,
             getSortIconClass: getSortIconClass,

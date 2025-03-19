@@ -241,6 +241,39 @@ function __VLS_template() {
                 ...{ class: ("primary-button") },
             });
         }
+        else if (__VLS_ctx.discordStatus === 'dcisalreadyused') {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: ("result-card error") },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: ("result-icon") },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
+            __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: ("result-description") },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: ("discord-requirement") },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: ("requirement-icon") },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: ("requirement-text") },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
+            __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+            __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: ("additional-info") },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: ("action-buttons") },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (__VLS_ctx.goToMemberProfile) },
+                ...{ class: ("primary-button") },
+            });
+        }
         else {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: ("result-card neutral") },
@@ -258,7 +291,7 @@ function __VLS_template() {
             });
         }
     }
-    ['account-link-result-page-wrapper', 'account-link-result-page', 'result-container', 'loading-state', 'loading-spinner', 'result-card', 'success', 'result-icon', 'result-description', 'discord-info', 'discord-avatar-container', 'discord-avatar', 'discord-logo', 'discord-user-details', 'discord-global-name', 'additional-info', 'primary-button', 'result-card', 'error', 'result-icon', 'result-description', 'action-buttons', 'secondary-button', 'primary-button', 'result-card', 'warning', 'result-icon', 'result-description', 'action-buttons', 'secondary-button', 'result-card', 'error', 'result-icon', 'result-description', 'action-buttons', 'secondary-button', 'result-card', 'warning', 'result-icon', 'result-description', 'discord-requirement', 'requirement-icon', 'requirement-text', 'additional-info', 'action-buttons', 'primary-button', 'result-card', 'neutral', 'result-icon', 'result-description', 'primary-button',];
+    ['account-link-result-page-wrapper', 'account-link-result-page', 'result-container', 'loading-state', 'loading-spinner', 'result-card', 'success', 'result-icon', 'result-description', 'discord-info', 'discord-avatar-container', 'discord-avatar', 'discord-logo', 'discord-user-details', 'discord-global-name', 'additional-info', 'primary-button', 'result-card', 'error', 'result-icon', 'result-description', 'action-buttons', 'secondary-button', 'primary-button', 'result-card', 'warning', 'result-icon', 'result-description', 'action-buttons', 'secondary-button', 'result-card', 'error', 'result-icon', 'result-description', 'action-buttons', 'secondary-button', 'result-card', 'warning', 'result-icon', 'result-description', 'discord-requirement', 'requirement-icon', 'requirement-text', 'additional-info', 'action-buttons', 'primary-button', 'result-card', 'error', 'result-icon', 'result-description', 'discord-requirement', 'requirement-icon', 'requirement-text', 'additional-info', 'action-buttons', 'primary-button', 'result-card', 'neutral', 'result-icon', 'result-description', 'primary-button',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;

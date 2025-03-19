@@ -1,4 +1,4 @@
-import { ref, reactive, onMounted, nextTick, watch, computed } from 'vue';
+import { ref, reactive, onMounted, nextTick, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { userService } from '@/services/api/user';
@@ -22,18 +22,12 @@ const menuItems = [
         icon: '🔒',
         label: '交易安全',
     },
-    {
-        id: 'account-links',
-        icon: '🔗',
-        label: '帳號連結',
-    },
 ];
 // 用戶名稱和電子郵件
 const userName = ref('');
 const userEmail = ref('');
 // 聯絡資訊表單
 const contactForm = reactive({
-    facebook: '',
     discord: '',
     phone: '',
 });
@@ -60,16 +54,6 @@ const discordState = reactive({
     avatar: '',
     isLinking: false,
     global_name: '',
-});
-// 計算社交帳號連結狀態 - 已修改為只計算兩個社交账号
-const socialAccountsStatus = computed(() => {
-    let linked = 0;
-    const total = 2; // Facebook, Discord (移除了 Line)
-    if (contactForm.facebook)
-        linked++;
-    if (discordState.isLinked)
-        linked++;
-    return `${linked}/${total}`;
 });
 // 顯示通知的方法
 const showNotification = (message, type = 'success') => {
@@ -101,20 +85,8 @@ const loadUserInfo = async () => {
                 discordState.username = response.data.discordUsername;
                 discordState.avatar = response.data.discordAvatar || '';
                 discordState.global_name = response.data.global_name || '';
-                // 將Discord資訊同步到表單中
-                contactForm.discord = response.data.discordUsername;
-            }
-            // 載入聯絡資訊
-            if (response.data.contactInfo) {
-                contactForm.facebook = response.data.contactInfo.facebook || '';
-                // 如果Discord欄位為空，但用戶已連結Discord，則使用Discord用戶名
-                if (!contactForm.discord && discordState.isLinked) {
-                    contactForm.discord = discordState.username;
-                }
             }
         }
-        console.log('用戶手機資訊: ', phoneVerificationState.phoneNumber, '驗證狀態: ', phoneVerificationState.isVerified);
-        console.log('Discord連結狀態:', discordState);
     }
     catch (error) {
         const apiError = error;
@@ -142,22 +114,6 @@ const updateUserInfo = async () => {
         const apiError = error;
         showNotification(apiError.response?.data?.message || apiError.message || '更新會員資料失敗', 'error');
         console.error('更新會員資料失敗:', error);
-    }
-};
-// 更新聯絡資訊
-const updateContactInfo = async () => {
-    try {
-        // 僅處理本地狀態，不實際調用API
-        const facebookLink = contactForm.facebook.trim();
-        // 模擬成功響應
-        showNotification('Facebook 連結已保存', 'success');
-        // 更新本地顯示
-        console.log('已暫存 Facebook 連結:', facebookLink);
-        // 將來在此處添加實際的API調用
-    }
-    catch (error) {
-        showNotification('更新 Facebook 連結失敗', 'error');
-        console.error('更新 Facebook 連結失敗:', error);
     }
 };
 // 檢查URL參數是否包含Discord相關信息
@@ -227,6 +183,10 @@ onMounted(async () => {
     if (!userStore.isAuthenticated) {
         router.push('/login');
         return;
+    }
+    // 檢查是否有特定參數來切換到交易安全頁籤
+    if (route.query.tab === 'security') {
+        currentMenu.value = 'security';
     }
     // 檢查是否有Discord回調信息
     checkDiscordCallback();
@@ -347,7 +307,7 @@ function __VLS_template() {
     const __VLS_ctx = {};
     let __VLS_components;
     let __VLS_directives;
-    ['verification-button', 'resend-button', 'settings-container', 'side-menu', 'menu-item', 'menu-item-icon', 'menu-item-text', 'site-header', 'content-wrapper', 'main-content', 'settings-content', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'discord-info', 'discord-disconnect-button', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'notification',];
+    ['verification-button', 'resend-button', 'settings-container', 'side-menu', 'menu-item', 'menu-item-icon', 'menu-item-text', 'site-header', 'content-wrapper', 'main-content', 'settings-content', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'discord-info', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'notification', 'discord-unlink-button', 'discord-button', 'discord-connect',];
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -536,34 +496,21 @@ function __VLS_template() {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
             (__VLS_ctx.phoneVerificationState.phoneNumber);
         }
-    }
-    else if (__VLS_ctx.currentMenu === 'account-links') {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("settings-section") },
-        });
-        __VLS_elementAsFunction(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
-        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("social-accounts-status") },
-        });
-        __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-        (__VLS_ctx.socialAccountsStatus);
-        __VLS_elementAsFunction(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-            ...{ onSubmit: (__VLS_ctx.updateContactInfo) },
-            ...{ class: ("user-form") },
+            ...{ class: ("security-item discord-section") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("form-group") },
+            ...{ class: ("security-item-header") },
         });
-        __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({});
-        __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
-            value: ((__VLS_ctx.contactForm.facebook)),
-            type: ("text"),
-            placeholder: ("請輸入 Facebook 連結"),
-        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
+        if (__VLS_ctx.discordState.isLinked) {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: ("status verified") },
+            });
+        }
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("form-group discord-section") },
+            ...{ class: ("security-item-content") },
         });
-        __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({});
         if (!__VLS_ctx.discordState.isLinked) {
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: ("discord-connect") },
@@ -587,7 +534,7 @@ function __VLS_template() {
                 ...{ class: ("discord-info") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: ("discord-profile") },
+                ...{ class: ("discord-profile-container") },
             });
             if (__VLS_ctx.discordState.avatar) {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -599,7 +546,7 @@ function __VLS_template() {
                 });
             }
             __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: ("discord-user-info") },
+                ...{ class: ("discord-user-details") },
             });
             __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                 ...{ class: ("discord-username") },
@@ -608,13 +555,9 @@ function __VLS_template() {
             __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (__VLS_ctx.disconnectDiscord) },
                 type: ("button"),
-                ...{ class: ("discord-disconnect-button") },
+                ...{ class: ("discord-unlink-button") },
             });
         }
-        __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            type: ("submit"),
-            ...{ class: ("save-button") },
-        });
     }
     if (__VLS_ctx.notification.show) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -622,7 +565,7 @@ function __VLS_template() {
         });
         (__VLS_ctx.notification.message);
     }
-    ['platform-base', 'site-header', 'header-link', 'content-wrapper', 'main-content', 'settings-content', 'settings-container', 'side-menu', 'active', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'save-button', 'settings-section', 'security-info', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'verified-email', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'phone-verification', 'mb-4', 'verification-button', 'verification-code-section', 'verification-input-group', 'verification-code-input', 'verification-actions', 'verification-button', 'verification-button', 'resend-button', 'settings-section', 'social-accounts-status', 'user-form', 'form-group', 'form-group', 'discord-section', 'discord-connect', 'discord-status', 'discord-connect-button', 'discord-icon', 'discord-info', 'discord-profile', 'discord-avatar', 'discord-user-info', 'discord-username', 'discord-disconnect-button', 'save-button', 'notification',];
+    ['platform-base', 'site-header', 'header-link', 'content-wrapper', 'main-content', 'settings-content', 'settings-container', 'side-menu', 'active', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'save-button', 'settings-section', 'security-info', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'verified-email', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'phone-verification', 'mb-4', 'verification-button', 'verification-code-section', 'verification-input-group', 'verification-code-input', 'verification-actions', 'verification-button', 'verification-button', 'resend-button', 'security-item', 'discord-section', 'security-item-header', 'status', 'verified', 'security-item-content', 'discord-connect', 'discord-status', 'discord-connect-button', 'discord-icon', 'discord-info', 'discord-profile-container', 'discord-avatar', 'discord-user-details', 'discord-username', 'discord-unlink-button', 'notification',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -645,13 +588,10 @@ const __VLS_self = (await import('vue')).defineComponent({
             menuItems: menuItems,
             userName: userName,
             userEmail: userEmail,
-            contactForm: contactForm,
             notification: notification,
             phoneVerificationState: phoneVerificationState,
             discordState: discordState,
-            socialAccountsStatus: socialAccountsStatus,
             updateUserInfo: updateUserInfo,
-            updateContactInfo: updateContactInfo,
             connectDiscord: connectDiscord,
             disconnectDiscord: disconnectDiscord,
             handleSendVerification: handleSendVerification,

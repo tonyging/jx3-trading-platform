@@ -131,7 +131,7 @@ export const useUserStore = defineStore(
           logout()
           return null
         }
-      } catch (err) {
+      } catch {
         logout()
         return null
       }
