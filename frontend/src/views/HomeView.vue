@@ -453,6 +453,11 @@ const handleMemberInfo = () => {
   router.push('/member-info?tab=security')
   closeUserMenu()
 }
+
+const handleAdminDashboard = () => {
+  router.push('/admin-dashboard')
+  closeUserMenu()
+}
 </script>
 
 <template>
@@ -474,6 +479,9 @@ const handleMemberInfo = () => {
           </div>
           <div class="user-actions">
             <button class="menu-button profile-button" @click="handleMemberInfo">會員資訊</button>
+            <button v-if="isAdmin" class="menu-button admin-button" @click="handleAdminDashboard">
+              管理員儀表板
+            </button>
             <button class="menu-button logout-button" @click="handleLogout">登出</button>
           </div>
         </div>
@@ -679,6 +687,8 @@ $font-family: 'Microsoft YaHei', '微軟雅黑', sans-serif;
 $spacing-unit: 8px;
 $box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 $transition: all 0.3s ease;
+$admin-color: #2d66b4;
+$admin-hover: #3a7bd5;
 
 // 基礎頁面容器
 .platform-base {
@@ -891,6 +901,14 @@ $transition: all 0.3s ease;
 
       &:hover {
         background: linear-gradient(to right, $primary-hover, #f4282d);
+      }
+    }
+
+    .admin-button {
+      background: linear-gradient(to right, $admin-color, $admin-hover);
+
+      &:hover {
+        background: linear-gradient(to right, $admin-hover, #4a8ae5);
       }
     }
   }

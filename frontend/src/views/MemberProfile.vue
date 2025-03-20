@@ -1051,7 +1051,7 @@ $discord-color: #5865f2;
   border: none;
 
   &:hover:not(:disabled) {
-    background-color: darken($discord-color, 5%);
+    background-color: #4a56d4; // 比 #5865f2 暗大約 5% 的色值
   }
 
   &:disabled {
