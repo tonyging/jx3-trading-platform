@@ -9,7 +9,7 @@ export type TransactionStatus =
   | 'payment_confirmed'
   | 'completed'
   | 'cancelled'
-export type ProductListType = 'all' | 'my' | 'trading' | 'admin'
+export type ProductListType = 'all' | 'my' | 'trading' | 'completed' | 'admin'
 export type PaymentMethod = '匯款' | 'Line Pay' | '街口支付' | '支付寶' | '微信'
 export type Currency = '台幣' | '人民幣' | '港幣'
 
@@ -29,6 +29,7 @@ export interface User {
   }
   phoneNumber?: string
   isPhoneVerified: boolean
+  discordId?: string
 }
 
 // 部分保留交易相關型別
@@ -51,7 +52,7 @@ export interface Product {
   buyerId?:
     | string
     | {
-        id: string
+        _id: string
         name: string
         email: string
       }

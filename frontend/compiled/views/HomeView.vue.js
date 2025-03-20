@@ -6,6 +6,7 @@ import CreateProductModal from '@/components/CreateProductModal.vue';
 import EditProductModal from '@/components/EditProductModal.vue';
 import PurchaseConfirmModal from '@/components/PurchaseConfirmModal.vue';
 import { productApi } from '@/services/api/product';
+import { ratingApi } from '@/services/api/rating';
 // 定義 products
 const products = ref([]);
 const loading = ref(true);
@@ -13,6 +14,9 @@ const showPurchaseModal = ref(false);
 const selectedProduct = ref(null);
 const showAccountVerificationModal = ref(false);
 const verificationMessage = ref('');
+const ratedTransactions = ref(new Set());
+const ratingScore = ref(5);
+const ratingComment = ref('');
 // 定義狀態映射
 const statusMap = {
     active: '可購買',
@@ -39,6 +43,17 @@ const totalColumns = computed(() => {
     }
     return baseColumns;
 });
+// 檢查用戶是否已評價交易
+const checkRatingStatus = async (transactionId) => {
+    try {
+        const response = await ratingApi.checkRatingExists(transactionId, userStore.currentUser?.id || '');
+        return response.exists;
+    }
+    catch (error) {
+        console.error('檢查評價狀態失敗:', error);
+        return false;
+    }
+};
 // 處理購買點擊
 const handleBuyProduct = (product) => {
     checkAccountVerification(() => {
@@ -85,6 +100,13 @@ const loadProducts = async () => {
                     requestParams.buyerId = userStore.currentUser.id;
                 }
                 break;
+            case 'completed':
+                requestParams.status = 'sold';
+                if (userStore.currentUser?.id) {
+                    requestParams.tab = 'completed';
+                    requestParams.userId = userStore.currentUser.id;
+                }
+                break;
             case 'my':
                 if (!userStore.currentUser?.id) {
                     await userStore.fetchCurrentUser();
@@ -108,6 +130,21 @@ const loadProducts = async () => {
         }
         const response = await productApi.getProducts(requestParams);
         products.value = response.data.products;
+        // 在載入商品後，重新檢查評價狀態
+        if (currentTab.value === 'completed') {
+            ratedTransactions.value.clear(); // 清空之前的已評價交易
+            for (const product of products.value) {
+                if (product.transactionId) {
+                    const transactionId = typeof product.transactionId === 'object'
+                        ? product.transactionId._id
+                        : product.transactionId;
+                    const hasRated = await checkRatingStatus(transactionId);
+                    if (hasRated) {
+                        ratedTransactions.value.add(transactionId);
+                    }
+                }
+            }
+        }
     }
     catch (error) {
         const apiError = error;
@@ -116,6 +153,56 @@ const loadProducts = async () => {
     }
     finally {
         loading.value = false;
+    }
+};
+// 添加評價功能
+const showRatingModal = ref(false);
+const transactionToRate = ref(null);
+const productToRate = ref(null);
+const targetUserId = ref(null);
+// 打開評價對話框
+const handleRate = async (product) => {
+    if (!product.transactionId) {
+        showNotification('找不到相關交易資訊', 'error');
+        return;
+    }
+    const transactionId = typeof product.transactionId === 'object' ? product.transactionId._id : product.transactionId;
+    // 儲存交易ID和產品資訊
+    transactionToRate.value = transactionId;
+    productToRate.value = product;
+    // 獲取評價對象的ID
+    if (typeof product.userId === 'object') {
+        targetUserId.value = product.userId._id;
+    }
+    else {
+        targetUserId.value = product.userId;
+    }
+    // 顯示評價對話框
+    showRatingModal.value = true;
+};
+// 提交評價
+const submitRating = async (rating) => {
+    try {
+        if (!transactionToRate.value || !targetUserId.value) {
+            showNotification('評價資訊不完整', 'error');
+            return;
+        }
+        await ratingApi.createRating({
+            toUserId: targetUserId.value,
+            score: rating.score,
+            comment: rating.comment,
+            transactionId: transactionToRate.value,
+        });
+        // 更新已評價的交易列表
+        ratedTransactions.value.add(transactionToRate.value);
+        showRatingModal.value = false;
+        showNotification('評價成功', 'success');
+        // 重新載入交易列表
+        await loadProducts();
+    }
+    catch (error) {
+        const apiError = error;
+        showNotification(apiError.response?.data?.message || apiError.message || '評價失敗', 'error');
     }
 };
 // 帳號驗證機制
@@ -228,6 +315,19 @@ onMounted(async () => {
     if (defaultTab === 'trading') {
         await switchTab('trading');
         localStorage.removeItem('defaultTab');
+    }
+    if (currentTab.value === 'completed') {
+        for (const product of products.value) {
+            if (product.transactionId) {
+                const transactionId = typeof product.transactionId === 'object'
+                    ? product.transactionId._id
+                    : product.transactionId;
+                const hasRated = await checkRatingStatus(transactionId);
+                if (hasRated) {
+                    ratedTransactions.value.add(transactionId);
+                }
+            }
+        }
     }
     // 等待用戶資訊載入完成
     if (!userStore.currentUser?.id) {
@@ -366,12 +466,16 @@ const getRoleDisplay = (role) => {
 const handleMemberInfo = () => {
     router.push('/member-info?tab=security');
     closeUserMenu();
+};
+const handleAdminDashboard = () => {
+    router.push('/admin-dashboard');
+    closeUserMenu();
 }; /* PartiallyEnd: #3632/scriptSetup.vue */
 function __VLS_template() {
     const __VLS_ctx = {};
     let __VLS_components;
     let __VLS_directives;
-    ['delete-button', 'cancel-button', 'verify-button', 'site-header', 'content-wrapper', 'main-content', 'trade-content', 'trade-table', 'sort-header', 'view-button',];
+    ['delete-button', 'cancel-button', 'verify-button', 'active', 'site-header', 'content-wrapper', 'main-content', 'trade-content', 'trade-table', 'sort-header', 'view-button', 'transaction-actions', 'rating-modal',];
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -417,6 +521,12 @@ function __VLS_template() {
             ...{ onClick: (__VLS_ctx.handleMemberInfo) },
             ...{ class: ("menu-button profile-button") },
         });
+        if (__VLS_ctx.isAdmin) {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (__VLS_ctx.handleAdminDashboard) },
+                ...{ class: ("menu-button admin-button") },
+            });
+        }
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             ...{ onClick: (__VLS_ctx.handleLogout) },
             ...{ class: ("menu-button logout-button") },
@@ -451,6 +561,12 @@ function __VLS_template() {
                 __VLS_ctx.switchTab('trading');
             } },
         ...{ class: ((['tab', { active: __VLS_ctx.currentTab === 'trading' }])) },
+    });
+    __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (...[$event]) => {
+                __VLS_ctx.switchTab('completed');
+            } },
+        ...{ class: ((['tab', { active: __VLS_ctx.currentTab === 'completed' }])) },
     });
     if (__VLS_ctx.userStore.currentUser?.role === 'admin') {
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
@@ -569,6 +685,50 @@ function __VLS_template() {
                 });
                 (product.transactionId ? '查看交易' : '交易資訊異常');
             }
+            if (__VLS_ctx.currentTab === 'completed') {
+                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: ("transaction-actions") },
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                    ...{ onClick: (...[$event]) => {
+                            if (!(!((__VLS_ctx.loading))))
+                                return;
+                            if (!(!((__VLS_ctx.products.length === 0))))
+                                return;
+                            if (!((__VLS_ctx.currentTab === 'completed')))
+                                return;
+                            __VLS_ctx.handleViewTransaction(product);
+                        } },
+                    ...{ class: ("view-button") },
+                    disabled: ((!product.transactionId)),
+                });
+                if (typeof product.buyerId === 'object' &&
+                    product.buyerId._id === __VLS_ctx.userStore.currentUser?.id &&
+                    product.transactionId &&
+                    !__VLS_ctx.ratedTransactions.has(typeof product.transactionId === 'object'
+                        ? product.transactionId._id
+                        : product.transactionId)) {
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(!((__VLS_ctx.loading))))
+                                    return;
+                                if (!(!((__VLS_ctx.products.length === 0))))
+                                    return;
+                                if (!((__VLS_ctx.currentTab === 'completed')))
+                                    return;
+                                if (!((typeof product.buyerId === 'object' &&
+                                    product.buyerId._id === __VLS_ctx.userStore.currentUser?.id &&
+                                    product.transactionId &&
+                                    !__VLS_ctx.ratedTransactions.has(typeof product.transactionId === 'object'
+                                        ? product.transactionId._id
+                                        : product.transactionId))))
+                                    return;
+                                __VLS_ctx.handleRate(product);
+                            } },
+                        ...{ class: ("rate-button") },
+                    });
+                }
+            }
             else if (__VLS_ctx.currentTab === 'admin') {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: ("admin-actions") },
@@ -580,7 +740,7 @@ function __VLS_template() {
                                     return;
                                 if (!(!((__VLS_ctx.products.length === 0))))
                                     return;
-                                if (!(!((__VLS_ctx.currentTab === 'trading'))))
+                                if (!(!((__VLS_ctx.currentTab === 'completed'))))
                                     return;
                                 if (!((__VLS_ctx.currentTab === 'admin')))
                                     return;
@@ -597,7 +757,7 @@ function __VLS_template() {
                                 return;
                             if (!(!((__VLS_ctx.products.length === 0))))
                                 return;
-                            if (!(!((__VLS_ctx.currentTab === 'trading'))))
+                            if (!(!((__VLS_ctx.currentTab === 'completed'))))
                                 return;
                             if (!((__VLS_ctx.currentTab === 'admin')))
                                 return;
@@ -618,7 +778,7 @@ function __VLS_template() {
                                     return;
                                 if (!(!((__VLS_ctx.products.length === 0))))
                                     return;
-                                if (!(!((__VLS_ctx.currentTab === 'trading'))))
+                                if (!(!((__VLS_ctx.currentTab === 'completed'))))
                                     return;
                                 if (!(!((__VLS_ctx.currentTab === 'admin'))))
                                     return;
@@ -635,7 +795,7 @@ function __VLS_template() {
                                     return;
                                 if (!(!((__VLS_ctx.products.length === 0))))
                                     return;
-                                if (!(!((__VLS_ctx.currentTab === 'trading'))))
+                                if (!(!((__VLS_ctx.currentTab === 'completed'))))
                                     return;
                                 if (!(!((__VLS_ctx.currentTab === 'admin'))))
                                     return;
@@ -654,7 +814,7 @@ function __VLS_template() {
                                     return;
                                 if (!(!((__VLS_ctx.products.length === 0))))
                                     return;
-                                if (!(!((__VLS_ctx.currentTab === 'trading'))))
+                                if (!(!((__VLS_ctx.currentTab === 'completed'))))
                                     return;
                                 if (!(!((__VLS_ctx.currentTab === 'admin'))))
                                     return;
@@ -666,6 +826,84 @@ function __VLS_template() {
                         ...{ class: ("buy-button") },
                     });
                 }
+            }
+            if (__VLS_ctx.showRatingModal) {
+                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: ("rating-modal-overlay") },
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: ("rating-modal") },
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
+                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: ("rating-stars") },
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: ("stars-label") },
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: ("stars-container") },
+                });
+                for (const [i] of __VLS_getVForSourceType((5))) {
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(!((__VLS_ctx.loading))))
+                                    return;
+                                if (!(!((__VLS_ctx.products.length === 0))))
+                                    return;
+                                if (!((__VLS_ctx.showRatingModal)))
+                                    return;
+                                __VLS_ctx.ratingScore = i;
+                            } },
+                        key: ((i)),
+                        type: ("button"),
+                        ...{ class: ((['star-btn', { active: i <= __VLS_ctx.ratingScore }])) },
+                    });
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                }
+                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: ("stars-value") },
+                });
+                (__VLS_ctx.ratingScore);
+                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: ("rating-comment") },
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                    for: ("rating-comment"),
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.textarea, __VLS_intrinsicElements.textarea)({
+                    id: ("rating-comment"),
+                    value: ((__VLS_ctx.ratingComment)),
+                    placeholder: ("請輸入您的評價內容..."),
+                    rows: ("4"),
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: ("rating-actions") },
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                    ...{ onClick: (...[$event]) => {
+                            if (!(!((__VLS_ctx.loading))))
+                                return;
+                            if (!(!((__VLS_ctx.products.length === 0))))
+                                return;
+                            if (!((__VLS_ctx.showRatingModal)))
+                                return;
+                            __VLS_ctx.showRatingModal = false;
+                        } },
+                    ...{ class: ("cancel-btn") },
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                    ...{ onClick: (...[$event]) => {
+                            if (!(!((__VLS_ctx.loading))))
+                                return;
+                            if (!(!((__VLS_ctx.products.length === 0))))
+                                return;
+                            if (!((__VLS_ctx.showRatingModal)))
+                                return;
+                            __VLS_ctx.submitRating({ score: __VLS_ctx.ratingScore, comment: __VLS_ctx.ratingComment });
+                        } },
+                    ...{ class: ("submit-btn") },
+                });
             }
         }
     }
@@ -780,7 +1018,7 @@ function __VLS_template() {
         });
         (__VLS_ctx.notification.message);
     }
-    ['platform-base', 'site-header', 'user-menu-container', 'user-avatar', 'user-dropdown-menu', 'user-info', 'user-name', 'role-tag', 'user-email', 'user-actions', 'menu-button', 'profile-button', 'menu-button', 'logout-button', 'content-wrapper', 'main-content', 'trade-content', 'table-header', 'tabs', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'create-button', 'trade-table', 'sort-header', 'sort-header', 'sort-header', 'status-message', 'status-message', 'status-tag', 'view-button', 'admin-actions', 'view-button', 'delete-button', 'product-actions', 'edit-button', 'delete-button', 'buy-button', 'disclaimer', 'verification-modal-overlay', 'verification-modal', 'verification-modal-content', 'verification-modal-actions', 'cancel-button', 'verify-button', 'notification',];
+    ['platform-base', 'site-header', 'user-menu-container', 'user-avatar', 'user-dropdown-menu', 'user-info', 'user-name', 'role-tag', 'user-email', 'user-actions', 'menu-button', 'profile-button', 'menu-button', 'admin-button', 'menu-button', 'logout-button', 'content-wrapper', 'main-content', 'trade-content', 'table-header', 'tabs', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'create-button', 'trade-table', 'sort-header', 'sort-header', 'sort-header', 'status-message', 'status-message', 'status-tag', 'view-button', 'transaction-actions', 'view-button', 'rate-button', 'admin-actions', 'view-button', 'delete-button', 'product-actions', 'edit-button', 'delete-button', 'buy-button', 'rating-modal-overlay', 'rating-modal', 'rating-stars', 'stars-label', 'stars-container', 'active', 'star-btn', 'stars-value', 'rating-comment', 'rating-actions', 'cancel-btn', 'submit-btn', 'disclaimer', 'verification-modal-overlay', 'verification-modal', 'verification-modal-content', 'verification-modal-actions', 'cancel-button', 'verify-button', 'notification',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -808,6 +1046,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             selectedProduct: selectedProduct,
             showAccountVerificationModal: showAccountVerificationModal,
             verificationMessage: verificationMessage,
+            ratedTransactions: ratedTransactions,
+            ratingScore: ratingScore,
+            ratingComment: ratingComment,
             isAdmin: isAdmin,
             totalColumns: totalColumns,
             handleBuyProduct: handleBuyProduct,
@@ -815,6 +1056,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             userStore: userStore,
             currentTab: currentTab,
             notification: notification,
+            showRatingModal: showRatingModal,
+            handleRate: handleRate,
+            submitRating: submitRating,
             switchTab: switchTab,
             isUserMenuOpen: isUserMenuOpen,
             closeUserMenu: closeUserMenu,
@@ -839,6 +1083,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             getStatusClass: getStatusClass,
             getRoleDisplay: getRoleDisplay,
             handleMemberInfo: handleMemberInfo,
+            handleAdminDashboard: handleAdminDashboard,
         };
     },
 });

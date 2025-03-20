@@ -35,6 +35,7 @@ const userActivitySchema = new Schema({
       "CREATE_PRODUCT",
       "UPDATE_PRODUCT",
       "DELETE_PRODUCT",
+      "ADMIN_DELETE_PRODUCT",
       "CREATE_TRANSACTION",
       "UPDATE_TRANSACTION_STATUS",
       "SEND_MESSAGE",

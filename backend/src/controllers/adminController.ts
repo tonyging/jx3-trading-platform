@@ -78,7 +78,15 @@ class AdminController {
       const users = await User.find(searchQuery)
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit);
+        .limit(limit)
+        .lean();
+
+      // 轉換 _id 為 id
+      const formattedUsers = users.map((user) => ({
+        ...user,
+        id: user._id,
+        _id: undefined, // 移除原 _id 屬性
+      }));
 
       // 獲取總用戶數
       const total = await User.countDocuments(searchQuery);

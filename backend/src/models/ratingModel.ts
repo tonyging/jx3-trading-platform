@@ -3,6 +3,7 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 export interface IRating extends Document {
   fromUser: Types.ObjectId; // 評價者
   toUser: Types.ObjectId; // 被評價者
+  transactionId: Types.ObjectId;
   score: number; // 評分 (1-5)
   comment: string; // 評價內容
   createdAt: Date; // 評價時間
@@ -36,6 +37,11 @@ const ratingSchema = new Schema(
     isDeleted: {
       type: Boolean,
       default: false,
+    },
+    transactionId: {
+      type: Schema.Types.ObjectId,
+      ref: "Transaction",
+      required: [true, "交易ID是必須的"],
     },
   },
   {

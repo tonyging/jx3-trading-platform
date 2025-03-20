@@ -66,6 +66,7 @@ const initDashboard = async () => {
 
     // 載入最近用戶
     const usersResponse = await adminApi.getRecentUsers()
+
     recentUsers.value = usersResponse.data.users
 
     // 載入最近商品
@@ -356,6 +357,7 @@ onMounted(() => {
               <th>角色</th>
               <th>註冊時間</th>
               <th>手機驗證</th>
+              <th>Discord 綁定</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -369,6 +371,11 @@ onMounted(() => {
               </td>
               <td>{{ user.createdAt ? formatDate(user.createdAt.toString()) : '未設定' }}</td>
               <td>{{ user.isPhoneVerified ? '已驗證' : '未驗證' }}</td>
+              <td>
+                <span :class="['verify-badge', user.discordId ? 'verified' : 'unverified']">
+                  {{ user.discordId ? '已綁定' : '未綁定' }}
+                </span>
+              </td>
               <td class="action-buttons">
                 <div class="dropdown">
                   <button class="dropdown-toggle">設定角色</button>
@@ -1114,6 +1121,27 @@ $transition: all 0.3s ease;
   span {
     display: inline-block;
     line-height: 1.6;
+  }
+}
+
+.verify-badge {
+  display: inline-block;
+  padding: $spacing-unit ($spacing-unit * 1.5);
+  border-radius: $spacing-unit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+
+  &.verified {
+    background-color: #e6f7ff;
+    color: #1890ff;
+    border: 1px solid #91d5ff;
+  }
+
+  &.unverified {
+    background-color: #fff7e6;
+    color: #fa8c16;
+    border: 1px solid #ffd591;
   }
 }
 </style>

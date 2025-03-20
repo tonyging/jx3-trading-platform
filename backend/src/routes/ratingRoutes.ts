@@ -10,5 +10,6 @@ router.delete("/:ratingId", authenticate, ratingController.deleteRating);
 
 // 不需要登入的路由
 router.get("/user/:userId", ratingController.getUserRatings);
+router.get("/check", ratingController.checkRatingExists);
 
 export default router;

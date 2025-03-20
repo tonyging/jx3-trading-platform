@@ -11,8 +11,22 @@ class RatingController {
     next: NextFunction
   ) => {
     try {
-      const { toUserId, score, comment } = req.body;
+      const { toUserId, score, comment, transactionId } = req.body;
       const fromUserId = req.user._id;
+
+      // 檢查是否已經評價過此交易
+      const existingRating = await Rating.findOne({
+        fromUser: fromUserId,
+        transactionId,
+        isDeleted: false,
+      });
+
+      if (existingRating) {
+        return res.status(400).json({
+          status: "error",
+          message: "已經對此交易評價過",
+        });
+      }
 
       // 檢查是否評價自己
       if (fromUserId.toString() === toUserId) {
@@ -35,6 +49,7 @@ class RatingController {
       const rating = await Rating.create({
         fromUser: fromUserId,
         toUser: toUserId,
+        transactionId,
         score,
         comment,
       });
@@ -187,6 +202,37 @@ class RatingController {
         status: "error",
         message: "刪除評價時發生錯誤",
       });
+    }
+  };
+
+  // 檢查是否已評價
+  public checkRatingExists = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { transactionId, fromUserId } = req.query;
+
+      if (!transactionId || !fromUserId) {
+        return res.status(400).json({
+          status: "error",
+          message: "缺少必要參數",
+        });
+      }
+
+      const existingRating = await Rating.findOne({
+        fromUser: fromUserId,
+        transactionId: transactionId as string,
+        isDeleted: false,
+      });
+
+      res.status(200).json({
+        status: "success",
+        exists: !!existingRating,
+      });
+    } catch (error) {
+      next(error);
     }
   };
 }

@@ -386,6 +386,7 @@ function __VLS_template() {
             __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
             __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
             __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
+            __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
             __VLS_elementAsFunction(__VLS_intrinsicElements.tbody, __VLS_intrinsicElements.tbody)({});
             for (const [user] of __VLS_getVForSourceType((__VLS_ctx.recentUsers))) {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({
@@ -406,6 +407,11 @@ function __VLS_template() {
                 (user.createdAt ? __VLS_ctx.formatDate(user.createdAt.toString()) : '未設定');
                 __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
                 (user.isPhoneVerified ? '已驗證' : '未驗證');
+                __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
+                __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: ((['verify-badge', user.discordId ? 'verified' : 'unverified'])) },
+                });
+                (user.discordId ? '已綁定' : '未綁定');
                 __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
                     ...{ class: ("action-buttons") },
                 });
@@ -682,7 +688,7 @@ function __VLS_template() {
         });
         (__VLS_ctx.notification.message);
     }
-    ['admin-dashboard', 'dashboard-header', 'back-button', 'loading-state', 'spinner', 'error-message', 'dashboard-content', 'dashboard-tabs', 'active', 'tab-button', 'active', 'tab-button', 'active', 'tab-button', 'active', 'tab-button', 'dashboard-panel', 'stats-cards', 'stat-card', 'stat-number', 'stat-card', 'stat-number', 'stat-card', 'stat-number', 'stat-card', 'stat-number', 'stat-card', 'stat-number', 'recent-activity', 'activity-section', 'activity-section', 'activity-section', 'dashboard-panel', 'management-controls', 'search-input', 'management-table', 'role-badge', 'action-buttons', 'dropdown', 'dropdown-toggle', 'dropdown-menu', 'view-button', 'dashboard-panel', 'management-controls', 'search-input', 'filter-controls', 'filter-select', 'management-table', 'status-badge', 'action-buttons', 'view-button', 'delete-button', 'dashboard-panel', 'management-controls', 'search-input', 'filter-controls', 'filter-select', 'management-table', 'status-badge', 'action-buttons', 'view-button', 'notification',];
+    ['admin-dashboard', 'dashboard-header', 'back-button', 'loading-state', 'spinner', 'error-message', 'dashboard-content', 'dashboard-tabs', 'active', 'tab-button', 'active', 'tab-button', 'active', 'tab-button', 'active', 'tab-button', 'dashboard-panel', 'stats-cards', 'stat-card', 'stat-number', 'stat-card', 'stat-number', 'stat-card', 'stat-number', 'stat-card', 'stat-number', 'stat-card', 'stat-number', 'recent-activity', 'activity-section', 'activity-section', 'activity-section', 'dashboard-panel', 'management-controls', 'search-input', 'management-table', 'role-badge', 'verify-badge', 'action-buttons', 'dropdown', 'dropdown-toggle', 'dropdown-menu', 'view-button', 'dashboard-panel', 'management-controls', 'search-input', 'filter-controls', 'filter-select', 'management-table', 'status-badge', 'action-buttons', 'view-button', 'delete-button', 'dashboard-panel', 'management-controls', 'search-input', 'filter-controls', 'filter-select', 'management-table', 'status-badge', 'action-buttons', 'view-button', 'notification',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;

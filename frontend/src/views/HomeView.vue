@@ -9,6 +9,7 @@ import EditProductModal from '@/components/EditProductModal.vue'
 import PurchaseConfirmModal from '@/components/PurchaseConfirmModal.vue'
 import { productApi } from '@/services/api/product'
 import type { Product, ProductListType, ProductStatus, UserRole } from '@/types'
+import { ratingApi } from '@/services/api/rating'
 
 // 定義可能的錯誤類型
 interface ApiError {
@@ -27,6 +28,9 @@ const showPurchaseModal = ref(false)
 const selectedProduct = ref<Product | null>(null)
 const showAccountVerificationModal = ref(false)
 const verificationMessage = ref('')
+const ratedTransactions = ref<Set<string>>(new Set())
+const ratingScore = ref(5)
+const ratingComment = ref('')
 
 // 定義狀態映射
 const statusMap: Record<Product['status'], string> = {
@@ -57,6 +61,20 @@ const totalColumns = computed(() => {
   }
   return baseColumns
 })
+
+// 檢查用戶是否已評價交易
+const checkRatingStatus = async (transactionId: string): Promise<boolean> => {
+  try {
+    const response = await ratingApi.checkRatingExists(
+      transactionId,
+      userStore.currentUser?.id || '',
+    )
+    return response.exists
+  } catch (error) {
+    console.error('檢查評價狀態失敗:', error)
+    return false
+  }
+}
 
 // 處理購買點擊
 const handleBuyProduct = (product: Product) => {
@@ -120,6 +138,13 @@ const loadProducts = async () => {
           requestParams.buyerId = userStore.currentUser.id
         }
         break
+      case 'completed':
+        requestParams.status = 'sold' as ProductStatus
+        if (userStore.currentUser?.id) {
+          requestParams.tab = 'completed'
+          requestParams.userId = userStore.currentUser.id
+        }
+        break
       case 'my':
         if (!userStore.currentUser?.id) {
           await userStore.fetchCurrentUser()
@@ -143,6 +168,24 @@ const loadProducts = async () => {
 
     const response = await productApi.getProducts(requestParams)
     products.value = response.data.products
+
+    // 在載入商品後，重新檢查評價狀態
+    if (currentTab.value === 'completed') {
+      ratedTransactions.value.clear() // 清空之前的已評價交易
+      for (const product of products.value) {
+        if (product.transactionId) {
+          const transactionId =
+            typeof product.transactionId === 'object'
+              ? product.transactionId._id
+              : product.transactionId
+
+          const hasRated = await checkRatingStatus(transactionId)
+          if (hasRated) {
+            ratedTransactions.value.add(transactionId)
+          }
+        }
+      }
+    }
   } catch (error: unknown) {
     const apiError = error as ApiError
     showNotification(
@@ -152,6 +195,69 @@ const loadProducts = async () => {
     products.value = []
   } finally {
     loading.value = false
+  }
+}
+
+// 添加評價功能
+const showRatingModal = ref(false)
+const transactionToRate = ref<string | null>(null)
+const productToRate = ref<Product | null>(null)
+const targetUserId = ref<string | null>(null)
+
+// 打開評價對話框
+const handleRate = async (product: Product) => {
+  if (!product.transactionId) {
+    showNotification('找不到相關交易資訊', 'error')
+    return
+  }
+
+  const transactionId =
+    typeof product.transactionId === 'object' ? product.transactionId._id : product.transactionId
+
+  // 儲存交易ID和產品資訊
+  transactionToRate.value = transactionId
+  productToRate.value = product
+
+  // 獲取評價對象的ID
+  if (typeof product.userId === 'object') {
+    targetUserId.value = product.userId._id
+  } else {
+    targetUserId.value = product.userId as string
+  }
+
+  // 顯示評價對話框
+  showRatingModal.value = true
+}
+
+// 提交評價
+const submitRating = async (rating: { score: number; comment: string }) => {
+  try {
+    if (!transactionToRate.value || !targetUserId.value) {
+      showNotification('評價資訊不完整', 'error')
+      return
+    }
+
+    await ratingApi.createRating({
+      toUserId: targetUserId.value,
+      score: rating.score,
+      comment: rating.comment,
+      transactionId: transactionToRate.value,
+    })
+
+    // 更新已評價的交易列表
+    ratedTransactions.value.add(transactionToRate.value)
+
+    showRatingModal.value = false
+    showNotification('評價成功', 'success')
+
+    // 重新載入交易列表
+    await loadProducts()
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    showNotification(
+      apiError.response?.data?.message || (apiError.message as string) || '評價失敗',
+      'error',
+    )
   }
 }
 
@@ -281,6 +387,22 @@ onMounted(async () => {
   if (defaultTab === 'trading') {
     await switchTab('trading')
     localStorage.removeItem('defaultTab')
+  }
+
+  if (currentTab.value === 'completed') {
+    for (const product of products.value) {
+      if (product.transactionId) {
+        const transactionId =
+          typeof product.transactionId === 'object'
+            ? product.transactionId._id
+            : product.transactionId
+
+        const hasRated = await checkRatingStatus(transactionId)
+        if (hasRated) {
+          ratedTransactions.value.add(transactionId)
+        }
+      }
+    }
   }
 
   // 等待用戶資訊載入完成
@@ -507,6 +629,12 @@ const handleAdminDashboard = () => {
               交易中
             </button>
             <button
+              :class="['tab', { active: currentTab === 'completed' }]"
+              @click="switchTab('completed')"
+            >
+              已完成
+            </button>
+            <button
               v-if="userStore.currentUser?.role === 'admin'"
               :class="['tab', { active: currentTab === 'admin' }]"
               @click="switchTab('admin')"
@@ -583,6 +711,35 @@ const handleAdminDashboard = () => {
                     </button>
                   </template>
 
+                  <template v-if="currentTab === 'completed'">
+                    <div class="transaction-actions">
+                      <button
+                        class="view-button"
+                        @click="handleViewTransaction(product)"
+                        :disabled="!product.transactionId"
+                      >
+                        查看交易
+                      </button>
+                      <!-- 顯示評價按鈕，當是買家且未評價時 -->
+                      <button
+                        v-if="
+                          typeof product.buyerId === 'object' &&
+                          product.buyerId._id === userStore.currentUser?.id &&
+                          product.transactionId &&
+                          !ratedTransactions.has(
+                            typeof product.transactionId === 'object'
+                              ? product.transactionId._id
+                              : product.transactionId,
+                          )
+                        "
+                        class="rate-button"
+                        @click="handleRate(product)"
+                      >
+                        評價賣家
+                      </button>
+                    </div>
+                  </template>
+
                   <!-- 管理員頁籤的按鈕邏輯 -->
                   <template v-else-if="currentTab === 'admin'">
                     <div class="admin-actions">
@@ -621,6 +778,46 @@ const handleAdminDashboard = () => {
                     </template>
                   </template>
                 </td>
+
+                <!-- 添加評價對話框 -->
+                <div v-if="showRatingModal" class="rating-modal-overlay">
+                  <div class="rating-modal">
+                    <h3>評價賣家</h3>
+                    <div class="rating-stars">
+                      <div class="stars-label">評分:</div>
+                      <div class="stars-container">
+                        <button
+                          v-for="i in 5"
+                          :key="i"
+                          type="button"
+                          :class="['star-btn', { active: i <= ratingScore }]"
+                          @click="ratingScore = i"
+                        >
+                          <span>★</span>
+                        </button>
+                      </div>
+                      <div class="stars-value">{{ ratingScore }} 顆星</div>
+                    </div>
+                    <div class="rating-comment">
+                      <label for="rating-comment">評價內容:</label>
+                      <textarea
+                        id="rating-comment"
+                        v-model="ratingComment"
+                        placeholder="請輸入您的評價內容..."
+                        rows="4"
+                      ></textarea>
+                    </div>
+                    <div class="rating-actions">
+                      <button class="cancel-btn" @click="showRatingModal = false">取消</button>
+                      <button
+                        class="submit-btn"
+                        @click="submitRating({ score: ratingScore, comment: ratingComment })"
+                      >
+                        提交評價
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </tr>
             </tbody>
           </table>
@@ -1209,6 +1406,156 @@ td {
   }
 }
 
+.transaction-actions {
+  display: flex;
+  gap: $spacing-unit * 2;
+}
+
+.rate-button {
+  padding: $spacing-unit $spacing-unit * 2;
+  background: linear-gradient(to right, #ffa940, #fa8c16);
+  color: white;
+  border: none;
+  border-radius: $spacing-unit;
+  cursor: pointer;
+  transition: $transition;
+  font-weight: 600;
+
+  &:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(to right, #fa8c16, #d46b08);
+  }
+}
+
+.rating-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.rating-modal {
+  background: white;
+  border-radius: $spacing-unit * 2;
+  width: 90%;
+  max-width: 500px;
+  padding: $spacing-unit * 4;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: $spacing-unit * 3;
+    color: $text-color;
+    text-align: center;
+    font-size: 18px;
+  }
+
+  .rating-stars {
+    margin-bottom: $spacing-unit * 3;
+
+    .stars-label {
+      margin-bottom: $spacing-unit;
+      font-weight: 500;
+    }
+
+    .stars-container {
+      display: flex;
+      gap: $spacing-unit;
+      margin-bottom: $spacing-unit;
+
+      .star-btn {
+        background: none;
+        border: none;
+        font-size: 30px;
+        cursor: pointer;
+        color: #d9d9d9;
+        transition: all 0.2s ease;
+        padding: 0;
+
+        &.active {
+          color: #ffc107;
+        }
+
+        &:hover {
+          transform: scale(1.1);
+        }
+      }
+    }
+
+    .stars-value {
+      font-size: 14px;
+      color: #666;
+    }
+  }
+
+  .rating-comment {
+    margin-bottom: $spacing-unit * 3;
+
+    label {
+      display: block;
+      margin-bottom: $spacing-unit;
+      font-weight: 500;
+    }
+
+    textarea {
+      width: 100%;
+      padding: $spacing-unit * 1.5;
+      border: 1px solid #d9d9d9;
+      border-radius: $spacing-unit;
+      font-size: 14px;
+      resize: vertical;
+
+      &:focus {
+        border-color: $primary-color;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba($primary-color, 0.1);
+      }
+    }
+  }
+
+  .rating-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-unit * 2;
+
+    button {
+      padding: $spacing-unit * 1.5 $spacing-unit * 3;
+      border-radius: $spacing-unit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .cancel-btn {
+      background: white;
+      border: 1px solid #d9d9d9;
+      color: #666;
+
+      &:hover {
+        background: #f5f5f5;
+      }
+    }
+
+    .submit-btn {
+      background: $primary-color;
+      border: none;
+      color: white;
+
+      &:hover {
+        background: $primary-hover;
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+
 // 響應式設計
 @media (max-width: 768px) {
   .site-header {
@@ -1247,6 +1594,20 @@ td {
   .view-button {
     padding: $spacing-unit ($spacing-unit * 1.5);
     font-size: 14px;
+  }
+
+  .transaction-actions {
+    flex-direction: column;
+    gap: $spacing-unit;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .rating-modal {
+    width: 95%;
+    padding: $spacing-unit * 3;
   }
 }
 

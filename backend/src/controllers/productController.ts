@@ -136,6 +136,23 @@ class ProductController {
           // 管理員頁籤：顯示除了 deleted 以外的所有商品
           query.status = { $ne: "deleted" };
           break;
+        case "completed":
+          // 已完成交易頁籤 - 使用者是買家或賣家的已售出商品
+          if (userId) {
+            query.$or = [
+              {
+                userId: Types.ObjectId.createFromHexString(userId),
+                status: "sold",
+              },
+              {
+                buyerId: Types.ObjectId.createFromHexString(userId),
+                status: "sold",
+              },
+            ];
+          } else {
+            query.status = "sold";
+          }
+          break;
         default:
           // 全部商品頁籤
           query.status = "active";
