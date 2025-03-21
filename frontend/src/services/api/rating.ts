@@ -57,6 +57,21 @@ export const ratingApi = {
     const response = await api.delete(`/api/ratings/${ratingId}`)
     return response.data
   },
+
+  // 獲取特定交易的評價詳情
+  getTransactionRating: async (transactionId: string) => {
+    const response = await api.get<{
+      status: string
+      data: {
+        rating: {
+          score: number
+          comment: string
+          createdAt: string
+        }
+      }
+    }>(`/api/ratings/transaction/${transactionId}`)
+    return response.data
+  },
 }
 
 export default ratingApi

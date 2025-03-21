@@ -31,6 +31,12 @@ const verificationMessage = ref('')
 const ratedTransactions = ref<Set<string>>(new Set())
 const ratingScore = ref(5)
 const ratingComment = ref('')
+const showPreviousRatingModal = ref(false)
+const previousRating = ref<{
+  score: number
+  comment: string
+  createdAt: string
+} | null>(null)
 
 // 定義狀態映射
 const statusMap: Record<Product['status'], string> = {
@@ -54,7 +60,7 @@ const isAdmin = computed(() => {
 // 計算表格的總列數
 const totalColumns = computed(() => {
   // 基礎列數（賣家、數量、價格、幣值、操作）
-  let baseColumns = 8
+  let baseColumns = currentTab.value === 'completed' ? 4 : 8
   // 如果是管理員，加上狀態列
   if (isAdmin.value) {
     baseColumns += 1
@@ -214,19 +220,37 @@ const handleRate = async (product: Product) => {
   const transactionId =
     typeof product.transactionId === 'object' ? product.transactionId._id : product.transactionId
 
-  // 儲存交易ID和產品資訊
-  transactionToRate.value = transactionId
-  productToRate.value = product
+  try {
+    // 檢查是否已評價
+    const ratingResponse = await ratingApi.checkRatingExists(
+      transactionId,
+      userStore.currentUser?.id || '',
+    )
 
-  // 獲取評價對象的ID
-  if (typeof product.userId === 'object') {
-    targetUserId.value = product.userId._id
-  } else {
-    targetUserId.value = product.userId as string
+    if (ratingResponse.exists) {
+      // 如果已評價，獲取之前的評價詳情
+      const previousRatingResponse = await ratingApi.getTransactionRating(transactionId)
+      previousRating.value = previousRatingResponse.data.rating
+      showPreviousRatingModal.value = true
+      return
+    }
+
+    // 儲存交易ID和產品資訊
+    transactionToRate.value = transactionId
+    productToRate.value = product
+
+    // 獲取評價對象的ID
+    if (typeof product.userId === 'object') {
+      targetUserId.value = product.userId._id
+    } else {
+      targetUserId.value = product.userId as string
+    }
+
+    // 顯示評價對話框
+    showRatingModal.value = true
+  } catch (error) {
+    showNotification('檢查評價狀態失敗', 'error')
   }
-
-  // 顯示評價對話框
-  showRatingModal.value = true
 }
 
 // 提交評價
@@ -651,12 +675,14 @@ const handleAdminDashboard = () => {
               <tr>
                 <th>賣家</th>
                 <th>角色暱稱</th>
-                <th>
-                  <div class="sort-header" @click="handleSort('amount')">
-                    數量
-                    <span :class="getSortIconClass('amount')" />
-                  </div>
-                </th>
+                <template v-if="currentTab !== 'completed'">
+                  <th>
+                    <div class="sort-header" @click="handleSort('amount')">
+                      數量
+                      <span :class="getSortIconClass('amount')" />
+                    </div>
+                  </th>
+                </template>
                 <th>
                   <div class="sort-header" @click="handleSort('price')">
                     價格
@@ -669,8 +695,10 @@ const handleAdminDashboard = () => {
                     <span :class="getSortIconClass('value')" />
                   </div>
                 </th>
-                <th>幣別</th>
-                <th>交易方式</th>
+                <template v-if="currentTab !== 'completed'">
+                  <th>幣別</th>
+                  <th>交易方式</th>
+                </template>
                 <!-- 管理員的狀態欄位 -->
                 <th v-if="isAdmin">狀態</th>
                 <th>操作</th>
@@ -686,11 +714,19 @@ const handleAdminDashboard = () => {
               <tr v-else v-for="product in products" :key="product._id">
                 <td>{{ typeof product.userId === 'object' ? product.userId.name : '未知賣家' }}</td>
                 <td>{{ product.characterNickname || '未設定' }}</td>
-                <td>{{ product.amount }}</td>
+
+                <template v-if="currentTab !== 'completed'">
+                  <td>{{ product.amount }}</td>
+                </template>
+
                 <td>{{ formatPrice(product.price) }}</td>
                 <td>{{ calculateValue(product.price, product.amount) }}</td>
-                <td>{{ product.currency || '台幣' }}</td>
-                <td>{{ formatPaymentMethods(product.paymentMethods) }}</td>
+
+                <template v-if="currentTab !== 'completed'">
+                  <td>{{ product.currency || '台幣' }}</td>
+                  <td>{{ formatPaymentMethods(product.paymentMethods) }}</td>
+                </template>
+
                 <td v-if="isAdmin">
                   <span
                     :class="['status-tag', getStatusClass(product.status)]"
@@ -725,17 +761,20 @@ const handleAdminDashboard = () => {
                         v-if="
                           typeof product.buyerId === 'object' &&
                           product.buyerId._id === userStore.currentUser?.id &&
-                          product.transactionId &&
-                          !ratedTransactions.has(
-                            typeof product.transactionId === 'object'
-                              ? product.transactionId._id
-                              : product.transactionId,
-                          )
+                          product.transactionId
                         "
                         class="rate-button"
                         @click="handleRate(product)"
                       >
-                        評價賣家
+                        {{
+                          ratedTransactions.has(
+                            typeof product.transactionId === 'object'
+                              ? product.transactionId._id
+                              : product.transactionId,
+                          )
+                            ? '已評價'
+                            : '評價賣家'
+                        }}
                       </button>
                     </div>
                   </template>
@@ -815,6 +854,48 @@ const handleAdminDashboard = () => {
                       >
                         提交評價
                       </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="showPreviousRatingModal" class="previous-rating-modal-overlay">
+                  <div class="previous-rating-modal">
+                    <h3>已評價的交易</h3>
+                    <div class="previous-rating-stars">
+                      <div class="stars-label">評分:</div>
+                      <div class="stars-container">
+                        <button
+                          v-for="i in 5"
+                          :key="i"
+                          type="button"
+                          :class="['star-btn', { active: i <= (previousRating?.score || 0) }]"
+                          disabled
+                        >
+                          <span>★</span>
+                        </button>
+                      </div>
+                      <div class="stars-value">{{ previousRating?.score || 0 }} 顆星</div>
+                    </div>
+                    <div class="previous-rating-comment">
+                      <label>評價內容:</label>
+                      <p>{{ previousRating?.comment || '無評價內容' }}</p>
+                      <div class="rating-date">
+                        評價時間:
+                        {{
+                          previousRating?.createdAt
+                            ? new Date(previousRating.createdAt).toLocaleString('zh-TW', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : '未知'
+                        }}
+                      </div>
+                    </div>
+                    <div class="previous-rating-actions">
+                      <button @click="showPreviousRatingModal = false">關閉</button>
                     </div>
                   </div>
                 </div>
@@ -1551,6 +1632,75 @@ td {
       &:hover {
         background: $primary-hover;
         transform: translateY(-1px);
+      }
+    }
+  }
+}
+
+.previous-rating-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.previous-rating-modal {
+  background: white;
+  border-radius: $spacing-unit * 2;
+  width: 90%;
+  max-width: 500px;
+  padding: $spacing-unit * 4;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+  .previous-rating-stars {
+    // 與 rating-modal 的 .rating-stars 類似
+    margin-bottom: $spacing-unit * 3;
+
+    .star-btn {
+      &.active {
+        color: #ffc107;
+      }
+    }
+  }
+
+  .previous-rating-comment {
+    margin-bottom: $spacing-unit * 3;
+
+    p {
+      background-color: #f5f5f5;
+      padding: $spacing-unit * 2;
+      border-radius: $spacing-unit;
+      min-height: 100px;
+    }
+
+    .rating-date {
+      text-align: right;
+      color: #666;
+      font-size: 14px;
+      margin-top: $spacing-unit * 2;
+    }
+  }
+
+  .previous-rating-actions {
+    display: flex;
+    justify-content: center;
+
+    button {
+      padding: $spacing-unit * 1.5 $spacing-unit * 3;
+      background-color: $primary-color;
+      color: white;
+      border: none;
+      border-radius: $spacing-unit;
+      cursor: pointer;
+
+      &:hover {
+        background-color: $primary-hover;
       }
     }
   }

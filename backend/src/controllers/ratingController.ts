@@ -235,6 +235,42 @@ class RatingController {
       next(error);
     }
   };
+
+  // 獲取特定交易的評價
+  public getTransactionRating = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { transactionId } = req.params;
+
+      const rating = await Rating.findOne({
+        transactionId: new Types.ObjectId(transactionId),
+        isDeleted: false,
+      });
+
+      if (!rating) {
+        return res.status(404).json({
+          status: "error",
+          message: "找不到該交易的評價",
+        });
+      }
+
+      res.status(200).json({
+        status: "success",
+        data: {
+          rating: {
+            score: rating.score,
+            comment: rating.comment,
+            createdAt: rating.createdAt,
+          },
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default new RatingController();
