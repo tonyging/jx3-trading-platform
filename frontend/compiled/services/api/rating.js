@@ -22,6 +22,11 @@ export const ratingApi = {
         const response = await api.delete(`/api/ratings/${ratingId}`);
         return response.data;
     },
+    // 獲取特定交易的評價詳情
+    getTransactionRating: async (transactionId) => {
+        const response = await api.get(`/api/ratings/transaction/${transactionId}`);
+        return response.data;
+    },
 };
 export default ratingApi;
 //# sourceMappingURL=rating.js.map

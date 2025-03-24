@@ -1,9 +1,16 @@
-import { onMounted } from 'vue';
+import { onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useAppStore } from '@/stores/appState';
+import SidebarNavigation from '@/components/SidebarNavigation.vue';
 import axios from 'axios';
 const userStore = useUserStore();
 const appStore = useAppStore();
+const router = useRouter();
+// 計算當前路由，用於側邊欄高亮顯示
+const currentRoute = computed(() => {
+    return router.currentRoute.value.path;
+});
 async function preWarmBackend() {
     try {
         appStore.setBackendWaking(true);
@@ -45,11 +52,29 @@ function __VLS_template() {
     let __VLS_directives;
     // CSS variable injection 
     // CSS variable injection end 
-    const __VLS_0 = {}.RouterView;
+    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: ("app-container") },
+    });
+    if (__VLS_ctx.userStore.isAuthenticated) {
+        // @ts-ignore
+        /** @type { [typeof SidebarNavigation, ] } */ ;
+        // @ts-ignore
+        const __VLS_0 = __VLS_asFunctionalComponent(SidebarNavigation, new SidebarNavigation({
+            activeRoute: ((__VLS_ctx.currentRoute)),
+        }));
+        const __VLS_1 = __VLS_0({
+            activeRoute: ((__VLS_ctx.currentRoute)),
+        }, ...__VLS_functionalComponentArgsRest(__VLS_0));
+    }
+    __VLS_elementAsFunction(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
+        ...{ class: ("main-content") },
+        ...{ class: (({ 'with-sidebar': __VLS_ctx.userStore.isAuthenticated })) },
+    });
+    const __VLS_5 = {}.RouterView;
     /** @type { [typeof __VLS_components.RouterView, typeof __VLS_components.routerView, ] } */ ;
     // @ts-ignore
-    const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({}));
-    const __VLS_2 = __VLS_1({}, ...__VLS_functionalComponentArgsRest(__VLS_1));
+    const __VLS_6 = __VLS_asFunctionalComponent(__VLS_5, new __VLS_5({}));
+    const __VLS_7 = __VLS_6({}, ...__VLS_functionalComponentArgsRest(__VLS_6));
     if (__VLS_ctx.appStore.isBackendWaking) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: ("backend-waking-overlay") },
@@ -68,7 +93,7 @@ function __VLS_template() {
             (__VLS_ctx.appStore.connectionAttempts);
         }
     }
-    ['backend-waking-overlay', 'loading-spinner', 'waking-message', 'waking-submessage',];
+    ['app-container', 'main-content', 'with-sidebar', 'backend-waking-overlay', 'loading-spinner', 'waking-message', 'waking-submessage',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -87,7 +112,10 @@ function __VLS_template() {
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
+            SidebarNavigation: SidebarNavigation,
+            userStore: userStore,
             appStore: appStore,
+            currentRoute: currentRoute,
         };
     },
 });
@@ -95,6 +123,7 @@ export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
+    __typeEl: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */
 //# sourceMappingURL=App.vue.js.map

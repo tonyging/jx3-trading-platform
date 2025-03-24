@@ -1,6 +1,6 @@
 <!-- components/SidebarNavigation.vue -->
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/appState'
 import { useUserStore } from '@/stores/user'
@@ -13,9 +13,33 @@ const userStore = useUserStore()
 const collapsed = computed(() => appStore.isSidebarCollapsed)
 
 // 定義props
-const props = defineProps<{
+type Props = {
   activeRoute?: string
-}>()
+}
+defineProps<Props>()
+
+// 定義子選單項目接口
+interface SubMenuItem {
+  title: string
+  icon: string
+  route: string
+  id: string
+}
+
+// 定義菜單項目接口
+interface MenuItem {
+  title: string
+  id: string
+  isTitle: boolean
+  hasSubMenu: boolean
+  subMenu?: SubMenuItem[]
+  route?: string
+  icon?: string
+}
+
+interface ExtendedSubMenuItem extends SubMenuItem {
+  parentId: string
+}
 
 // 獲取router實例
 const router = useRouter()
@@ -26,8 +50,8 @@ const isAdmin = computed(() => userStore.currentUser?.role === 'admin')
 // 移除展開相關邏輯，因為子選單始終顯示
 
 // 側邊欄選單項目
-const menuItems = computed(() => {
-  const items = [
+const menuItems = computed((): MenuItem[] => {
+  const items: MenuItem[] = [
     {
       title: '遊戲幣',
       id: 'game-currency',
@@ -100,8 +124,8 @@ const menuItems = computed(() => {
 })
 
 // 所有子菜單項目集合，用於折疊視圖
-const allSubMenuItems = computed(() => {
-  const items: any[] = []
+const allSubMenuItems = computed((): ExtendedSubMenuItem[] => {
+  const items: ExtendedSubMenuItem[] = []
   menuItems.value.forEach((item) => {
     if (item.hasSubMenu && item.subMenu) {
       items.push(
@@ -116,16 +140,17 @@ const allSubMenuItems = computed(() => {
 })
 
 // 檢查當前頁面是否為特定頁面
-const isActive = (route: string) => {
+const isActive = (route: string | undefined) => {
+  if (!route) return false // 如果沒有路由，不可能是活躍的
   return router.currentRoute.value.path === route
 }
 
 // 檢查當前頁面或其子頁面是否活躍
-const isActiveOrChildActive = (item: any) => {
+const isActiveOrChildActive = (item: MenuItem) => {
   if (item.isTitle) {
     // 如果是標題類別，檢查其子項是否活躍
     if (item.hasSubMenu && item.subMenu) {
-      return item.subMenu.some((subItem: any) => isActive(subItem.route))
+      return item.subMenu.some((subItem) => isActive(subItem.route))
     }
     return false
   }
@@ -138,14 +163,16 @@ const toggleSidebar = () => {
 }
 
 // 導航到指定路由，但標題分類不可導航
-const navigateTo = (route: string, isTitle: boolean) => {
+const navigateTo = (route: string | undefined, isTitle: boolean) => {
   if (!isTitle && route) {
     router.push(route)
   }
 }
 
 // 獲取圖標路徑
-const getIconPath = (iconName: string) => {
+const getIconPath = (iconName: string | undefined) => {
+  if (!iconName) return '' // 如果沒有圖標名稱，返回空字串
+
   // 使用動態導入確保圖標正確加載
   try {
     return new URL(`../assets/icons/${iconName}.svg`, import.meta.url).href
@@ -176,7 +203,6 @@ const getIconPath = (iconName: string) => {
           class="nav-item"
           :class="{
             active: isActiveOrChildActive(item),
-            'admin-item': item.id === 'admin',
             'title-category': item.isTitle,
           }"
         >
@@ -224,7 +250,6 @@ const getIconPath = (iconName: string) => {
           class="nav-item collapsed-item"
           :class="{
             active: isActive(subItem.route),
-            'admin-item': subItem.parentId === 'admin',
           }"
           @click="navigateTo(subItem.route, false)"
         >
@@ -263,8 +288,8 @@ $primary-hover: #d4282d;
 $background-color: #f5f5f5;
 $text-color: #333333;
 $error-color: #ff4d4f;
-$admin-color: #2d66b4;
-$admin-hover: #3a7bd5;
+$admin-color: $primary-color; // 將管理員顏色設為與主題色相同
+$admin-hover: $primary-hover; // 將管理員懸停顏色設為與主題懸停色相同
 $transition: all 0.3s ease;
 $box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 $font-family: 'Microsoft YaHei', '微軟雅黑', sans-serif;
@@ -422,16 +447,6 @@ $sidebar-title-color: rgba(255, 255, 255, 0.6); // 標題項目的顏色
         }
       }
     }
-
-    &.admin-item {
-      &.active > .nav-link {
-        background: $admin-color;
-      }
-
-      & > .nav-link:hover {
-        background: rgba($admin-color, 0.3);
-      }
-    }
   }
 
   .nav-link,
@@ -548,10 +563,6 @@ $sidebar-title-color: rgba(255, 255, 255, 0.6); // 標題項目的顏色
       &::before {
         display: none;
       }
-    }
-
-    &.admin-item.active .nav-link {
-      background: $admin-color;
     }
   }
 
