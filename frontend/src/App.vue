@@ -1,12 +1,20 @@
 <!-- App.vue -->
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/appState'
+import SidebarNavigation from '@/components/SidebarNavigation.vue'
 import axios from 'axios'
 
 const userStore = useUserStore()
 const appStore = useAppStore()
+const router = useRouter()
+
+// 計算當前路由，用於側邊欄高亮顯示
+const currentRoute = computed(() => {
+  return router.currentRoute.value.path
+})
 
 async function preWarmBackend() {
   try {
@@ -47,18 +55,26 @@ onMounted(async () => {
 </script>
 
 <template>
-  <router-view />
+  <div class="app-container">
+    <!-- 側邊欄導航 - 僅在使用者已登入時顯示 -->
+    <SidebarNavigation v-if="userStore.isAuthenticated" :active-route="currentRoute" />
 
-  <!-- 全局加載指示器 -->
-  <div v-if="appStore.isBackendWaking" class="backend-waking-overlay">
-    <div class="loading-spinner"></div>
-    <p class="waking-message">正在連接到伺服器，這可能需要幾秒鐘...</p>
-    <p class="waking-submessage">
-      我們使用免費的雲服務，首次連接可能較慢
-      <span v-if="appStore.connectionAttempts > 1">
-        (嘗試第 {{ appStore.connectionAttempts }} 次)
-      </span>
-    </p>
+    <!-- 主要內容區域 - 根據使用者登入狀態調整樣式 -->
+    <main class="main-content" :class="{ 'with-sidebar': userStore.isAuthenticated }">
+      <router-view />
+    </main>
+
+    <!-- 全局加載指示器 -->
+    <div v-if="appStore.isBackendWaking" class="backend-waking-overlay">
+      <div class="loading-spinner"></div>
+      <p class="waking-message">正在連接到伺服器，這可能需要幾秒鐘...</p>
+      <p class="waking-submessage">
+        我們使用免費的雲服務，首次連接可能較慢
+        <span v-if="appStore.connectionAttempts > 1">
+          (嘗試第 {{ appStore.connectionAttempts }} 次)
+        </span>
+      </p>
+    </div>
   </div>
 </template>
 
@@ -77,6 +93,23 @@ body {
     'Helvetica Neue', sans-serif;
   line-height: 1.5;
   color: #202123;
+}
+
+/* App 容器樣式 */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* 主要內容區域樣式 */
+.main-content {
+  flex: 1;
+  transition: margin-left 0.3s ease;
+}
+
+/* 當側邊欄顯示時的內容區域樣式 */
+.main-content.with-sidebar {
+  margin-left: 240px; /* 與側邊欄寬度相同 */
 }
 
 /* 確保整個應用容器佔滿視窗高度 */
@@ -127,5 +160,12 @@ body {
 .waking-submessage {
   font-size: 14px;
   opacity: 0.8;
+}
+
+/* 響應式設計 - 在小螢幕上調整側邊欄相關樣式 */
+@media (max-width: 768px) {
+  .main-content.with-sidebar {
+    margin-left: 72px; /* 收起狀態下側邊欄的寬度 */
+  }
 }
 </style>
