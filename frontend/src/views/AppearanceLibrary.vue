@@ -279,11 +279,6 @@ onMounted(() => {
                 </div>
               </div>
             </div>
-
-            <!-- 新增外觀卡片 -->
-            <div class="appearance-card add-card" @click="isCreateModalOpen = true">
-              <div class="add-icon">+</div>
-            </div>
           </div>
         </section>
 
