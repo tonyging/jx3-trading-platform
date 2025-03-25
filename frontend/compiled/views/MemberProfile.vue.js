@@ -23,6 +23,12 @@ const menuItems = [
         label: '交易安全',
     },
 ];
+// 處理登出功能
+const handleLogout = () => {
+    userStore.logout();
+    router.push('/login');
+    showNotification('登出成功', 'success');
+};
 // 用戶名稱和電子郵件
 const userName = ref('');
 const userEmail = ref('');
@@ -307,35 +313,9 @@ function __VLS_template() {
     const __VLS_ctx = {};
     let __VLS_components;
     let __VLS_directives;
-    ['verification-button', 'resend-button', 'settings-container', 'side-menu', 'menu-item', 'menu-item-icon', 'menu-item-text', 'site-header', 'content-wrapper', 'main-content', 'settings-content', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'discord-info', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'notification', 'discord-unlink-button', 'discord-button', 'discord-connect',];
+    ['verification-button', 'resend-button', 'settings-container', 'side-menu', 'menu-item', 'menu-item-icon', 'menu-item-text', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'discord-info', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'notification', 'discord-unlink-button', 'discord-button', 'discord-connect', 'save-button', 'logout-button',];
     // CSS variable injection 
     // CSS variable injection end 
-    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("platform-base") },
-    });
-    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("site-header") },
-    });
-    const __VLS_0 = {}.RouterLink;
-    /** @type { [typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, ] } */ ;
-    // @ts-ignore
-    const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
-        to: ("/"),
-        ...{ class: ("header-link") },
-    }));
-    const __VLS_2 = __VLS_1({
-        to: ("/"),
-        ...{ class: ("header-link") },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_1));
-    __VLS_elementAsFunction(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({});
-    __VLS_5.slots.default;
-    var __VLS_5;
-    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("content-wrapper") },
-    });
-    __VLS_elementAsFunction(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
-        ...{ class: ("main-content settings-content") },
-    });
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: ("settings-container") },
     });
@@ -392,6 +372,11 @@ function __VLS_template() {
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             type: ("submit"),
             ...{ class: ("save-button") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.handleLogout) },
+            type: ("button"),
+            ...{ class: ("logout-button") },
         });
     }
     else if (__VLS_ctx.currentMenu === 'security') {
@@ -565,7 +550,7 @@ function __VLS_template() {
         });
         (__VLS_ctx.notification.message);
     }
-    ['platform-base', 'site-header', 'header-link', 'content-wrapper', 'main-content', 'settings-content', 'settings-container', 'side-menu', 'active', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'save-button', 'settings-section', 'security-info', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'verified-email', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'phone-verification', 'mb-4', 'verification-button', 'verification-code-section', 'verification-input-group', 'verification-code-input', 'verification-actions', 'verification-button', 'verification-button', 'resend-button', 'security-item', 'discord-section', 'security-item-header', 'status', 'verified', 'security-item-content', 'discord-connect', 'discord-status', 'discord-connect-button', 'discord-icon', 'discord-info', 'discord-profile-container', 'discord-avatar', 'discord-user-details', 'discord-username', 'discord-unlink-button', 'notification',];
+    ['settings-container', 'side-menu', 'active', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'save-button', 'logout-button', 'settings-section', 'security-info', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'verified-email', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'phone-verification', 'mb-4', 'verification-button', 'verification-code-section', 'verification-input-group', 'verification-code-input', 'verification-actions', 'verification-button', 'verification-button', 'resend-button', 'security-item', 'discord-section', 'security-item-header', 'status', 'verified', 'security-item-content', 'discord-connect', 'discord-status', 'discord-connect-button', 'discord-icon', 'discord-info', 'discord-profile-container', 'discord-avatar', 'discord-user-details', 'discord-username', 'discord-unlink-button', 'notification',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -586,6 +571,7 @@ const __VLS_self = (await import('vue')).defineComponent({
         return {
             currentMenu: currentMenu,
             menuItems: menuItems,
+            handleLogout: handleLogout,
             userName: userName,
             userEmail: userEmail,
             notification: notification,

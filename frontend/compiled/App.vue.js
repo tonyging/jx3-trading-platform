@@ -11,6 +11,13 @@ const router = useRouter();
 const currentRoute = computed(() => {
     return router.currentRoute.value.path;
 });
+// 計算主內容區域的樣式
+const mainContentClass = computed(() => {
+    return {
+        'with-sidebar': userStore.isAuthenticated,
+        'sidebar-collapsed': appStore.isSidebarCollapsed,
+    };
+});
 async function preWarmBackend() {
     try {
         appStore.setBackendWaking(true);
@@ -68,7 +75,7 @@ function __VLS_template() {
     }
     __VLS_elementAsFunction(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
         ...{ class: ("main-content") },
-        ...{ class: (({ 'with-sidebar': __VLS_ctx.userStore.isAuthenticated })) },
+        ...{ class: ((__VLS_ctx.mainContentClass)) },
     });
     const __VLS_5 = {}.RouterView;
     /** @type { [typeof __VLS_components.RouterView, typeof __VLS_components.routerView, ] } */ ;
@@ -93,7 +100,7 @@ function __VLS_template() {
             (__VLS_ctx.appStore.connectionAttempts);
         }
     }
-    ['app-container', 'main-content', 'with-sidebar', 'backend-waking-overlay', 'loading-spinner', 'waking-message', 'waking-submessage',];
+    ['app-container', 'main-content', 'backend-waking-overlay', 'loading-spinner', 'waking-message', 'waking-submessage',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -116,6 +123,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             userStore: userStore,
             appStore: appStore,
             currentRoute: currentRoute,
+            mainContentClass: mainContentClass,
         };
     },
 });

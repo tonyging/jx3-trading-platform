@@ -109,11 +109,11 @@ body {
   display: flex;
   min-height: 100vh;
   position: relative;
-  width: 100%;
 }
 
 /* 主要內容區域樣式 */
 .main-content {
+  flex: 1;
   transition: margin-left 0.3s ease;
   width: 100%;
   height: auto;
@@ -121,14 +121,17 @@ body {
 
 /* 當側邊欄展開時的內容區域樣式 */
 .main-content.with-sidebar {
-  margin-left: 210px; /* 與展開狀態下側邊欄寬度相同 */
-  width: 100%;
+  margin-left: 240px; /* 與展開狀態下側邊欄寬度相同 */
 }
 
 /* 當側邊欄收起時的內容區域樣式 */
 .main-content.with-sidebar.sidebar-collapsed {
   margin-left: 72px; /* 與收起狀態下側邊欄寬度相同 */
-  width: 100%;
+}
+
+/* 確保整個應用容器佔滿視窗高度 */
+#app {
+  min-height: 100vh;
 }
 
 .backend-waking-overlay {

@@ -1,4 +1,4 @@
-<!-- HomeView.vue -->
+// HomeView.vue
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { storeToRefs } from 'pinia'
@@ -8,7 +8,7 @@ import CreateProductModal from '@/components/CreateProductModal.vue'
 import EditProductModal from '@/components/EditProductModal.vue'
 import PurchaseConfirmModal from '@/components/PurchaseConfirmModal.vue'
 import { productApi } from '@/services/api/product'
-import type { Product, ProductListType, ProductStatus, UserRole } from '@/types'
+import type { Product, ProductListType, ProductStatus } from '@/types'
 import { ratingApi } from '@/services/api/rating'
 
 // 定義可能的錯誤類型
@@ -44,13 +44,6 @@ const statusMap: Record<Product['status'], string> = {
   reserved: '交易中',
   sold: '已售出',
   deleted: '已下架',
-}
-
-// 定義角色映射
-const roleMap: Record<UserRole, string> = {
-  admin: '管理員',
-  user: '一般會員',
-  banned: '停權會員',
 }
 
 const isAdmin = computed(() => {
@@ -249,6 +242,7 @@ const handleRate = async (product: Product) => {
     // 顯示評價對話框
     showRatingModal.value = true
   } catch (error) {
+    console.error('檢查評價狀態失敗:', error)
     showNotification('檢查評價狀態失敗', 'error')
   }
 }
@@ -342,24 +336,6 @@ const showNotification = (message: string, type: 'success' | 'error' = 'success'
   setTimeout(() => {
     notification.value.show = false
   }, 3000)
-}
-
-const isUserMenuOpen = ref(false)
-
-// 添加關閉選單的方法
-const closeUserMenu = () => {
-  isUserMenuOpen.value = false
-}
-
-// 切換用戶菜單顯示狀態
-const toggleUserMenu = () => {
-  isUserMenuOpen.value = !isUserMenuOpen.value
-}
-
-// 處理用戶登出
-const handleLogout = () => {
-  userStore.logout()
-  router.push('/login')
 }
 
 // 格式化價格顯示
@@ -588,330 +564,191 @@ const getStatusClass = (status: ProductStatus) => {
   }
   return classMap[status] || 'status-unknown'
 }
-
-// 轉換角色為中文顯示
-const getRoleDisplay = (role: UserRole | undefined) => {
-  if (!role) return '未知角色'
-  return roleMap[role] || '未知角色'
-}
-
-const handleMemberInfo = () => {
-  router.push('/member-info?tab=security')
-  closeUserMenu()
-}
-
-const handleAdminDashboard = () => {
-  router.push('/admin-dashboard')
-  closeUserMenu()
-}
 </script>
 
 <template>
-  <div class="platform-base" @click="closeUserMenu">
-    <!-- 頁面頂部標題和用戶選單 -->
-    <div class="site-header">
-      <h1>劍三交易平台</h1>
-      <div class="user-menu-container" @click.stop>
-        <div class="user-avatar" @click.stop="toggleUserMenu">
-          {{ userStore.currentUser?.name?.charAt(0) || '用' }}
-        </div>
-        <div v-if="isUserMenuOpen" class="user-dropdown-menu">
-          <div class="user-info">
-            <p class="user-name">
-              {{ userStore.currentUser?.name || '用戶' }}
-              <span class="role-tag">({{ getRoleDisplay(userStore.currentUser?.role) }})</span>
-            </p>
-            <p class="user-email">{{ userStore.currentUser?.email }}</p>
-          </div>
-          <div class="user-actions">
-            <button class="menu-button profile-button" @click="handleMemberInfo">會員資訊</button>
-            <button v-if="isAdmin" class="menu-button admin-button" @click="handleAdminDashboard">
-              管理員儀表板
-            </button>
-            <button class="menu-button logout-button" @click="handleLogout">登出</button>
-          </div>
-        </div>
+  <!-- 主要內容區域 -->
+  <main class="main-content trade-content">
+    <!-- 頁籤和創建商品按鈕 -->
+    <div class="table-header">
+      <div class="tabs">
+        <button :class="['tab', { active: currentTab === 'all' }]" @click="switchTab('all')">
+          我要買幣
+        </button>
+        <button :class="['tab', { active: currentTab === 'my' }]" @click="switchTab('my')">
+          我的賣幣
+        </button>
+        <button
+          :class="['tab', { active: currentTab === 'trading' }]"
+          @click="switchTab('trading')"
+        >
+          交易中
+        </button>
+        <button
+          :class="['tab', { active: currentTab === 'completed' }]"
+          @click="switchTab('completed')"
+        >
+          已完成
+        </button>
+        <button
+          v-if="userStore.currentUser?.role === 'admin'"
+          :class="['tab', { active: currentTab === 'admin' }]"
+          @click="switchTab('admin')"
+        >
+          管理員
+        </button>
       </div>
+      <button class="create-button" @click="handleCreateProduct">我要賣幣</button>
     </div>
+    <!-- 商品列表區域 -->
+    <div class="trade-table">
+      <table>
+        <thead>
+          <tr>
+            <th>賣家</th>
+            <th>角色暱稱</th>
+            <template v-if="currentTab !== 'completed'">
+              <th>
+                <div class="sort-header" @click="handleSort('amount')">
+                  數量
+                  <span :class="getSortIconClass('amount')" />
+                </div>
+              </th>
+            </template>
+            <th>
+              <div class="sort-header" @click="handleSort('price')">
+                價格
+                <span :class="getSortIconClass('price')" />
+              </div>
+            </th>
+            <th>
+              <div class="sort-header" @click="handleSort('value')">
+                幣值
+                <span :class="getSortIconClass('value')" />
+              </div>
+            </th>
+            <template v-if="currentTab !== 'completed'">
+              <th>幣別</th>
+              <th>交易方式</th>
+            </template>
+            <!-- 管理員的狀態欄位 -->
+            <th v-if="isAdmin">狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="loading">
+            <td :colspan="totalColumns" class="status-message">載入中...</td>
+          </tr>
+          <tr v-else-if="products.length === 0">
+            <td :colspan="totalColumns" class="status-message">暫無商品</td>
+          </tr>
+          <tr v-else v-for="product in products" :key="product._id">
+            <td>{{ typeof product.userId === 'object' ? product.userId.name : '未知賣家' }}</td>
+            <td>{{ product.characterNickname || '未設定' }}</td>
 
-    <!-- 主要內容區域 -->
-    <div class="content-wrapper">
-      <main class="main-content trade-content">
-        <!-- 添加創建商品按鈕 -->
-        <div class="table-header">
-          <div class="tabs">
-            <button :class="['tab', { active: currentTab === 'all' }]" @click="switchTab('all')">
-              我要買幣
-            </button>
-            <button :class="['tab', { active: currentTab === 'my' }]" @click="switchTab('my')">
-              我的賣幣
-            </button>
-            <button
-              :class="['tab', { active: currentTab === 'trading' }]"
-              @click="switchTab('trading')"
-            >
-              交易中
-            </button>
-            <button
-              :class="['tab', { active: currentTab === 'completed' }]"
-              @click="switchTab('completed')"
-            >
-              已完成
-            </button>
-            <button
-              v-if="userStore.currentUser?.role === 'admin'"
-              :class="['tab', { active: currentTab === 'admin' }]"
-              @click="switchTab('admin')"
-            >
-              管理員
-            </button>
-          </div>
-          <button class="create-button" @click="handleCreateProduct">我要賣幣</button>
-        </div>
-        <!-- 商品列表區域 -->
-        <div class="trade-table">
-          <table>
-            <thead>
-              <tr>
-                <th>賣家</th>
-                <th>角色暱稱</th>
-                <template v-if="currentTab !== 'completed'">
-                  <th>
-                    <div class="sort-header" @click="handleSort('amount')">
-                      數量
-                      <span :class="getSortIconClass('amount')" />
-                    </div>
-                  </th>
-                </template>
-                <th>
-                  <div class="sort-header" @click="handleSort('price')">
-                    價格
-                    <span :class="getSortIconClass('price')" />
-                  </div>
-                </th>
-                <th>
-                  <div class="sort-header" @click="handleSort('value')">
-                    幣值
-                    <span :class="getSortIconClass('value')" />
-                  </div>
-                </th>
-                <template v-if="currentTab !== 'completed'">
-                  <th>幣別</th>
-                  <th>交易方式</th>
-                </template>
-                <!-- 管理員的狀態欄位 -->
-                <th v-if="isAdmin">狀態</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="loading">
-                <td :colspan="totalColumns" class="status-message">載入中...</td>
-              </tr>
-              <tr v-else-if="products.length === 0">
-                <td :colspan="totalColumns" class="status-message">暫無商品</td>
-              </tr>
-              <tr v-else v-for="product in products" :key="product._id">
-                <td>{{ typeof product.userId === 'object' ? product.userId.name : '未知賣家' }}</td>
-                <td>{{ product.characterNickname || '未設定' }}</td>
+            <template v-if="currentTab !== 'completed'">
+              <td>{{ product.amount }}</td>
+            </template>
 
-                <template v-if="currentTab !== 'completed'">
-                  <td>{{ product.amount }}</td>
-                </template>
+            <td>{{ formatPrice(product.price) }}</td>
+            <td>{{ calculateValue(product.price, product.amount) }}</td>
 
-                <td>{{ formatPrice(product.price) }}</td>
-                <td>{{ calculateValue(product.price, product.amount) }}</td>
+            <template v-if="currentTab !== 'completed'">
+              <td>{{ product.currency || '台幣' }}</td>
+              <td>{{ formatPaymentMethods(product.paymentMethods) }}</td>
+            </template>
 
-                <template v-if="currentTab !== 'completed'">
-                  <td>{{ product.currency || '台幣' }}</td>
-                  <td>{{ formatPaymentMethods(product.paymentMethods) }}</td>
-                </template>
+            <td v-if="isAdmin">
+              <span :class="['status-tag', getStatusClass(product.status)]" :title="product.status">
+                {{ getStatusDisplay(product.status) }}
+              </span>
+            </td>
+            <td>
+              <!-- 交易中頁籤的按鈕邏輯 -->
+              <template v-if="currentTab === 'trading'">
+                <button
+                  class="view-button"
+                  @click="handleViewTransaction(product)"
+                  :disabled="!product.transactionId"
+                >
+                  {{ product.transactionId ? '查看交易' : '交易資訊異常' }}
+                </button>
+              </template>
 
-                <td v-if="isAdmin">
-                  <span
-                    :class="['status-tag', getStatusClass(product.status)]"
-                    :title="product.status"
+              <template v-if="currentTab === 'completed'">
+                <div class="transaction-actions">
+                  <button
+                    class="view-button"
+                    @click="handleViewTransaction(product)"
+                    :disabled="!product.transactionId"
                   >
-                    {{ getStatusDisplay(product.status) }}
-                  </span>
-                </td>
-                <td>
-                  <!-- 交易中頁籤的按鈕邏輯 -->
-                  <template v-if="currentTab === 'trading'">
-                    <button
-                      class="view-button"
-                      @click="handleViewTransaction(product)"
-                      :disabled="!product.transactionId"
-                    >
-                      {{ product.transactionId ? '查看交易' : '交易資訊異常' }}
+                    查看交易
+                  </button>
+                  <!-- 顯示評價按鈕，當是買家且未評價時 -->
+                  <button
+                    v-if="
+                      typeof product.buyerId === 'object' &&
+                      product.buyerId._id === userStore.currentUser?.id &&
+                      product.transactionId
+                    "
+                    class="rate-button"
+                    @click="handleRate(product)"
+                  >
+                    {{
+                      ratedTransactions.has(
+                        typeof product.transactionId === 'object'
+                          ? product.transactionId._id
+                          : product.transactionId,
+                      )
+                        ? '已評價'
+                        : '評價賣家'
+                    }}
+                  </button>
+                </div>
+              </template>
+
+              <!-- 管理員頁籤的按鈕邏輯 -->
+              <template v-else-if="currentTab === 'admin'">
+                <div class="admin-actions">
+                  <button
+                    v-if="product.transactionId"
+                    class="view-button"
+                    @click="handleViewTransaction(product)"
+                  >
+                    查看交易
+                  </button>
+                  <button class="delete-button" @click="handleDeleteProduct(product)">刪除</button>
+                </div>
+              </template>
+
+              <!-- 其他頁籤的按鈕邏輯 -->
+              <template v-else>
+                <template
+                  v-if="
+                    typeof product.userId === 'object' &&
+                    product.userId._id === userStore.currentUser?.id
+                  "
+                >
+                  <div class="product-actions">
+                    <button class="edit-button" @click="handleEditProduct(product)">編輯</button>
+                    <button class="delete-button" @click="handleDeleteProduct(product)">
+                      刪除
                     </button>
-                  </template>
-
-                  <template v-if="currentTab === 'completed'">
-                    <div class="transaction-actions">
-                      <button
-                        class="view-button"
-                        @click="handleViewTransaction(product)"
-                        :disabled="!product.transactionId"
-                      >
-                        查看交易
-                      </button>
-                      <!-- 顯示評價按鈕，當是買家且未評價時 -->
-                      <button
-                        v-if="
-                          typeof product.buyerId === 'object' &&
-                          product.buyerId._id === userStore.currentUser?.id &&
-                          product.transactionId
-                        "
-                        class="rate-button"
-                        @click="handleRate(product)"
-                      >
-                        {{
-                          ratedTransactions.has(
-                            typeof product.transactionId === 'object'
-                              ? product.transactionId._id
-                              : product.transactionId,
-                          )
-                            ? '已評價'
-                            : '評價賣家'
-                        }}
-                      </button>
-                    </div>
-                  </template>
-
-                  <!-- 管理員頁籤的按鈕邏輯 -->
-                  <template v-else-if="currentTab === 'admin'">
-                    <div class="admin-actions">
-                      <button
-                        v-if="product.transactionId"
-                        class="view-button"
-                        @click="handleViewTransaction(product)"
-                      >
-                        查看交易
-                      </button>
-                      <button class="delete-button" @click="handleDeleteProduct(product)">
-                        刪除
-                      </button>
-                    </div>
-                  </template>
-
-                  <!-- 其他頁籤的按鈕邏輯 -->
-                  <template v-else>
-                    <template
-                      v-if="
-                        typeof product.userId === 'object' &&
-                        product.userId._id === userStore.currentUser?.id
-                      "
-                    >
-                      <div class="product-actions">
-                        <button class="edit-button" @click="handleEditProduct(product)">
-                          編輯
-                        </button>
-                        <button class="delete-button" @click="handleDeleteProduct(product)">
-                          刪除
-                        </button>
-                      </div>
-                    </template>
-                    <template v-else>
-                      <button class="buy-button" @click="handleBuyProduct(product)">購買</button>
-                    </template>
-                  </template>
-                </td>
-
-                <!-- 添加評價對話框 -->
-                <div v-if="showRatingModal" class="rating-modal-overlay">
-                  <div class="rating-modal">
-                    <h3>評價賣家</h3>
-                    <div class="rating-stars">
-                      <div class="stars-label">評分:</div>
-                      <div class="stars-container">
-                        <button
-                          v-for="i in 5"
-                          :key="i"
-                          type="button"
-                          :class="['star-btn', { active: i <= ratingScore }]"
-                          @click="ratingScore = i"
-                        >
-                          <span>★</span>
-                        </button>
-                      </div>
-                      <div class="stars-value">{{ ratingScore }} 顆星</div>
-                    </div>
-                    <div class="rating-comment">
-                      <label for="rating-comment">評價內容:</label>
-                      <textarea
-                        id="rating-comment"
-                        v-model="ratingComment"
-                        placeholder="請輸入您的評價內容..."
-                        rows="4"
-                      ></textarea>
-                    </div>
-                    <div class="rating-actions">
-                      <button class="cancel-btn" @click="showRatingModal = false">取消</button>
-                      <button
-                        class="submit-btn"
-                        @click="submitRating({ score: ratingScore, comment: ratingComment })"
-                      >
-                        提交評價
-                      </button>
-                    </div>
                   </div>
-                </div>
+                </template>
+                <template v-else>
+                  <button class="buy-button" @click="handleBuyProduct(product)">購買</button>
+                </template>
+              </template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
 
-                <div v-if="showPreviousRatingModal" class="previous-rating-modal-overlay">
-                  <div class="previous-rating-modal">
-                    <h3>已評價的交易</h3>
-                    <div class="previous-rating-stars">
-                      <div class="stars-label">評分:</div>
-                      <div class="stars-container">
-                        <button
-                          v-for="i in 5"
-                          :key="i"
-                          type="button"
-                          :class="['star-btn', { active: i <= (previousRating?.score || 0) }]"
-                          disabled
-                        >
-                          <span>★</span>
-                        </button>
-                      </div>
-                      <div class="stars-value">{{ previousRating?.score || 0 }} 顆星</div>
-                    </div>
-                    <div class="previous-rating-comment">
-                      <label>評價內容:</label>
-                      <p>{{ previousRating?.comment || '無評價內容' }}</p>
-                      <div class="rating-date">
-                        評價時間:
-                        {{
-                          previousRating?.createdAt
-                            ? new Date(previousRating.createdAt).toLocaleString('zh-TW', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
-                            : '未知'
-                        }}
-                      </div>
-                    </div>
-                    <div class="previous-rating-actions">
-                      <button @click="showPreviousRatingModal = false">關閉</button>
-                    </div>
-                  </div>
-                </div>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </main>
-    </div>
-    <div class="disclaimer">
-      <span
-        >免責聲明:
-        本平台僅提供劍三交易資訊的媒合服務,不涉及任何金流操作。交易過程中請務必提高警惕,謹防詐騙。所有交易風險由買賣雙方自行承擔,本平台不承擔任何法律責任。</span
-      >
-    </div>
-  </div>
+  <!-- 模態框與通知元件 -->
   <CreateProductModal v-model:isOpen="isCreateModalOpen" @submit="handleSubmitProduct" />
   <EditProductModal
     v-if="currentEditProduct"
@@ -925,6 +762,7 @@ const handleAdminDashboard = () => {
     @confirm="handleConfirmPurchase"
     @cancel="showPurchaseModal = false"
   />
+
   <!-- 帳號驗證 Modal -->
   <div v-if="showAccountVerificationModal" class="verification-modal-overlay">
     <div class="verification-modal">
@@ -948,6 +786,89 @@ const handleAdminDashboard = () => {
       </div>
     </div>
   </div>
+
+  <!-- 評價相關模態框 -->
+  <div v-if="showRatingModal" class="rating-modal-overlay">
+    <div class="rating-modal">
+      <h3>評價賣家</h3>
+      <div class="rating-stars">
+        <div class="stars-label">評分:</div>
+        <div class="stars-container">
+          <button
+            v-for="i in 5"
+            :key="i"
+            type="button"
+            :class="['star-btn', { active: i <= ratingScore }]"
+            @click="ratingScore = i"
+          >
+            <span>★</span>
+          </button>
+        </div>
+        <div class="stars-value">{{ ratingScore }} 顆星</div>
+      </div>
+      <div class="rating-comment">
+        <label for="rating-comment">評價內容:</label>
+        <textarea
+          id="rating-comment"
+          v-model="ratingComment"
+          placeholder="請輸入您的評價內容..."
+          rows="4"
+        ></textarea>
+      </div>
+      <div class="rating-actions">
+        <button class="cancel-btn" @click="showRatingModal = false">取消</button>
+        <button
+          class="submit-btn"
+          @click="submitRating({ score: ratingScore, comment: ratingComment })"
+        >
+          提交評價
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showPreviousRatingModal" class="previous-rating-modal-overlay">
+    <div class="previous-rating-modal">
+      <h3>已評價的交易</h3>
+      <div class="previous-rating-stars">
+        <div class="stars-label">評分:</div>
+        <div class="stars-container">
+          <button
+            v-for="i in 5"
+            :key="i"
+            type="button"
+            :class="['star-btn', { active: i <= (previousRating?.score || 0) }]"
+            disabled
+          >
+            <span>★</span>
+          </button>
+        </div>
+        <div class="stars-value">{{ previousRating?.score || 0 }} 顆星</div>
+      </div>
+      <div class="previous-rating-comment">
+        <label>評價內容:</label>
+        <p>{{ previousRating?.comment || '無評價內容' }}</p>
+        <div class="rating-date">
+          評價時間:
+          {{
+            previousRating?.createdAt
+              ? new Date(previousRating.createdAt).toLocaleString('zh-TW', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : '未知'
+          }}
+        </div>
+      </div>
+      <div class="previous-rating-actions">
+        <button @click="showPreviousRatingModal = false">關閉</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 通知組件 -->
   <div v-if="notification.show" :class="['notification', `notification-${notification.type}`]">
     {{ notification.message }}
@@ -968,104 +889,23 @@ $transition: all 0.3s ease;
 $admin-color: #2d66b4;
 $admin-hover: #3a7bd5;
 
-// 基礎頁面容器
-.platform-base {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  background-color: $background-color;
-  background-image: linear-gradient(135deg, #ffffff, #f0f0f0);
-  overflow-y: auto;
-}
-
-.disclaimer {
-  margin-top: auto;
-  padding: $spacing-unit * 2;
-  background: #fff5f5;
-  text-align: center;
-  font-size: 12px;
-  color: #f5222d;
-
-  span {
-    display: inline-block;
-    line-height: 1.6;
-  }
-}
-
-// 頁面頂部結構
-.site-header {
-  position: absolute;
-  top: $spacing-unit * 3;
-  left: $spacing-unit * 3;
-  right: $spacing-unit * 3;
-  z-index: 10;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  h1 {
-    font-size: 24px;
-    font-weight: 600;
-    color: $primary-color;
-    margin: 0;
-    font-family: $font-family;
-  }
-}
-
-// 內容區域包裝容器
-.content-wrapper {
-  min-height: auto;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: $spacing-unit * 10;
-  overflow: auto;
-  padding-bottom: $spacing-unit * 4;
-}
-
 // 主要內容區域 - 交易頁面特定樣式
 .main-content.trade-content {
-  width: 90%;
-  max-width: 1440px;
+  max-width: 1200px;
   padding: $spacing-unit * 4;
   background: #ffffff;
   border-radius: $spacing-unit * 1.5;
   box-shadow: $box-shadow;
   border: 1px solid rgba($primary-color, 0.1);
-}
-
-// 用戶菜單相關樣式
-.user-menu-container {
-  position: relative;
+  width: 90%;
+  margin: $spacing-unit * 6 auto;
+  height: auto;
 }
 
 .admin-actions {
   display: flex;
   gap: $spacing-unit * 2;
   align-items: center;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  background-color: $primary-color;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  font-weight: bold;
-  transition: $transition;
-
-  &:hover {
-    background-color: $primary-hover;
-  }
 }
 
 .status-tag {
@@ -1106,103 +946,19 @@ $admin-hover: #3a7bd5;
   }
 }
 
-.user-dropdown-menu {
-  position: absolute;
-  top: calc(100% + #{$spacing-unit});
-  right: 0;
-  width: 250px;
-  background: white;
-  border-radius: $spacing-unit;
-  box-shadow: $box-shadow;
-  border: 1px solid rgba($primary-color, 0.1);
-  padding: $spacing-unit * 2;
-  z-index: 20;
-
-  .user-info {
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: $spacing-unit * 2;
-    margin-bottom: $spacing-unit * 2;
-
-    .user-name {
-      margin: 0;
-      font-weight: 600;
-      color: $text-color;
-      display: flex;
-      align-items: center;
-      gap: $spacing-unit;
-
-      .role-tag {
-        font-size: 0.85em;
-        color: #666;
-        font-weight: normal;
-      }
-    }
-
-    .user-email {
-      margin: 0;
-      color: #666666;
-      font-size: 14px;
-    }
-  }
-
-  .user-actions {
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-unit;
-
-    .menu-button {
-      width: 100%;
-      padding: $spacing-unit * 1.5 $spacing-unit * 2;
-      color: white;
-      border: none;
-      border-radius: $spacing-unit;
-      font-size: 16px;
-      cursor: pointer;
-      transition: $transition;
-      font-weight: 600;
-
-      &:hover {
-        transform: translateY(-1px);
-      }
-    }
-
-    .profile-button {
-      background: linear-gradient(to right, #4a90e2, #357abd);
-
-      &:hover {
-        background: linear-gradient(to right, #357abd, #2868a9);
-      }
-    }
-
-    .logout-button {
-      background: linear-gradient(to right, $primary-color, $primary-hover);
-
-      &:hover {
-        background: linear-gradient(to right, $primary-hover, #f4282d);
-      }
-    }
-
-    .admin-button {
-      background: linear-gradient(to right, $admin-color, $admin-hover);
-
-      &:hover {
-        background: linear-gradient(to right, $admin-hover, #4a8ae5);
-      }
-    }
-  }
-}
-
 // 添加創建按鈕相關樣式
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: $spacing-unit * 3;
+  margin-bottom: $spacing-unit * 4; // 增加與表格的間距
+  padding: 0 $spacing-unit; // 增加水平內邊距
 }
 
 .tabs {
   display: flex;
   gap: $spacing-unit * 2;
+  flex-wrap: wrap; // 允許在小屏幕上換行
 }
 
 .tab {
@@ -1210,7 +966,7 @@ $admin-hover: #3a7bd5;
   border: none;
   color: #666;
   font-weight: 500;
-  padding: $spacing-unit $spacing-unit * 2;
+  padding: $spacing-unit * 1.5 $spacing-unit * 2; // 增加按鈕內邊距
   border-bottom: 2px solid transparent;
   cursor: pointer;
   transition: $transition;
@@ -1239,10 +995,10 @@ $admin-hover: #3a7bd5;
   display: flex;
   align-items: center;
   gap: $spacing-unit;
+  white-space: nowrap; // 防止按鈕文字換行
 
   &:hover {
     transform: translateY(-1px);
-    // 修改漸層背景的寫法，使用更安全的顏色值
     background: linear-gradient(to right, $primary-hover, #f4282d);
   }
 }
@@ -1250,14 +1006,26 @@ $admin-hover: #3a7bd5;
 // 交易表格相關樣式
 .trade-table {
   width: 100%;
+  overflow-x: auto; // 確保表格在小螢幕上可以水平滾動
   background: white;
   border-radius: $spacing-unit;
-  overflow: hidden;
+  margin: $spacing-unit * 3 0; // 增加上下邊距
+  padding: $spacing-unit * 2; // 為表格添加內邊距
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto; // 自動調整列寬
+  min-width: 800px; // 設置最小寬度以確保在小螢幕上可以滾動
+  height: auto;
+}
+
+thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f8f8f8;
 }
 
 th {
@@ -1266,8 +1034,23 @@ th {
   text-align: left;
   font-weight: 600;
   color: $text-color;
+  border-bottom: 2px solid #e0e0e0;
+  white-space: nowrap; // 防止表頭文字換行
 }
 
+// 移除固定寬度的設置，讓表格自動調整列寬
+th {
+  padding: $spacing-unit * 2.5; // 增加表頭內邊距
+}
+
+td {
+  padding: $spacing-unit * 2;
+  border-top: 1px solid #eee;
+  color: $text-color;
+  word-break: break-word; // 允許長文字在單元格內折行
+}
+
+// 排序圖標樣式
 .sort-header {
   display: flex;
   align-items: center;
@@ -1280,13 +1063,6 @@ th {
   }
 }
 
-td {
-  padding: $spacing-unit * 2;
-  border-top: 1px solid #eee;
-  color: $text-color;
-}
-
-// 排序圖標樣式
 .sort-icon {
   width: 0;
   height: 0;
@@ -1310,7 +1086,7 @@ td {
 }
 
 .delete-button {
-  padding: $spacing-unit $spacing-unit * 2;
+  padding: $spacing-unit * 1.5 $spacing-unit * 2;
   background: linear-gradient(to right, #888, #666);
   color: white;
   border: none;
@@ -1329,12 +1105,13 @@ td {
 .status-message {
   text-align: center;
   color: #666;
-  padding: $spacing-unit * 3;
+  padding: $spacing-unit * 4; // 增加狀態消息的內邊距
+  font-size: 16px; // 增加文字大小
 }
 
 // 購買按鈕樣式
 .buy-button {
-  padding: $spacing-unit $spacing-unit * 2;
+  padding: $spacing-unit * 1.5 $spacing-unit * 2;
   background: linear-gradient(to right, $primary-color, $primary-hover);
   color: white;
   border: none;
@@ -1350,7 +1127,7 @@ td {
 
 .view-button {
   // 正常狀態的樣式
-  padding: $spacing-unit $spacing-unit * 2;
+  padding: $spacing-unit * 1.5 $spacing-unit * 2;
   background: linear-gradient(to right, #4a90e2, #4a7de2); // 藍色漸層
   color: white;
   border: none;
@@ -1384,7 +1161,7 @@ td {
   gap: $spacing-unit * 2;
 
   .edit-button {
-    padding: $spacing-unit $spacing-unit * 2;
+    padding: $spacing-unit * 1.5 $spacing-unit * 2;
     background: linear-gradient(to right, #4caf50, #45a049);
     color: white;
     border: none;
@@ -1397,22 +1174,6 @@ td {
       transform: translateY(-1px);
       background: linear-gradient(to right, #45a049, #3d8b40);
     }
-  }
-}
-
-.delete-button {
-  padding: $spacing-unit $spacing-unit * 2;
-  background: linear-gradient(to right, #888, #666);
-  color: white;
-  border: none;
-  border-radius: $spacing-unit;
-  cursor: pointer;
-  transition: $transition;
-  font-weight: 600;
-
-  &:hover {
-    transform: translateY(-1px);
-    background: linear-gradient(to right, #777, #555);
   }
 }
 
@@ -1493,7 +1254,7 @@ td {
 }
 
 .rate-button {
-  padding: $spacing-unit $spacing-unit * 2;
+  padding: $spacing-unit * 1.5 $spacing-unit * 2;
   background: linear-gradient(to right, #ffa940, #fa8c16);
   color: white;
   border: none;
@@ -1706,81 +1467,22 @@ td {
   }
 }
 
-// 響應式設計
-@media (max-width: 768px) {
-  .site-header {
-    position: static;
-    width: 100%;
-    text-align: center;
-    padding: $spacing-unit * 2;
-    flex-direction: column;
-    gap: $spacing-unit * 2;
-  }
-
-  .content-wrapper {
-    padding-top: 0;
-  }
-
-  .main-content.trade-content {
-    width: 95%;
-    padding: $spacing-unit * 2;
-    margin-top: $spacing-unit * 2;
-  }
-
-  .trade-table {
-    overflow-x: auto;
-  }
-
-  th,
-  td {
-    padding: $spacing-unit * 1.5;
-    white-space: nowrap;
-  }
-
-  .sort-header {
-    white-space: nowrap;
-  }
-
-  .view-button {
-    padding: $spacing-unit ($spacing-unit * 1.5);
-    font-size: 14px;
-  }
-
-  .transaction-actions {
-    flex-direction: column;
-    gap: $spacing-unit;
-
-    button {
-      width: 100%;
-    }
-  }
-
-  .rating-modal {
-    width: 95%;
-    padding: $spacing-unit * 3;
-  }
-}
-
+// 通知樣式
 .notification {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-
-  display: inline-block; // 使寬度根據內容調整
-  max-width: 90%; // 防止在較長文字時過寬
-  width: auto; // 自動調整寬度
-
+  display: inline-block;
+  max-width: 90%;
+  width: auto;
   padding: $spacing-unit * 3;
   border-radius: $spacing-unit * 2;
   z-index: 1000;
   text-align: center;
-
-  word-wrap: break-word; // 長文字自動換行
-  white-space: normal; // 允許文字自然換行
-
+  word-wrap: break-word;
+  white-space: normal;
   animation: notificationAnimation 0.5s ease;
-
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 
   &-success {
@@ -1802,6 +1504,64 @@ td {
   to {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+// 響應式設計
+@media (max-width: 768px) {
+  .main-content.trade-content {
+    width: 100%;
+    padding: $spacing-unit * 3;
+    border-radius: $spacing-unit; // 減小圓角
+    margin: $spacing-unit 0; // 減少頂部和底部邊距
+  }
+
+  .table-header {
+    flex-direction: column;
+    gap: $spacing-unit * 2;
+
+    .tabs {
+      overflow-x: auto;
+      padding-bottom: $spacing-unit;
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .create-button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .trade-table {
+    overflow-x: auto;
+    padding: $spacing-unit;
+    margin: $spacing-unit * 2 0;
+    height: auto;
+  }
+
+  th,
+  td {
+    padding: $spacing-unit;
+    font-size: 14px;
+  }
+
+  .view-button,
+  .buy-button,
+  .edit-button,
+  .delete-button,
+  .rate-button {
+    padding: $spacing-unit ($spacing-unit * 1.5);
+    font-size: 14px;
+  }
+
+  .transaction-actions {
+    flex-direction: column;
+    gap: $spacing-unit;
+
+    button {
+      width: 100%;
+    }
   }
 }
 </style>

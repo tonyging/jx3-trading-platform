@@ -112,6 +112,15 @@ const router = createRouter({
         title: '管理員儀表板 - 劍三交易平台',
       },
     },
+    {
+      path: '/appearance/library',
+      name: 'appearance-library',
+      component: () => import('@/views/AppearanceLibrary.vue'),
+      meta: {
+        requiresAuth: true,
+        title: '外觀資料庫 - 劍三交易平台',
+      },
+    },
   ],
 })
 

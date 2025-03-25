@@ -183,3 +183,93 @@ export interface CompleteTransactionResponse {
   message: string
   data: Transaction
 }
+
+export interface AppearanceImage {
+  adultMale?: string
+  adultFemale?: string
+  childMale?: string
+  childFemale?: string
+}
+
+export interface Appearance {
+  _id: string
+  officialName: string
+  nicknames: string[]
+  images: AppearanceImage
+  submittedBy:
+    | string
+    | {
+        _id: string
+        name: string
+        email: string
+      }
+  approvedBy: string[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface AppearanceSubmission {
+  _id: string
+  officialName: string
+  nicknames: string[]
+  images?: AppearanceImage
+  submittedBy:
+    | string
+    | {
+        _id: string
+        name: string
+        email: string
+      }
+  status: 'pending' | 'approved' | 'rejected'
+  approvals: Array<{
+    userId: string
+    timestamp: Date
+    comment?: string
+  }>
+  rejections: Array<{
+    userId: string
+    timestamp: Date
+    reason: string
+  }>
+  createdAt: Date
+  updatedAt: Date
+}
+
+// 針對 API 回應的額外介面
+export interface AppearanceResponse {
+  status: string
+  data: {
+    appearance: Appearance
+  }
+}
+
+export interface AppearanceListResponse {
+  status: string
+  data: {
+    appearances: Appearance[]
+    pagination: {
+      current: number
+      total: number
+      totalRecords: number
+    }
+  }
+}
+
+export interface AppearanceSubmissionResponse {
+  status: string
+  data: {
+    submission: AppearanceSubmission
+  }
+}
+
+export interface AppearanceSubmissionListResponse {
+  status: string
+  data: {
+    submissions: AppearanceSubmission[]
+    pagination: {
+      current: number
+      total: number
+      totalRecords: number
+    }
+  }
+}

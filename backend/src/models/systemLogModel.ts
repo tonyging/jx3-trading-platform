@@ -15,7 +15,7 @@ const systemLogSchema = new Schema<ISystemLog>(
   {
     type: {
       type: String,
-      enum: ["user", "product", "transaction", "system"],
+      enum: ["user", "product", "transaction", "system", "appearance"],
       required: true,
     },
     action: {

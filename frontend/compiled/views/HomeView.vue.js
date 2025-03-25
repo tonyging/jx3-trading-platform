@@ -1,3 +1,4 @@
+// HomeView.vue
 import { ref, onMounted, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
@@ -25,12 +26,6 @@ const statusMap = {
     reserved: '交易中',
     sold: '已售出',
     deleted: '已下架',
-};
-// 定義角色映射
-const roleMap = {
-    admin: '管理員',
-    user: '一般會員',
-    banned: '停權會員',
 };
 const isAdmin = computed(() => {
     return userStore.currentUser?.role === 'admin';
@@ -193,6 +188,7 @@ const handleRate = async (product) => {
         showRatingModal.value = true;
     }
     catch (error) {
+        console.error('檢查評價狀態失敗:', error);
         showNotification('檢查評價狀態失敗', 'error');
     }
 };
@@ -271,20 +267,6 @@ const showNotification = (message, type = 'success') => {
     setTimeout(() => {
         notification.value.show = false;
     }, 3000);
-};
-const isUserMenuOpen = ref(false);
-// 添加關閉選單的方法
-const closeUserMenu = () => {
-    isUserMenuOpen.value = false;
-};
-// 切換用戶菜單顯示狀態
-const toggleUserMenu = () => {
-    isUserMenuOpen.value = !isUserMenuOpen.value;
-};
-// 處理用戶登出
-const handleLogout = () => {
-    userStore.logout();
-    router.push('/login');
 };
 // 格式化價格顯示
 const formatPrice = (price) => {
@@ -472,85 +454,14 @@ const getStatusClass = (status) => {
         deleted: 'status-deleted',
     };
     return classMap[status] || 'status-unknown';
-};
-// 轉換角色為中文顯示
-const getRoleDisplay = (role) => {
-    if (!role)
-        return '未知角色';
-    return roleMap[role] || '未知角色';
-};
-const handleMemberInfo = () => {
-    router.push('/member-info?tab=security');
-    closeUserMenu();
-};
-const handleAdminDashboard = () => {
-    router.push('/admin-dashboard');
-    closeUserMenu();
 }; /* PartiallyEnd: #3632/scriptSetup.vue */
 function __VLS_template() {
     const __VLS_ctx = {};
     let __VLS_components;
     let __VLS_directives;
-    ['delete-button', 'cancel-button', 'verify-button', 'active', 'star-btn', 'active', 'site-header', 'content-wrapper', 'main-content', 'trade-content', 'trade-table', 'sort-header', 'view-button', 'transaction-actions', 'rating-modal',];
+    ['cancel-button', 'verify-button', 'active', 'star-btn', 'active', 'main-content', 'trade-content', 'table-header', 'tabs', 'create-button', 'trade-table', 'view-button', 'buy-button', 'edit-button', 'delete-button', 'rate-button', 'transaction-actions',];
     // CSS variable injection 
     // CSS variable injection end 
-    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ onClick: (__VLS_ctx.closeUserMenu) },
-        ...{ class: ("platform-base") },
-    });
-    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("site-header") },
-    });
-    __VLS_elementAsFunction(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({});
-    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ onClick: () => { } },
-        ...{ class: ("user-menu-container") },
-    });
-    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ onClick: (__VLS_ctx.toggleUserMenu) },
-        ...{ class: ("user-avatar") },
-    });
-    (__VLS_ctx.userStore.currentUser?.name?.charAt(0) || '用');
-    if (__VLS_ctx.isUserMenuOpen) {
-        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("user-dropdown-menu") },
-        });
-        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("user-info") },
-        });
-        __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: ("user-name") },
-        });
-        (__VLS_ctx.userStore.currentUser?.name || '用戶');
-        __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: ("role-tag") },
-        });
-        (__VLS_ctx.getRoleDisplay(__VLS_ctx.userStore.currentUser?.role));
-        __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: ("user-email") },
-        });
-        (__VLS_ctx.userStore.currentUser?.email);
-        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("user-actions") },
-        });
-        __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (__VLS_ctx.handleMemberInfo) },
-            ...{ class: ("menu-button profile-button") },
-        });
-        if (__VLS_ctx.isAdmin) {
-            __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                ...{ onClick: (__VLS_ctx.handleAdminDashboard) },
-                ...{ class: ("menu-button admin-button") },
-            });
-        }
-        __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (__VLS_ctx.handleLogout) },
-            ...{ class: ("menu-button logout-button") },
-        });
-    }
-    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("content-wrapper") },
-    });
     __VLS_elementAsFunction(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
         ...{ class: ("main-content trade-content") },
     });
@@ -852,153 +763,8 @@ function __VLS_template() {
                     });
                 }
             }
-            if (__VLS_ctx.showRatingModal) {
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("rating-modal-overlay") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("rating-modal") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("rating-stars") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("stars-label") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("stars-container") },
-                });
-                for (const [i] of __VLS_getVForSourceType((5))) {
-                    __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                        ...{ onClick: (...[$event]) => {
-                                if (!(!((__VLS_ctx.loading))))
-                                    return;
-                                if (!(!((__VLS_ctx.products.length === 0))))
-                                    return;
-                                if (!((__VLS_ctx.showRatingModal)))
-                                    return;
-                                __VLS_ctx.ratingScore = i;
-                            } },
-                        key: ((i)),
-                        type: ("button"),
-                        ...{ class: ((['star-btn', { active: i <= __VLS_ctx.ratingScore }])) },
-                    });
-                    __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                }
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("stars-value") },
-                });
-                (__VLS_ctx.ratingScore);
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("rating-comment") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    for: ("rating-comment"),
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.textarea, __VLS_intrinsicElements.textarea)({
-                    id: ("rating-comment"),
-                    value: ((__VLS_ctx.ratingComment)),
-                    placeholder: ("請輸入您的評價內容..."),
-                    rows: ("4"),
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("rating-actions") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(!((__VLS_ctx.loading))))
-                                return;
-                            if (!(!((__VLS_ctx.products.length === 0))))
-                                return;
-                            if (!((__VLS_ctx.showRatingModal)))
-                                return;
-                            __VLS_ctx.showRatingModal = false;
-                        } },
-                    ...{ class: ("cancel-btn") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(!((__VLS_ctx.loading))))
-                                return;
-                            if (!(!((__VLS_ctx.products.length === 0))))
-                                return;
-                            if (!((__VLS_ctx.showRatingModal)))
-                                return;
-                            __VLS_ctx.submitRating({ score: __VLS_ctx.ratingScore, comment: __VLS_ctx.ratingComment });
-                        } },
-                    ...{ class: ("submit-btn") },
-                });
-            }
-            if (__VLS_ctx.showPreviousRatingModal) {
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("previous-rating-modal-overlay") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("previous-rating-modal") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("previous-rating-stars") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("stars-label") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("stars-container") },
-                });
-                for (const [i] of __VLS_getVForSourceType((5))) {
-                    __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                        key: ((i)),
-                        type: ("button"),
-                        ...{ class: ((['star-btn', { active: i <= (__VLS_ctx.previousRating?.score || 0) }])) },
-                        disabled: (true),
-                    });
-                    __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                }
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("stars-value") },
-                });
-                (__VLS_ctx.previousRating?.score || 0);
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("previous-rating-comment") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({});
-                __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-                (__VLS_ctx.previousRating?.comment || '無評價內容');
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("rating-date") },
-                });
-                (__VLS_ctx.previousRating?.createdAt
-                    ? new Date(__VLS_ctx.previousRating.createdAt).toLocaleString('zh-TW', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    })
-                    : '未知');
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("previous-rating-actions") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(!((__VLS_ctx.loading))))
-                                return;
-                            if (!(!((__VLS_ctx.products.length === 0))))
-                                return;
-                            if (!((__VLS_ctx.showPreviousRatingModal)))
-                                return;
-                            __VLS_ctx.showPreviousRatingModal = false;
-                        } },
-                });
-            }
         }
     }
-    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("disclaimer") },
-    });
-    __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     // @ts-ignore
     /** @type { [typeof CreateProductModal, ] } */ ;
     // @ts-ignore
@@ -1100,13 +866,138 @@ function __VLS_template() {
             ...{ class: ("verify-button") },
         });
     }
+    if (__VLS_ctx.showRatingModal) {
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("rating-modal-overlay") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("rating-modal") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("rating-stars") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("stars-label") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("stars-container") },
+        });
+        for (const [i] of __VLS_getVForSourceType((5))) {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!((__VLS_ctx.showRatingModal)))
+                            return;
+                        __VLS_ctx.ratingScore = i;
+                    } },
+                key: ((i)),
+                type: ("button"),
+                ...{ class: ((['star-btn', { active: i <= __VLS_ctx.ratingScore }])) },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        }
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("stars-value") },
+        });
+        (__VLS_ctx.ratingScore);
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("rating-comment") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            for: ("rating-comment"),
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.textarea, __VLS_intrinsicElements.textarea)({
+            id: ("rating-comment"),
+            value: ((__VLS_ctx.ratingComment)),
+            placeholder: ("請輸入您的評價內容..."),
+            rows: ("4"),
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("rating-actions") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (...[$event]) => {
+                    if (!((__VLS_ctx.showRatingModal)))
+                        return;
+                    __VLS_ctx.showRatingModal = false;
+                } },
+            ...{ class: ("cancel-btn") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (...[$event]) => {
+                    if (!((__VLS_ctx.showRatingModal)))
+                        return;
+                    __VLS_ctx.submitRating({ score: __VLS_ctx.ratingScore, comment: __VLS_ctx.ratingComment });
+                } },
+            ...{ class: ("submit-btn") },
+        });
+    }
+    if (__VLS_ctx.showPreviousRatingModal) {
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("previous-rating-modal-overlay") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("previous-rating-modal") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("previous-rating-stars") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("stars-label") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("stars-container") },
+        });
+        for (const [i] of __VLS_getVForSourceType((5))) {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                key: ((i)),
+                type: ("button"),
+                ...{ class: ((['star-btn', { active: i <= (__VLS_ctx.previousRating?.score || 0) }])) },
+                disabled: (true),
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        }
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("stars-value") },
+        });
+        (__VLS_ctx.previousRating?.score || 0);
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("previous-rating-comment") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({});
+        __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+        (__VLS_ctx.previousRating?.comment || '無評價內容');
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("rating-date") },
+        });
+        (__VLS_ctx.previousRating?.createdAt
+            ? new Date(__VLS_ctx.previousRating.createdAt).toLocaleString('zh-TW', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+            })
+            : '未知');
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("previous-rating-actions") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (...[$event]) => {
+                    if (!((__VLS_ctx.showPreviousRatingModal)))
+                        return;
+                    __VLS_ctx.showPreviousRatingModal = false;
+                } },
+        });
+    }
     if (__VLS_ctx.notification.show) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: ((['notification', `notification-${__VLS_ctx.notification.type}`])) },
         });
         (__VLS_ctx.notification.message);
     }
-    ['platform-base', 'site-header', 'user-menu-container', 'user-avatar', 'user-dropdown-menu', 'user-info', 'user-name', 'role-tag', 'user-email', 'user-actions', 'menu-button', 'profile-button', 'menu-button', 'admin-button', 'menu-button', 'logout-button', 'content-wrapper', 'main-content', 'trade-content', 'table-header', 'tabs', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'create-button', 'trade-table', 'sort-header', 'sort-header', 'sort-header', 'status-message', 'status-message', 'status-tag', 'view-button', 'transaction-actions', 'view-button', 'rate-button', 'admin-actions', 'view-button', 'delete-button', 'product-actions', 'edit-button', 'delete-button', 'buy-button', 'rating-modal-overlay', 'rating-modal', 'rating-stars', 'stars-label', 'stars-container', 'active', 'star-btn', 'stars-value', 'rating-comment', 'rating-actions', 'cancel-btn', 'submit-btn', 'previous-rating-modal-overlay', 'previous-rating-modal', 'previous-rating-stars', 'stars-label', 'stars-container', 'active', 'star-btn', 'stars-value', 'previous-rating-comment', 'rating-date', 'previous-rating-actions', 'disclaimer', 'verification-modal-overlay', 'verification-modal', 'verification-modal-content', 'verification-modal-actions', 'cancel-button', 'verify-button', 'notification',];
+    ['main-content', 'trade-content', 'table-header', 'tabs', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'active', 'tab', 'create-button', 'trade-table', 'sort-header', 'sort-header', 'sort-header', 'status-message', 'status-message', 'status-tag', 'view-button', 'transaction-actions', 'view-button', 'rate-button', 'admin-actions', 'view-button', 'delete-button', 'product-actions', 'edit-button', 'delete-button', 'buy-button', 'verification-modal-overlay', 'verification-modal', 'verification-modal-content', 'verification-modal-actions', 'cancel-button', 'verify-button', 'rating-modal-overlay', 'rating-modal', 'rating-stars', 'stars-label', 'stars-container', 'active', 'star-btn', 'stars-value', 'rating-comment', 'rating-actions', 'cancel-btn', 'submit-btn', 'previous-rating-modal-overlay', 'previous-rating-modal', 'previous-rating-stars', 'stars-label', 'stars-container', 'active', 'star-btn', 'stars-value', 'previous-rating-comment', 'rating-date', 'previous-rating-actions', 'notification',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -1150,10 +1041,6 @@ const __VLS_self = (await import('vue')).defineComponent({
             handleRate: handleRate,
             submitRating: submitRating,
             switchTab: switchTab,
-            isUserMenuOpen: isUserMenuOpen,
-            closeUserMenu: closeUserMenu,
-            toggleUserMenu: toggleUserMenu,
-            handleLogout: handleLogout,
             formatPrice: formatPrice,
             formatPaymentMethods: formatPaymentMethods,
             calculateValue: calculateValue,
@@ -1171,9 +1058,6 @@ const __VLS_self = (await import('vue')).defineComponent({
             handleViewTransaction: handleViewTransaction,
             getStatusDisplay: getStatusDisplay,
             getStatusClass: getStatusClass,
-            getRoleDisplay: getRoleDisplay,
-            handleMemberInfo: handleMemberInfo,
-            handleAdminDashboard: handleAdminDashboard,
         };
     },
 });

@@ -56,6 +56,13 @@ const menuItems: MenuItem[] = [
   },
 ]
 
+// 處理登出功能
+const handleLogout = () => {
+  userStore.logout()
+  router.push('/login')
+  showNotification('登出成功', 'success')
+}
+
 // 用戶名稱和電子郵件
 const userName = ref('')
 const userEmail = ref('')
@@ -386,177 +393,163 @@ watch(currentMenu, (newMenu) => {
 })
 </script>
 
+<!-- 修改 template 部分，在設定區塊中添加登出按鈕 -->
 <template>
-  <div class="platform-base">
-    <!-- 頁面頂部標題 -->
-    <div class="site-header">
-      <router-link to="/" class="header-link">
-        <h1>劍三交易平台</h1>
-      </router-link>
+  <div class="settings-container">
+    <!-- 側邊欄 -->
+    <div class="side-menu">
+      <div
+        v-for="item in menuItems"
+        :key="item.id"
+        :class="['menu-item', { active: currentMenu === item.id }]"
+        @click="currentMenu = item.id"
+      >
+        <div class="menu-item-icon">{{ item.icon }}</div>
+        <div class="menu-item-text">
+          <span class="menu-item-label">{{ item.label }}</span>
+          <span v-if="item.subLabel" class="menu-item-sublabel">{{ item.subLabel }}</span>
+        </div>
+      </div>
     </div>
 
-    <!-- 主要內容區域 -->
-    <div class="content-wrapper">
-      <main class="main-content settings-content">
-        <div class="settings-container">
-          <!-- 側邊欄 -->
-          <div class="side-menu">
-            <div
-              v-for="item in menuItems"
-              :key="item.id"
-              :class="['menu-item', { active: currentMenu === item.id }]"
-              @click="currentMenu = item.id"
-            >
-              <div class="menu-item-icon">{{ item.icon }}</div>
-              <div class="menu-item-text">
-                <span class="menu-item-label">{{ item.label }}</span>
-                <span v-if="item.subLabel" class="menu-item-sublabel">{{ item.subLabel }}</span>
+    <!-- 主要內容區 -->
+    <div class="main-settings-area">
+      <!-- 一般設置 -->
+      <div v-if="currentMenu === 'general'" class="settings-section">
+        <h2>會員資料</h2>
+        <form @submit.prevent="updateUserInfo" class="user-form">
+          <div class="form-group">
+            <label>會員名稱</label>
+            <input v-model="userName" type="text" placeholder="請輸入會員名稱" />
+          </div>
+
+          <button type="submit" class="save-button">儲存變更</button>
+
+          <!-- 登出按鈕 -->
+          <button type="button" class="logout-button" @click="handleLogout">登出</button>
+        </form>
+      </div>
+
+      <!-- 交易安全 -->
+      <div v-else-if="currentMenu === 'security'" class="settings-section">
+        <h2>交易安全</h2>
+        <div class="security-info">
+          <div class="security-item">
+            <div class="security-item-header">
+              <h3>電子郵件驗證</h3>
+              <span class="status verified">✓ 已驗證</span>
+            </div>
+            <div class="security-item-content">
+              <p class="verified-email">{{ userEmail }}</p>
+            </div>
+          </div>
+
+          <div class="security-item">
+            <div class="security-item-header">
+              <h3>手機號碼驗證</h3>
+              <span v-if="phoneVerificationState.isVerified" class="status verified">
+                ✓ 已驗證
+              </span>
+            </div>
+
+            <div class="security-item-content">
+              <div v-if="!phoneVerificationState.isVerified" class="phone-verification">
+                <div v-if="!phoneVerificationState.isCodeSent">
+                  <input
+                    v-model="phoneVerificationState.phoneNumber"
+                    type="tel"
+                    placeholder="請輸入手機號碼"
+                    :disabled="phoneVerificationState.isVerifying"
+                  />
+                  <!-- reCAPTCHA container -->
+                  <div id="recaptcha-container" class="mb-4"></div>
+                  <button
+                    type="button"
+                    class="verification-button"
+                    @click="handleSendVerification"
+                    :disabled="phoneVerificationState.isVerifying"
+                  >
+                    {{ phoneVerificationState.isVerifying ? '發送中...' : '發送驗證碼' }}
+                  </button>
+                </div>
+                <div v-else class="verification-code-section">
+                  <div class="verification-input-group">
+                    <input
+                      v-model="phoneVerificationState.verificationCode"
+                      type="text"
+                      placeholder="請輸入驗證碼"
+                      :disabled="phoneVerificationState.isVerifying"
+                      class="verification-code-input"
+                    />
+                    <div class="verification-actions">
+                      <button
+                        type="button"
+                        class="verification-button"
+                        @click="handleVerifyCode"
+                        :disabled="phoneVerificationState.isVerifying"
+                      >
+                        {{ phoneVerificationState.isVerifying ? '驗證中...' : '驗證' }}
+                      </button>
+                      <button
+                        type="button"
+                        class="verification-button resend-button"
+                        @click="
+                          () => {
+                            phoneVerificationState.isCodeSent = false
+                          }
+                        "
+                        :disabled="phoneVerificationState.isVerifying"
+                      >
+                        重新發送
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else>
+                {{ phoneVerificationState.phoneNumber }}
               </div>
             </div>
           </div>
 
-          <!-- 主要內容區 -->
-          <div class="main-settings-area">
-            <!-- 一般設置 -->
-            <div v-if="currentMenu === 'general'" class="settings-section">
-              <h2>會員資料</h2>
-              <form @submit.prevent="updateUserInfo" class="user-form">
-                <div class="form-group">
-                  <label>會員名稱</label>
-                  <input v-model="userName" type="text" placeholder="請輸入會員名稱" />
-                </div>
-
-                <button type="submit" class="save-button">儲存變更</button>
-              </form>
+          <div class="security-item discord-section">
+            <div class="security-item-header">
+              <h3>Discord 帳號連結</h3>
+              <span v-if="discordState.isLinked" class="status verified">✓ 已連結</span>
             </div>
+            <div class="security-item-content">
+              <div v-if="!discordState.isLinked" class="discord-connect">
+                <p class="discord-status">尚未連結Discord帳號</p>
+                <button
+                  type="button"
+                  class="discord-connect-button"
+                  @click="connectDiscord"
+                  :disabled="discordState.isLinking"
+                >
+                  <span class="discord-icon">🎮</span>
+                  {{ discordState.isLinking ? '連結中...' : '連結Discord帳號' }}
+                </button>
+              </div>
 
-            <!-- 交易安全 -->
-            <div v-else-if="currentMenu === 'security'" class="settings-section">
-              <h2>交易安全</h2>
-              <div class="security-info">
-                <div class="security-item">
-                  <div class="security-item-header">
-                    <h3>電子郵件驗證</h3>
-                    <span class="status verified">✓ 已驗證</span>
+              <div v-else class="discord-info">
+                <div class="discord-profile-container">
+                  <div v-if="discordState.avatar" class="discord-avatar">
+                    <img :src="discordState.avatar" alt="Discord Avatar" />
                   </div>
-                  <div class="security-item-content">
-                    <p class="verified-email">{{ userEmail }}</p>
-                  </div>
-                </div>
-
-                <div class="security-item">
-                  <div class="security-item-header">
-                    <h3>手機號碼驗證</h3>
-                    <span v-if="phoneVerificationState.isVerified" class="status verified">
-                      ✓ 已驗證
+                  <div class="discord-user-details">
+                    <span class="discord-username">
+                      {{ discordState.global_name || discordState.username }}
                     </span>
                   </div>
-
-                  <div class="security-item-content">
-                    <div v-if="!phoneVerificationState.isVerified" class="phone-verification">
-                      <div v-if="!phoneVerificationState.isCodeSent">
-                        <input
-                          v-model="phoneVerificationState.phoneNumber"
-                          type="tel"
-                          placeholder="請輸入手機號碼"
-                          :disabled="phoneVerificationState.isVerifying"
-                        />
-                        <!-- reCAPTCHA container -->
-                        <div id="recaptcha-container" class="mb-4"></div>
-                        <button
-                          type="button"
-                          class="verification-button"
-                          @click="handleSendVerification"
-                          :disabled="phoneVerificationState.isVerifying"
-                        >
-                          {{ phoneVerificationState.isVerifying ? '發送中...' : '發送驗證碼' }}
-                        </button>
-                      </div>
-                      <div v-else class="verification-code-section">
-                        <div class="verification-input-group">
-                          <input
-                            v-model="phoneVerificationState.verificationCode"
-                            type="text"
-                            placeholder="請輸入驗證碼"
-                            :disabled="phoneVerificationState.isVerifying"
-                            class="verification-code-input"
-                          />
-                          <div class="verification-actions">
-                            <button
-                              type="button"
-                              class="verification-button"
-                              @click="handleVerifyCode"
-                              :disabled="phoneVerificationState.isVerifying"
-                            >
-                              {{ phoneVerificationState.isVerifying ? '驗證中...' : '驗證' }}
-                            </button>
-                            <button
-                              type="button"
-                              class="verification-button resend-button"
-                              @click="
-                                () => {
-                                  phoneVerificationState.isCodeSent = false
-                                }
-                              "
-                              :disabled="phoneVerificationState.isVerifying"
-                            >
-                              重新發送
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div v-else>
-                      {{ phoneVerificationState.phoneNumber }}
-                    </div>
-                  </div>
-                </div>
-
-                <div class="security-item discord-section">
-                  <div class="security-item-header">
-                    <h3>Discord 帳號連結</h3>
-                    <span v-if="discordState.isLinked" class="status verified">✓ 已連結</span>
-                  </div>
-                  <div class="security-item-content">
-                    <div v-if="!discordState.isLinked" class="discord-connect">
-                      <p class="discord-status">尚未連結Discord帳號</p>
-                      <button
-                        type="button"
-                        class="discord-connect-button"
-                        @click="connectDiscord"
-                        :disabled="discordState.isLinking"
-                      >
-                        <span class="discord-icon">🎮</span>
-                        {{ discordState.isLinking ? '連結中...' : '連結Discord帳號' }}
-                      </button>
-                    </div>
-
-                    <div v-else class="discord-info">
-                      <div class="discord-profile-container">
-                        <div v-if="discordState.avatar" class="discord-avatar">
-                          <img :src="discordState.avatar" alt="Discord Avatar" />
-                        </div>
-                        <div class="discord-user-details">
-                          <span class="discord-username">
-                            {{ discordState.global_name || discordState.username }}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          class="discord-unlink-button"
-                          @click="disconnectDiscord"
-                        >
-                          解除連結
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <button type="button" class="discord-unlink-button" @click="disconnectDiscord">
+                    解除連結
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
 
     <!-- 通知組件 -->
@@ -577,57 +570,10 @@ $transition: all 0.3s ease;
 $font-family: 'Microsoft YaHei', '微軟雅黑', sans-serif;
 $discord-color: #5865f2;
 
-// 基礎頁面樣式
-.platform-base {
-  height: 100%;
-  width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  background-color: $background-color;
-  background-image: linear-gradient(135deg, #ffffff, #f0f0f0);
-  overflow-y: auto;
-}
-
-.site-header {
-  position: absolute;
-  top: $spacing-unit * 3;
-  left: $spacing-unit * 3;
-  right: $spacing-unit * 3;
-  z-index: 10;
-
-  h1 {
-    font-size: 24px;
-    font-weight: 600;
-    color: $primary-color;
-    margin: 0;
-    font-family: $font-family;
-  }
-}
-
-.content-wrapper {
-  min-height: 100vh;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: $spacing-unit * 10;
-  overflow: auto;
-}
-
-.main-content.settings-content {
-  width: 70%;
-  max-width: 840px;
-  background: #ffffff;
-  border-radius: $spacing-unit * 1.5;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba($primary-color, 0.1);
-  overflow: hidden;
-}
-
 .settings-container {
   display: flex;
-  height: 550px;
+  width: 90%;
+  margin: $spacing-unit * 6 auto;
 }
 
 // 側邊欄樣式
@@ -800,16 +746,35 @@ $discord-color: #5865f2;
   background: linear-gradient(
     to right,
     $primary-color,
-    color.scale($primary-color, $lightness: -10%)
+    #9e2328 // 使用十六進制顏色代替 color.scale 函數
   );
   color: white;
   border: none;
   border-radius: $spacing-unit;
   cursor: pointer;
   transition: $transition;
+  margin-bottom: $spacing-unit * 2; // 添加與登出按鈕的間距
 
   &:hover {
     opacity: 0.9;
+  }
+}
+
+/* 登出按鈕樣式 */
+.logout-button {
+  width: 100%;
+  padding: $spacing-unit * 2;
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: $spacing-unit;
+  cursor: pointer;
+  transition: $transition;
+  margin-top: $spacing-unit; // 與儲存按鈕的間距
+
+  &:hover {
+    background-color: #e5e5e5;
+    color: #333;
   }
 }
 
@@ -1132,6 +1097,7 @@ $discord-color: #5865f2;
   .settings-container {
     flex-direction: column;
     height: auto;
+    width: 95%; // 調整手機版的寬度
   }
 
   .side-menu {
@@ -1159,21 +1125,6 @@ $discord-color: #5865f2;
       align-items: center;
       text-align: center;
     }
-  }
-
-  .site-header {
-    position: static;
-    padding: $spacing-unit * 2;
-    text-align: center;
-  }
-
-  .content-wrapper {
-    padding-top: $spacing-unit * 2;
-  }
-
-  .main-content.settings-content {
-    width: 90%;
-    max-width: 840px;
   }
 
   .main-settings-area {
@@ -1269,6 +1220,12 @@ $discord-color: #5865f2;
     flex-direction: column;
     align-items: flex-start;
     gap: $spacing-unit * 2;
+  }
+
+  .save-button,
+  .logout-button {
+    font-size: 14px;
+    padding: $spacing-unit * 1.5;
   }
 }
 </style>

@@ -189,12 +189,6 @@ function __VLS_template() {
     ['status-item', 'label', 'value', 'back-button', 'complete-transaction-button', 'confirmation-status', 'status-badge', 'back-button', 'message-board', 'page-header', 'page-actions', 'back-button', 'complete-transaction-button', 'content-wrapper', 'main-content', 'status-grid', 'message-input', 'send-button', 'title-status-wrapper', 'confirmation-status', 'message-board', 'message-header-wrapper', 'confirmation-status', 'status-badge', 'permission-denied', 'permission-denied-content', 'back-button',];
     // CSS variable injection 
     // CSS variable injection end 
-    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("platform-base") },
-    });
-    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("content-wrapper") },
-    });
     __VLS_elementAsFunction(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
         ...{ class: ("main-content trade-content") },
     });
@@ -433,9 +427,7 @@ function __VLS_template() {
                 (__VLS_ctx.formatTime(message.timestamp));
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: ("message-content") },
-                    ...{ class: ((message.sender === __VLS_ctx.transaction.seller._id
-                            ? 'seller-message'
-                            : 'buyer-message')) },
+                    ...{ class: ((message.sender === __VLS_ctx.transaction.seller._id ? 'seller-message' : 'buyer-message')) },
                 });
                 (message.content);
             }
@@ -454,17 +446,13 @@ function __VLS_template() {
             });
         }
     }
-    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: ("disclaimer") },
-    });
-    __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     if (__VLS_ctx.notification.show) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: ((['notification', `notification-${__VLS_ctx.notification.type}`])) },
         });
         (__VLS_ctx.notification.message);
     }
-    ['platform-base', 'content-wrapper', 'main-content', 'trade-content', 'permission-denied', 'permission-denied-content', 'back-button', 'page-header', 'title-status-wrapper', 'page-title', 'page-actions', 'back-button', 'complete-transaction-button', 'waiting-confirmation', 'status-message', 'status-message', 'error', 'transaction-container', 'content-grid', 'left-column', 'card', 'transaction-status', 'status-item', 'status-row', 'label', 'value', 'status-row-container', 'status-item', 'label', 'value', 'status-item', 'label', 'value', 'status-row-container', 'status-item', 'label', 'value', 'status-item', 'label', 'value', 'card', 'seller-info', 'contact-info', 'info-item', 'label', 'value', 'info-item', 'label', 'value', 'info-item', 'label', 'value', 'info-item', 'label', 'value', 'right-column', 'card', 'message-board', 'message-header-wrapper', 'confirmation-status', 'status-badge', 'status-badge', 'messages', 'message', 'message-header', 'sender', 'time', 'message-content', 'message-input', 'send-button', 'disclaimer', 'notification',];
+    ['main-content', 'trade-content', 'permission-denied', 'permission-denied-content', 'back-button', 'page-header', 'title-status-wrapper', 'page-title', 'page-actions', 'back-button', 'complete-transaction-button', 'waiting-confirmation', 'status-message', 'status-message', 'error', 'transaction-container', 'content-grid', 'left-column', 'card', 'transaction-status', 'status-item', 'status-row', 'label', 'value', 'status-row-container', 'status-item', 'label', 'value', 'status-item', 'label', 'value', 'status-row-container', 'status-item', 'label', 'value', 'status-item', 'label', 'value', 'card', 'seller-info', 'contact-info', 'info-item', 'label', 'value', 'info-item', 'label', 'value', 'info-item', 'label', 'value', 'info-item', 'label', 'value', 'right-column', 'card', 'message-board', 'message-header-wrapper', 'confirmation-status', 'status-badge', 'status-badge', 'messages', 'message', 'message-header', 'sender', 'time', 'message-content', 'message-input', 'send-button', 'notification',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;

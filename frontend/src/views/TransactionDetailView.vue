@@ -213,194 +213,182 @@ watch(
 </script>
 
 <template>
-  <div class="platform-base">
-    <div class="content-wrapper">
-      <main class="main-content trade-content">
-        <!-- 權限被拒絕的畫面 -->
-        <div v-if="permissionDenied" class="permission-denied">
-          <div class="permission-denied-content">
-            <h1>權限不足</h1>
-            <p>您沒有權限查看此交易詳情。</p>
-            <p>只有交易的買賣雙方和管理員可以訪問此頁面。</p>
-            <button class="back-button" @click="goBackToTradingTab">返回交易列表</button>
+  <main class="main-content trade-content">
+    <!-- 權限被拒絕的畫面 -->
+    <div v-if="permissionDenied" class="permission-denied">
+      <div class="permission-denied-content">
+        <h1>權限不足</h1>
+        <p>您沒有權限查看此交易詳情。</p>
+        <p>只有交易的買賣雙方和管理員可以訪問此頁面。</p>
+        <button class="back-button" @click="goBackToTradingTab">返回交易列表</button>
+      </div>
+    </div>
+
+    <!-- 正常顯示交易詳情的畫面 -->
+    <template v-else>
+      <div class="page-header">
+        <div class="title-status-wrapper">
+          <h1 class="page-title">交易詳情</h1>
+        </div>
+        <div class="page-actions">
+          <button class="back-button" @click="goBackToTradingTab">← 返回交易列表</button>
+          <button
+            v-if="
+              transaction &&
+              transaction.status !== 'completed' &&
+              transaction.status !== 'cancelled' &&
+              (canCompleteTransaction ||
+                (userRole === 'buyer' && transaction?.buyerConfirmed) ||
+                (userRole === 'seller' && transaction?.sellerConfirmed))
+            "
+            class="complete-transaction-button"
+            :class="{
+              'waiting-confirmation':
+                (userRole === 'buyer' && transaction?.buyerConfirmed) ||
+                (userRole === 'seller' && transaction?.sellerConfirmed),
+            }"
+            :disabled="
+              (userRole === 'buyer' && transaction?.buyerConfirmed) ||
+              (userRole === 'seller' && transaction?.sellerConfirmed)
+            "
+            @click="completeTransaction"
+          >
+            {{
+              (userRole === 'buyer' && transaction?.buyerConfirmed) ||
+              (userRole === 'seller' && transaction?.sellerConfirmed)
+                ? '等待對方確認'
+                : '完成交易'
+            }}
+          </button>
+        </div>
+      </div>
+      <div v-if="loading" class="status-message">載入中...</div>
+      <div v-else-if="error && !permissionDenied" class="status-message error">{{ error }}</div>
+      <div v-else-if="transaction" class="transaction-container">
+        <div class="content-grid">
+          <!-- 左側資訊區 -->
+          <div class="left-column">
+            <!-- 交易狀態卡片 -->
+            <section class="card transaction-status">
+              <h2>交易資訊</h2>
+              <!-- 交易狀態獨占一行 -->
+              <div class="status-item status-row">
+                <span class="label">交易狀態</span>
+                <span class="value" :class="'status-' + transaction.status">
+                  {{ formatStatus(transaction.status) }}
+                </span>
+              </div>
+
+              <!-- 遊戲幣數量和金額放在同一行 -->
+              <div class="status-row-container">
+                <div class="status-item">
+                  <span class="label">遊戲幣數量</span>
+                  <span class="value">{{ transaction.amount }}</span>
+                </div>
+                <div class="status-item">
+                  <span class="label">金額</span>
+                  <span class="value">{{ formatPrice(transaction.price) }}</span>
+                </div>
+              </div>
+
+              <!-- 幣種和交易方式放在同一行 -->
+              <div class="status-row-container">
+                <div class="status-item">
+                  <span class="label">幣種</span>
+                  <span class="value">{{ transaction.currency || '台幣' }}</span>
+                </div>
+                <div class="status-item">
+                  <span class="label">交易方式</span>
+                  <span class="value">{{ transaction.paymentMethod || '匯款' }}</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- 賣家資訊 -->
+            <section class="card seller-info">
+              <h2>賣家資訊</h2>
+              <div class="contact-info">
+                <div class="info-item">
+                  <span class="label">賣家名稱</span>
+                  <span class="value">{{ transaction.seller.name }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">角色暱稱</span>
+                  <span class="value">{{ transaction.characterNickname || '未設定' }}</span>
+                </div>
+                <div class="info-item" v-if="transaction.seller.contactInfo?.line">
+                  <span class="label">LINE ID</span>
+                  <span class="value">{{ transaction.seller.contactInfo?.line }}</span>
+                </div>
+                <div class="info-item" v-if="transaction.seller.contactInfo?.discord">
+                  <span class="label">Discord</span>
+                  <span class="value">{{ transaction.seller.contactInfo?.discord }}</span>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- 右側留言板 -->
+          <div class="right-column">
+            <section class="card message-board">
+              <div class="message-header-wrapper">
+                <h2>交易留言</h2>
+                <div class="confirmation-status" v-if="transaction">
+                  <span class="status-badge">
+                    賣家確認: {{ transaction.sellerConfirmed ? '✅' : '❌' }}
+                  </span>
+                  <span class="status-badge">
+                    買家確認: {{ transaction.buyerConfirmed ? '✅' : '❌' }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="messages">
+                <div v-for="message in transaction.messages" :key="message._id" class="message">
+                  <div class="message-header">
+                    <span
+                      class="sender"
+                      :class="
+                        message.sender === transaction.seller._id
+                          ? 'seller-message'
+                          : 'buyer-message'
+                      "
+                    >
+                      {{
+                        message.sender === transaction.seller._id
+                          ? `${transaction.seller.name} (賣家)`
+                          : `${transaction.buyer.name} (買家)`
+                      }}
+                    </span>
+                    <span class="time">{{ formatTime(message.timestamp) }}</span>
+                  </div>
+                  <div
+                    class="message-content"
+                    :class="
+                      message.sender === transaction.seller._id ? 'seller-message' : 'buyer-message'
+                    "
+                  >
+                    {{ message.content }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="message-input">
+                <textarea
+                  v-model="newMessage"
+                  placeholder="輸入訊息..."
+                  @keyup.enter.ctrl="sendMessage"
+                ></textarea>
+                <button class="send-button" @click="sendMessage" :disabled="!newMessage.trim()">
+                  發送
+                </button>
+              </div>
+            </section>
           </div>
         </div>
-
-        <!-- 正常顯示交易詳情的畫面 -->
-        <template v-else>
-          <div class="page-header">
-            <div class="title-status-wrapper">
-              <h1 class="page-title">交易詳情</h1>
-            </div>
-            <div class="page-actions">
-              <button class="back-button" @click="goBackToTradingTab">← 返回交易列表</button>
-              <button
-                v-if="
-                  transaction &&
-                  transaction.status !== 'completed' &&
-                  transaction.status !== 'cancelled' &&
-                  (canCompleteTransaction ||
-                    (userRole === 'buyer' && transaction?.buyerConfirmed) ||
-                    (userRole === 'seller' && transaction?.sellerConfirmed))
-                "
-                class="complete-transaction-button"
-                :class="{
-                  'waiting-confirmation':
-                    (userRole === 'buyer' && transaction?.buyerConfirmed) ||
-                    (userRole === 'seller' && transaction?.sellerConfirmed),
-                }"
-                :disabled="
-                  (userRole === 'buyer' && transaction?.buyerConfirmed) ||
-                  (userRole === 'seller' && transaction?.sellerConfirmed)
-                "
-                @click="completeTransaction"
-              >
-                {{
-                  (userRole === 'buyer' && transaction?.buyerConfirmed) ||
-                  (userRole === 'seller' && transaction?.sellerConfirmed)
-                    ? '等待對方確認'
-                    : '完成交易'
-                }}
-              </button>
-            </div>
-          </div>
-          <div v-if="loading" class="status-message">載入中...</div>
-          <div v-else-if="error && !permissionDenied" class="status-message error">{{ error }}</div>
-          <div v-else-if="transaction" class="transaction-container">
-            <div class="content-grid">
-              <!-- 左側資訊區 -->
-              <div class="left-column">
-                <!-- 交易狀態卡片 -->
-                <section class="card transaction-status">
-                  <h2>交易資訊</h2>
-                  <!-- 交易狀態獨占一行 -->
-                  <div class="status-item status-row">
-                    <span class="label">交易狀態</span>
-                    <span class="value" :class="'status-' + transaction.status">
-                      {{ formatStatus(transaction.status) }}
-                    </span>
-                  </div>
-
-                  <!-- 遊戲幣數量和金額放在同一行 -->
-                  <div class="status-row-container">
-                    <div class="status-item">
-                      <span class="label">遊戲幣數量</span>
-                      <span class="value">{{ transaction.amount }}</span>
-                    </div>
-                    <div class="status-item">
-                      <span class="label">金額</span>
-                      <span class="value">{{ formatPrice(transaction.price) }}</span>
-                    </div>
-                  </div>
-
-                  <!-- 幣種和交易方式放在同一行 -->
-                  <div class="status-row-container">
-                    <div class="status-item">
-                      <span class="label">幣種</span>
-                      <span class="value">{{ transaction.currency || '台幣' }}</span>
-                    </div>
-                    <div class="status-item">
-                      <span class="label">交易方式</span>
-                      <span class="value">{{ transaction.paymentMethod || '匯款' }}</span>
-                    </div>
-                  </div>
-                </section>
-
-                <!-- 賣家資訊 -->
-                <section class="card seller-info">
-                  <h2>賣家資訊</h2>
-                  <div class="contact-info">
-                    <div class="info-item">
-                      <span class="label">賣家名稱</span>
-                      <span class="value">{{ transaction.seller.name }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="label">角色暱稱</span>
-                      <span class="value">{{ transaction.characterNickname || '未設定' }}</span>
-                    </div>
-                    <div class="info-item" v-if="transaction.seller.contactInfo?.line">
-                      <span class="label">LINE ID</span>
-                      <span class="value">{{ transaction.seller.contactInfo?.line }}</span>
-                    </div>
-                    <div class="info-item" v-if="transaction.seller.contactInfo?.discord">
-                      <span class="label">Discord</span>
-                      <span class="value">{{ transaction.seller.contactInfo?.discord }}</span>
-                    </div>
-                  </div>
-                </section>
-              </div>
-
-              <!-- 右側留言板 -->
-              <div class="right-column">
-                <section class="card message-board">
-                  <div class="message-header-wrapper">
-                    <h2>交易留言</h2>
-                    <div class="confirmation-status" v-if="transaction">
-                      <span class="status-badge">
-                        賣家確認: {{ transaction.sellerConfirmed ? '✅' : '❌' }}
-                      </span>
-                      <span class="status-badge">
-                        買家確認: {{ transaction.buyerConfirmed ? '✅' : '❌' }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class="messages">
-                    <div v-for="message in transaction.messages" :key="message._id" class="message">
-                      <div class="message-header">
-                        <span
-                          class="sender"
-                          :class="
-                            message.sender === transaction.seller._id
-                              ? 'seller-message'
-                              : 'buyer-message'
-                          "
-                        >
-                          {{
-                            message.sender === transaction.seller._id
-                              ? `${transaction.seller.name} (賣家)`
-                              : `${transaction.buyer.name} (買家)`
-                          }}
-                        </span>
-                        <span class="time">{{ formatTime(message.timestamp) }}</span>
-                      </div>
-                      <div
-                        class="message-content"
-                        :class="
-                          message.sender === transaction.seller._id
-                            ? 'seller-message'
-                            : 'buyer-message'
-                        "
-                      >
-                        {{ message.content }}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="message-input">
-                    <textarea
-                      v-model="newMessage"
-                      placeholder="輸入訊息..."
-                      @keyup.enter.ctrl="sendMessage"
-                    ></textarea>
-                    <button class="send-button" @click="sendMessage" :disabled="!newMessage.trim()">
-                      發送
-                    </button>
-                  </div>
-                </section>
-              </div>
-            </div>
-          </div>
-        </template>
-      </main>
-    </div>
-    <div class="disclaimer">
-      <span>
-        免責聲明:
-        本平台僅提供劍三交易資訊的媒合服務,不涉及任何金流操作。交易過程中請務必提高警惕,謹防詐騙。所有交易風險由買賣雙方自行承擔,本平台不承擔任何法律責任。
-      </span>
-    </div>
-  </div>
+      </div>
+    </template>
+  </main>
 
   <!-- 通知組件 -->
   <div v-if="notification.show" :class="['notification', `notification-${notification.type}`]">
@@ -454,8 +442,9 @@ $error-color: #ff4d4f;
 
 .main-content {
   width: 90%;
+  margin: $spacing-unit * 6 auto;
   max-width: 1200px;
-  margin-top: $spacing-unit;
+  padding: $spacing-unit * 2;
 }
 
 .page-title {
