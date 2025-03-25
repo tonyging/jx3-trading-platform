@@ -1,5 +1,5 @@
-// api/appearance.ts
 import api from './index'
+import { uploadImageToFirebase } from '@/firebase/storage'
 import type {
   AppearanceListResponse,
   AppearanceSubmissionListResponse,
@@ -82,22 +82,33 @@ export const appearanceApi = {
 
   // 上傳外觀圖片 (管理員專用)
   uploadAppearanceImage: async (appearanceId: string, imageFile: File) => {
-    console.log('Uploading file:', imageFile)
+    try {
+      const imagePath = `appearances/${appearanceId}/${Date.now()}_${imageFile.name}`
+      const imageUrl = await uploadImageToFirebase(imageFile, imagePath)
 
-    const formData = new FormData()
-    formData.append('image', imageFile)
+      const response = await api.patch<{
+        status: string
+        data: {
+          appearance: Appearance
+          imageUrl: string
+        }
+      }>(`/api/appearances/${appearanceId}`, { imageUrl })
 
-    for (const pair of formData.entries()) {
-      console.log(pair[0], pair[1])
+      return response.data
+    } catch (error) {
+      console.error('Upload error:', error)
+      throw error
     }
+  },
 
-    const response = await api.post<{
+  updateAppearanceImage: async (appearanceId: string, imageUrl: string) => {
+    const response = await api.patch<{
       status: string
       data: {
         appearance: Appearance
         imageUrl: string
       }
-    }>(`/api/appearances/${appearanceId}/upload-image`, formData)
+    }>(`/api/appearances/${appearanceId}`, { imageUrl })
     return response.data
   },
 }

@@ -526,6 +526,15 @@ class AppearanceController {
         });
       }
 
+      // 確保請求包含 imageUrl
+      const { imageUrl } = req.body;
+      if (!imageUrl) {
+        return res.status(400).json({
+          status: "error",
+          message: "未提供圖片 URL",
+        });
+      }
+
       // 檢查外觀是否存在
       const appearance = await Appearance.findById(appearanceId);
       if (!appearance) {
@@ -534,16 +543,6 @@ class AppearanceController {
           message: "找不到指定的外觀",
         });
       }
-
-      // 確保請求包含文件
-      if (!req.file) {
-        return res.status(400).json({
-          status: "error",
-          message: "未提供圖片文件",
-        });
-      }
-
-      const imageUrl = `/uploads/appearances/${req.file.filename}`;
 
       // 更新外觀的圖片 URL
       appearance.imageUrl = imageUrl;
@@ -555,6 +554,59 @@ class AppearanceController {
         action: "update_image",
         userId: user._id,
         details: `更新了外觀 ${appearance.officialName} 的圖片`,
+        ip: req.ip,
+      });
+
+      res.status(200).json({
+        status: "success",
+        data: {
+          appearance,
+          imageUrl,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // 更新外觀圖片 URL (僅限管理員)
+  public updateAppearanceImage = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { appearanceId } = req.params;
+      const { imageUrl } = req.body;
+      const user = req.user;
+
+      // 檢查用戶是否為管理員
+      if (user.role !== "admin") {
+        return res.status(403).json({
+          status: "error",
+          message: "只有管理員可以更新外觀圖片",
+        });
+      }
+
+      // 檢查外觀是否存在
+      const appearance = await Appearance.findById(appearanceId);
+      if (!appearance) {
+        return res.status(404).json({
+          status: "error",
+          message: "找不到指定的外觀",
+        });
+      }
+
+      // 更新外觀的圖片 URL
+      appearance.imageUrl = imageUrl;
+      await appearance.save();
+
+      // 記錄系統日誌
+      await SystemLog.create({
+        type: "appearance",
+        action: "update_image",
+        userId: user._id,
+        details: `更新了外觀 ${appearance.officialName} 的圖片 URL`,
         ip: req.ip,
       });
 

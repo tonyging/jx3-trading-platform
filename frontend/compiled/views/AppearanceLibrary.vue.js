@@ -3,6 +3,7 @@ import { appearanceApi } from '@/services/api/appearance';
 import CreateAppearanceModal from '@/components/CreateAppearanceModal.vue';
 import AppearancePagination from '@/components/AppearancePagination.vue';
 import { useUserStore } from '@/stores/user';
+import { uploadImageToFirebase } from '@/firebase/storage';
 // 獲取用戶信息
 const userStore = useUserStore();
 // 判斷是否為管理員
@@ -163,8 +164,12 @@ const handleReviewAppearance = async (submissionId, action) => {
 // 獲取適當的圖片URL (用於顯示外觀的圖片，如果有的話)
 const getAppearanceImageUrl = (item) => {
     if (item.imageUrl) {
-        console.log('imageUrl', item.imageUrl);
-        return item.imageUrl;
+        if (item.imageUrl.includes('firebasestorage.googleapis.com')) {
+            return item.imageUrl;
+        }
+        return item.imageUrl.startsWith('/uploads')
+            ? item.imageUrl
+            : `/uploads${item.imageUrl.startsWith('/') ? item.imageUrl : '/' + item.imageUrl}`;
     }
     return undefined;
 };
@@ -201,7 +206,11 @@ const handleImageUpload = async (event) => {
     isUploading.value = true;
     uploadError.value = null;
     try {
-        await appearanceApi.uploadAppearanceImage(selectedAppearanceId.value, file);
+        // 這裡可以直接使用 Firebase 上傳
+        const imagePath = `appearances/${selectedAppearanceId.value}/${Date.now()}_${file.name}`;
+        const imageUrl = await uploadImageToFirebase(file, imagePath);
+        // 更新後端資料庫中的 URL
+        await appearanceApi.updateAppearanceImage(selectedAppearanceId.value, imageUrl);
         closeUploadModal();
         // 重新加載數據以反映圖片更新
         loadData();

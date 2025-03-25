@@ -2,7 +2,6 @@ import { Router } from "express";
 import { authenticate } from "../middleware/auth";
 import { checkBanStatus, isAdmin } from "../middleware/roleCheck";
 import appearanceController from "../controllers/appearanceController";
-import uploadImage from "../middleware/uploadImage";
 
 const router = Router();
 
@@ -28,20 +27,11 @@ router.delete(
   appearanceController.deleteSubmission
 );
 
-// 上傳外觀圖片 (僅限管理員)
-router.post(
-  "/:appearanceId/upload-image",
+// 更新外觀圖片 URL (僅限管理員)
+router.patch(
+  "/:appearanceId",
   isAdmin,
-  uploadImage.single("image"),
-  (req, res, next) => {
-    console.log("文件上傳信息:", {
-      file: req.file,
-      body: req.body,
-      params: req.params,
-    });
-    next();
-  },
-  appearanceController.uploadAppearanceImage
+  appearanceController.updateAppearanceImage
 );
 
 // 公開路由(不需要登入)
