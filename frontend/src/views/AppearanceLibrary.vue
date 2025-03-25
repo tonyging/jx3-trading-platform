@@ -58,6 +58,7 @@ const loadData = async () => {
         })
         pendingSubmissions.value = pendingResponse.data.submissions
         pagination.value = pendingResponse.data.pagination
+        console.log('Pending submissions:', pendingSubmissions.value) // 添加日志
         break
     }
   } catch (err) {
@@ -87,23 +88,19 @@ const handleTabChange = (tab: 'official' | 'pending') => {
   loadData()
 }
 
-// 提交新外觀
-const handleSubmitAppearance = async (data: {
-  officialName: string
-  nicknames?: string[]
-  images?: {
-    adultMale?: string
-    adultFemale?: string
-    childMale?: string
-    childFemale?: string
-  }
-}) => {
+// 提交新外觀 - 已修正為與 CreateAppearanceModal 匹配的參數
+const handleSubmitAppearance = async () => {
   try {
-    await appearanceApi.submitAppearance(data)
+    // 關閉模態窗口
     isCreateModalOpen.value = false
-    // 重新載入待審核頁籤
+
+    // 確保頁籤是「提交外觀數據」
     activeTab.value = 'pending'
-    loadData()
+
+    // 重新加載數據（使用 setTimeout 確保頁籤變更後再加載）
+    setTimeout(() => {
+      loadData()
+    }, 100)
   } catch (error) {
     console.error('提交外觀失敗', error)
   }
@@ -177,24 +174,19 @@ const handleReviewAppearance = async (submissionId: string, action: 'approve' | 
   }
 }
 
-// 判斷提交者名稱
-// const getSubmitterName = (submission: AppearanceSubmission): string => {
-//   if (typeof submission.submittedBy === 'object' && submission.submittedBy !== null) {
-//     return submission.submittedBy.name || '未知用戶'
-//   }
-//   return '未知用戶'
-// }
+// 獲取適當的圖片URL (用於顯示外觀的圖片，如果有的話)
+const getAppearanceImageUrl = (item: Appearance | AppearanceSubmission): string | undefined => {
+  if (item.imageUrl) {
+    return item.imageUrl
+  }
+  return undefined
+}
 
-// 獲取適當的圖片URL
-const getAppearanceImage = (appearance: Appearance | AppearanceSubmission): string | undefined => {
-  if (!appearance.images) return undefined
-  return (
-    appearance.images.adultMale ||
-    appearance.images.adultFemale ||
-    appearance.images.childMale ||
-    appearance.images.childFemale ||
-    undefined
-  )
+// 確保 nicknames 始終是數組
+const ensureNicknames = (item: Appearance | AppearanceSubmission): string[] => {
+  if (!item.nicknames) return []
+  if (Array.isArray(item.nicknames)) return item.nicknames
+  return []
 }
 
 // 生命週期鉤子
@@ -249,33 +241,38 @@ onMounted(() => {
           </div>
           <div v-else class="appearances-flex">
             <div v-for="appearance in appearances" :key="appearance._id" class="appearance-card">
+              <!-- 保留圖片容器 -->
               <div class="appearance-image-container">
                 <img
-                  v-if="getAppearanceImage(appearance)"
-                  :src="getAppearanceImage(appearance)"
+                  v-if="getAppearanceImageUrl(appearance)"
+                  :src="getAppearanceImageUrl(appearance)"
                   alt="外觀圖片"
                   class="appearance-image"
                 />
                 <div v-else class="no-image">
-                  <span>無照片</span>
+                  <span>尚無圖片</span>
                 </div>
               </div>
               <div class="appearance-info">
                 <h3 class="appearance-name">{{ appearance.officialName }}</h3>
+                <div class="appearance-category">
+                  <label class="field-label">類型：</label>
+                  <span class="category-tag">{{ appearance.category }}</span>
+                </div>
                 <div class="appearance-nicknames">
-                  <span
-                    v-for="(nickname, index) in appearance.nicknames"
-                    :key="index"
-                    class="nickname-tag"
-                  >
-                    {{ nickname }}
-                  </span>
-                  <span
-                    v-if="!appearance.nicknames || appearance.nicknames.length === 0"
-                    class="no-nickname"
-                  >
-                    無暱稱
-                  </span>
+                  <label class="field-label">暱稱：</label>
+                  <div class="nickname-wrapper">
+                    <span
+                      v-for="(nickname, index) in ensureNicknames(appearance)"
+                      :key="index"
+                      class="nickname-tag"
+                    >
+                      {{ nickname }}
+                    </span>
+                    <span v-if="!ensureNicknames(appearance).length" class="no-nickname">
+                      無暱稱
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -287,48 +284,39 @@ onMounted(() => {
           <div v-if="pendingSubmissions.length === 0 && !isLoading" class="empty-state">
             <div class="appearance-card add-card" @click="isCreateModalOpen = true">
               <div class="add-icon">+</div>
+              <p class="add-text">新增外觀</p>
             </div>
           </div>
           <div v-else class="appearances-flex">
-            <!-- 提交新外觀的卡片 -->
-            <div class="appearance-card add-card" @click="isCreateModalOpen = true">
-              <div class="add-icon">+</div>
-            </div>
-
             <!-- 審核中的外觀提交 -->
             <div
               v-for="submission in pendingSubmissions"
               :key="submission._id"
-              class="appearance-card submission-card"
+              class="appearance-card submission-card pending-card"
             >
-              <div class="appearance-image-container">
-                <img
-                  v-if="getAppearanceImage(submission)"
-                  :src="getAppearanceImage(submission)"
-                  alt="外觀圖片"
-                  class="appearance-image"
-                />
-                <div v-else class="no-image">
-                  <span>無照片</span>
-                </div>
-              </div>
-
               <div class="appearance-info">
                 <h3 class="appearance-name">{{ submission.officialName }}</h3>
 
-                <div
-                  class="appearance-nicknames"
-                  v-if="submission.nicknames && submission.nicknames.length > 0"
-                >
-                  <span
-                    v-for="(nickname, index) in submission.nicknames"
-                    :key="index"
-                    class="nickname-tag"
-                  >
-                    {{ nickname }}
-                  </span>
+                <div class="appearance-category">
+                  <label class="field-label">類型：</label>
+                  <span class="category-tag">{{ submission.category }}</span>
                 </div>
-                <div v-else class="no-nicknames">無暱稱</div>
+
+                <div class="appearance-nicknames">
+                  <label class="field-label">暱稱：</label>
+                  <div class="nickname-wrapper">
+                    <span
+                      v-for="(nickname, index) in ensureNicknames(submission)"
+                      :key="index"
+                      class="nickname-tag"
+                    >
+                      {{ nickname }}
+                    </span>
+                    <span v-if="!ensureNicknames(submission).length" class="no-nickname">
+                      無暱稱
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <!-- 根據提交者是否為當前用戶顯示不同的按鈕 -->
@@ -358,6 +346,12 @@ onMounted(() => {
                   </button>
                 </template>
               </div>
+            </div>
+
+            <!-- 提交新外觀的卡片 - 放在最後 -->
+            <div class="appearance-card add-card" @click="isCreateModalOpen = true">
+              <div class="add-icon">+</div>
+              <p class="add-text">新增外觀</p>
             </div>
           </div>
         </section>
@@ -398,11 +392,14 @@ onMounted(() => {
 // 基礎變數定義
 $primary-color: #b4282d;
 $primary-hover: #d4282d;
+$primary-darker: #8f2024; // 替代 darken($primary-color, 10%)
 $background-color: #f5f5f5;
 $text-color: #333333;
 $success-color: #52c41a;
+$success-darker: #389e0d; // 替代 darken($success-color, 10%)
 $warning-color: #faad14;
 $error-color: #f5222d;
+$error-darker: #cf1322; // 替代 darken($error-color, 10%)
 $font-family: 'Microsoft YaHei', '微軟雅黑', sans-serif;
 $spacing-unit: 8px;
 $box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -417,7 +414,6 @@ $transition: all 0.3s ease;
   background: #ffffff;
   box-shadow: $box-shadow;
   border: 1px solid rgba($primary-color, 0.1);
-  border-radius: $spacing-unit * 1.5;
   flex-direction: column;
 }
 
@@ -565,6 +561,7 @@ $transition: all 0.3s ease;
   width: 100%;
 }
 
+// 基本卡片樣式 (用於所有卡片)
 .appearance-card {
   flex: 0 0 calc(33% - #{$spacing-unit * 2});
   max-width: calc(33% - #{$spacing-unit * 2});
@@ -582,21 +579,26 @@ $transition: all 0.3s ease;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   }
 
+  // 圖片容器 - 符合 710x400 的寬高比 (約為 16:9)
+  // 這個樣式只會被"外觀資料庫"頁籤的卡片使用
   .appearance-image-container {
-    height: 200px; // 稍微增加高度
+    height: 0;
+    padding-bottom: 56.34%; // 保持 16:9 的寬高比 (9/16 * 100 = 56.25%)
+    position: relative;
     overflow: hidden;
     background-color: #f5f5f5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 
     .appearance-image {
+      position: absolute;
       width: 100%;
       height: 100%;
       object-fit: cover;
+      top: 0;
+      left: 0;
     }
 
     .no-image {
+      position: absolute;
       width: 100%;
       height: 100%;
       display: flex;
@@ -605,6 +607,13 @@ $transition: all 0.3s ease;
       color: #999;
       font-size: 14px;
     }
+  }
+  .field-label {
+    display: inline-block;
+    font-weight: 600;
+    color: #666;
+    margin-right: $spacing-unit;
+    min-width: 42px;
   }
 
   .appearance-info {
@@ -623,18 +632,39 @@ $transition: all 0.3s ease;
       white-space: nowrap;
     }
 
-    // 提交者信息已移除
+    .appearance-category {
+      display: flex;
+      align-items: center;
+      margin-bottom: $spacing-unit * 1.5;
+
+      .category-tag {
+        font-size: 14px;
+        padding: 4px $spacing-unit;
+        background-color: rgba($primary-color, 0.3);
+        color: $primary-darker;
+        border-radius: $spacing-unit;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+    }
 
     .appearance-nicknames {
       display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
+      align-items: flex-start;
+
+      .nickname-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        flex: 1;
+      }
 
       .nickname-tag {
-        font-size: 14px; // 增加字體大小
+        font-size: 14px;
         padding: 4px $spacing-unit;
-        background-color: rgba($primary-color, 0.1);
-        color: $primary-color;
+        background-color: rgba($background-color, 0.8);
+        color: #666;
+        border: 1px solid #e0e0e0;
         border-radius: $spacing-unit;
         white-space: nowrap;
       }
@@ -649,6 +679,19 @@ $transition: all 0.3s ease;
       font-size: 14px;
       color: #999;
     }
+  }
+}
+
+// 特定樣式 - 提交外觀數據頁籤中的卡片 (不需要圖片容器)
+.pending-card {
+  // 在待審核頁籤中的卡片，不需要顯示圖片容器
+  .appearance-image-container {
+    display: none;
+  }
+
+  // 由於沒有圖片容器，增加上方的 padding
+  .appearance-info {
+    padding-top: $spacing-unit * 3;
   }
 }
 
@@ -678,7 +721,7 @@ $transition: all 0.3s ease;
       background-color: $success-color;
 
       &:hover {
-        background-color: rgba($success-color, 0.8);
+        background-color: $success-darker;
       }
     }
 
@@ -686,7 +729,7 @@ $transition: all 0.3s ease;
       background-color: $error-color;
 
       &:hover {
-        background-color: rgba($error-color, 0.8);
+        background-color: $error-darker;
       }
     }
 
@@ -694,7 +737,7 @@ $transition: all 0.3s ease;
       background-color: $error-color;
 
       &:hover {
-        background-color: rgba($error-color, 0.8);
+        background-color: $error-darker;
       }
     }
   }
@@ -703,23 +746,43 @@ $transition: all 0.3s ease;
 .add-card {
   cursor: pointer;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   border: 2px dashed rgba($primary-color, 0.3);
   background-color: rgba($background-color, 0.5);
-  min-height: 280px; // 確保與其他卡片高度一致
-  order: 999; // 確保加號卡片始終排在最後
+  min-height: 200px; // 調整卡片高度
+  padding: $spacing-unit * 4;
+  order: 999; // 確保加號卡片排在最後
+
+  // 讓新增外觀卡片高度與其他卡片一致，包含圖片區域
+  .appearance-image-container {
+    display: none; // 隱藏圖片容器
+  }
 
   .add-icon {
     font-size: 64px; // 增加字體大小
     color: $primary-color;
     opacity: 0.6;
     transition: $transition;
+    margin-bottom: $spacing-unit;
   }
 
-  &:hover .add-icon {
-    opacity: 1;
-    transform: scale(1.1);
+  .add-text {
+    color: $primary-color;
+    font-weight: 600;
+    opacity: 0.8;
+  }
+
+  &:hover {
+    .add-icon,
+    .add-text {
+      opacity: 1;
+    }
+
+    .add-icon {
+      transform: scale(1.1);
+    }
   }
 }
 
@@ -794,7 +857,7 @@ $transition: all 0.3s ease;
         color: white;
 
         &:hover {
-          background-color: rgba($error-color, 0.8);
+          background-color: $error-darker;
         }
       }
     }
@@ -850,10 +913,6 @@ $transition: all 0.3s ease;
   .appearance-card {
     flex: 0 0 100%;
     max-width: 100%;
-
-    .appearance-image-container {
-      height: 200px;
-    }
   }
 }
 </style>

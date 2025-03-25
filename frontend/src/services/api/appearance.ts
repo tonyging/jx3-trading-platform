@@ -4,7 +4,7 @@ import type {
   AppearanceListResponse,
   AppearanceSubmissionListResponse,
   AppearanceSubmissionResponse,
-  AppearanceImage,
+  AppearanceCategory,
 } from '@/types'
 
 export const appearanceApi = {
@@ -12,7 +12,8 @@ export const appearanceApi = {
   submitAppearance: async (data: {
     officialName: string
     nicknames?: string[]
-    images?: AppearanceImage
+    imageUrl?: string
+    category: AppearanceCategory
   }) => {
     const response = await api.post<AppearanceSubmissionResponse>('/api/appearances/submit', data)
     return response.data

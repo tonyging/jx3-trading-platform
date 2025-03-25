@@ -46,6 +46,7 @@ const loadData = async () => {
                 });
                 pendingSubmissions.value = pendingResponse.data.submissions;
                 pagination.value = pendingResponse.data.pagination;
+                console.log('Pending submissions:', pendingSubmissions.value); // 添加日志
                 break;
         }
     }
@@ -73,14 +74,17 @@ const handleTabChange = (tab) => {
     pagination.value.current = 1;
     loadData();
 };
-// 提交新外觀
-const handleSubmitAppearance = async (data) => {
+// 提交新外觀 - 已修正為與 CreateAppearanceModal 匹配的參數
+const handleSubmitAppearance = async () => {
     try {
-        await appearanceApi.submitAppearance(data);
+        // 關閉模態窗口
         isCreateModalOpen.value = false;
-        // 重新載入待審核頁籤
+        // 確保頁籤是「提交外觀數據」
         activeTab.value = 'pending';
-        loadData();
+        // 重新加載數據（使用 setTimeout 確保頁籤變更後再加載）
+        setTimeout(() => {
+            loadData();
+        }, 100);
     }
     catch (error) {
         console.error('提交外觀失敗', error);
@@ -149,22 +153,20 @@ const handleReviewAppearance = async (submissionId, action) => {
         console.error('審核外觀失敗', error);
     }
 };
-// 判斷提交者名稱
-// const getSubmitterName = (submission: AppearanceSubmission): string => {
-//   if (typeof submission.submittedBy === 'object' && submission.submittedBy !== null) {
-//     return submission.submittedBy.name || '未知用戶'
-//   }
-//   return '未知用戶'
-// }
-// 獲取適當的圖片URL
-const getAppearanceImage = (appearance) => {
-    if (!appearance.images)
-        return undefined;
-    return (appearance.images.adultMale ||
-        appearance.images.adultFemale ||
-        appearance.images.childMale ||
-        appearance.images.childFemale ||
-        undefined);
+// 獲取適當的圖片URL (用於顯示外觀的圖片，如果有的話)
+const getAppearanceImageUrl = (item) => {
+    if (item.imageUrl) {
+        return item.imageUrl;
+    }
+    return undefined;
+};
+// 確保 nicknames 始終是數組
+const ensureNicknames = (item) => {
+    if (!item.nicknames)
+        return [];
+    if (Array.isArray(item.nicknames))
+        return item.nicknames;
+    return [];
 };
 // 生命週期鉤子
 onMounted(() => {
@@ -174,7 +176,7 @@ function __VLS_template() {
     const __VLS_ctx = {};
     let __VLS_components;
     let __VLS_directives;
-    ['approve-btn', 'reject-btn', 'delete-btn', 'add-icon', 'appearance-card', 'appearance-card', 'appearance-content', 'appearance-tabs', 'appearance-tabs', 'appearances-flex', 'appearance-card', 'search-container', 'appearance-card', 'appearance-image-container',];
+    ['appearance-image-container', 'appearance-info', 'approve-btn', 'reject-btn', 'delete-btn', 'appearance-image-container', 'add-icon', 'add-text', 'add-icon', 'appearance-card', 'appearance-card', 'appearance-content', 'appearance-tabs', 'appearance-tabs', 'appearances-flex', 'appearance-card', 'search-container', 'appearance-card',];
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -255,9 +257,9 @@ function __VLS_template() {
                     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: ("appearance-image-container") },
                     });
-                    if (__VLS_ctx.getAppearanceImage(appearance)) {
+                    if (__VLS_ctx.getAppearanceImageUrl(appearance)) {
                         __VLS_elementAsFunction(__VLS_intrinsicElements.img)({
-                            src: ((__VLS_ctx.getAppearanceImage(appearance))),
+                            src: ((__VLS_ctx.getAppearanceImageUrl(appearance))),
                             alt: ("外觀圖片"),
                             ...{ class: ("appearance-image") },
                         });
@@ -276,38 +278,37 @@ function __VLS_template() {
                     });
                     (appearance.officialName);
                     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: ("appearance-category") },
+                    });
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                        ...{ class: ("field-label") },
+                    });
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                        ...{ class: ("category-tag") },
+                    });
+                    (appearance.category);
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: ("appearance-nicknames") },
                     });
-                    for (const [nickname, index] of __VLS_getVForSourceType((appearance.nicknames))) {
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                        ...{ class: ("field-label") },
+                    });
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: ("nickname-wrapper") },
+                    });
+                    for (const [nickname, index] of __VLS_getVForSourceType((__VLS_ctx.ensureNicknames(appearance)))) {
                         __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                             key: ((index)),
                             ...{ class: ("nickname-tag") },
                         });
                         (nickname);
                     }
-                    if (!appearance.nicknames || appearance.nicknames.length === 0) {
+                    if (!__VLS_ctx.ensureNicknames(appearance).length) {
                         __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                             ...{ class: ("no-nickname") },
                         });
                     }
                 }
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(!((__VLS_ctx.isLoading))))
-                                return;
-                            if (!(!((__VLS_ctx.error))))
-                                return;
-                            if (!((__VLS_ctx.activeTab === 'official')))
-                                return;
-                            if (!(!((__VLS_ctx.appearances.length === 0))))
-                                return;
-                            __VLS_ctx.isCreateModalOpen = true;
-                        } },
-                    ...{ class: ("appearance-card add-card") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("add-icon") },
-                });
             }
         }
         if (__VLS_ctx.activeTab === 'pending') {
@@ -335,49 +336,19 @@ function __VLS_template() {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: ("add-icon") },
                 });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: ("add-text") },
+                });
             }
             else {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: ("appearances-flex") },
                 });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(!((__VLS_ctx.isLoading))))
-                                return;
-                            if (!(!((__VLS_ctx.error))))
-                                return;
-                            if (!((__VLS_ctx.activeTab === 'pending')))
-                                return;
-                            if (!(!((__VLS_ctx.pendingSubmissions.length === 0 && !__VLS_ctx.isLoading))))
-                                return;
-                            __VLS_ctx.isCreateModalOpen = true;
-                        } },
-                    ...{ class: ("appearance-card add-card") },
-                });
-                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: ("add-icon") },
-                });
                 for (const [submission] of __VLS_getVForSourceType((__VLS_ctx.pendingSubmissions))) {
                     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         key: ((submission._id)),
-                        ...{ class: ("appearance-card submission-card") },
+                        ...{ class: ("appearance-card submission-card pending-card") },
                     });
-                    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                        ...{ class: ("appearance-image-container") },
-                    });
-                    if (__VLS_ctx.getAppearanceImage(submission)) {
-                        __VLS_elementAsFunction(__VLS_intrinsicElements.img)({
-                            src: ((__VLS_ctx.getAppearanceImage(submission))),
-                            alt: ("外觀圖片"),
-                            ...{ class: ("appearance-image") },
-                        });
-                    }
-                    else {
-                        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                            ...{ class: ("no-image") },
-                        });
-                        __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                    }
                     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: ("appearance-info") },
                     });
@@ -385,21 +356,35 @@ function __VLS_template() {
                         ...{ class: ("appearance-name") },
                     });
                     (submission.officialName);
-                    if (submission.nicknames && submission.nicknames.length > 0) {
-                        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                            ...{ class: ("appearance-nicknames") },
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: ("appearance-category") },
+                    });
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                        ...{ class: ("field-label") },
+                    });
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                        ...{ class: ("category-tag") },
+                    });
+                    (submission.category);
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: ("appearance-nicknames") },
+                    });
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                        ...{ class: ("field-label") },
+                    });
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: ("nickname-wrapper") },
+                    });
+                    for (const [nickname, index] of __VLS_getVForSourceType((__VLS_ctx.ensureNicknames(submission)))) {
+                        __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                            key: ((index)),
+                            ...{ class: ("nickname-tag") },
                         });
-                        for (const [nickname, index] of __VLS_getVForSourceType((submission.nicknames))) {
-                            __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                                key: ((index)),
-                                ...{ class: ("nickname-tag") },
-                            });
-                            (nickname);
-                        }
+                        (nickname);
                     }
-                    else {
-                        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                            ...{ class: ("no-nicknames") },
+                    if (!__VLS_ctx.ensureNicknames(submission).length) {
+                        __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                            ...{ class: ("no-nickname") },
                         });
                     }
                     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -458,6 +443,26 @@ function __VLS_template() {
                         });
                     }
                 }
+                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ onClick: (...[$event]) => {
+                            if (!(!((__VLS_ctx.isLoading))))
+                                return;
+                            if (!(!((__VLS_ctx.error))))
+                                return;
+                            if (!((__VLS_ctx.activeTab === 'pending')))
+                                return;
+                            if (!(!((__VLS_ctx.pendingSubmissions.length === 0 && !__VLS_ctx.isLoading))))
+                                return;
+                            __VLS_ctx.isCreateModalOpen = true;
+                        } },
+                    ...{ class: ("appearance-card add-card") },
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: ("add-icon") },
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: ("add-text") },
+                });
             }
         }
     }
@@ -534,7 +539,7 @@ function __VLS_template() {
             ...{ class: ("submit-btn") },
         });
     }
-    ['appearance-library-container', 'appearance-tabs', 'active', 'active', 'appearance-content', 'search-container', 'search-btn', 'loading-container', 'loading-spinner', 'error-container', 'official-appearances', 'empty-state', 'appearances-flex', 'appearance-card', 'appearance-image-container', 'appearance-image', 'no-image', 'appearance-info', 'appearance-name', 'appearance-nicknames', 'nickname-tag', 'no-nickname', 'appearance-card', 'add-card', 'add-icon', 'pending-appearances', 'empty-state', 'appearance-card', 'add-card', 'add-icon', 'appearances-flex', 'appearance-card', 'add-card', 'add-icon', 'appearance-card', 'submission-card', 'appearance-image-container', 'appearance-image', 'no-image', 'appearance-info', 'appearance-name', 'appearance-nicknames', 'nickname-tag', 'no-nicknames', 'submission-actions', 'delete-btn', 'approve-btn', 'reject-btn', 'modal-overlay', 'reject-modal', 'modal-actions', 'cancel-btn', 'submit-btn',];
+    ['appearance-library-container', 'appearance-tabs', 'active', 'active', 'appearance-content', 'search-container', 'search-btn', 'loading-container', 'loading-spinner', 'error-container', 'official-appearances', 'empty-state', 'appearances-flex', 'appearance-card', 'appearance-image-container', 'appearance-image', 'no-image', 'appearance-info', 'appearance-name', 'appearance-category', 'field-label', 'category-tag', 'appearance-nicknames', 'field-label', 'nickname-wrapper', 'nickname-tag', 'no-nickname', 'pending-appearances', 'empty-state', 'appearance-card', 'add-card', 'add-icon', 'add-text', 'appearances-flex', 'appearance-card', 'submission-card', 'pending-card', 'appearance-info', 'appearance-name', 'appearance-category', 'field-label', 'category-tag', 'appearance-nicknames', 'field-label', 'nickname-wrapper', 'nickname-tag', 'no-nickname', 'submission-actions', 'delete-btn', 'approve-btn', 'reject-btn', 'appearance-card', 'add-card', 'add-icon', 'add-text', 'modal-overlay', 'reject-modal', 'modal-actions', 'cancel-btn', 'submit-btn',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -575,7 +580,8 @@ const __VLS_self = (await import('vue')).defineComponent({
             closeRejectModal: closeRejectModal,
             submitReject: submitReject,
             handleReviewAppearance: handleReviewAppearance,
-            getAppearanceImage: getAppearanceImage,
+            getAppearanceImageUrl: getAppearanceImageUrl,
+            ensureNicknames: ensureNicknames,
         };
     },
 });

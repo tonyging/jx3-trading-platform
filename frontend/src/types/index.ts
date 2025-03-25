@@ -12,6 +12,25 @@ export type TransactionStatus =
 export type ProductListType = 'all' | 'my' | 'trading' | 'completed' | 'admin'
 export type PaymentMethod = '匯款' | 'Line Pay' | '街口支付' | '支付寶' | '微信'
 export type Currency = '台幣' | '人民幣' | '港幣'
+export type AppearanceCategory =
+  | '外觀禮盒'
+  | '上衣'
+  | '髮型'
+  | '披風'
+  | '頭飾'
+  | '背掛'
+  | '腰掛'
+  | '面掛'
+  | '肩飾'
+  | '眼飾'
+  | '手飾'
+  | '佩囊'
+  | '小頭像'
+  | '寵物'
+  | '掛寵'
+  | '坐騎'
+  | '馬具'
+  | '其他'
 
 // 用戶相關型別
 export interface User {
@@ -184,18 +203,12 @@ export interface CompleteTransactionResponse {
   data: Transaction
 }
 
-export interface AppearanceImage {
-  adultMale?: string
-  adultFemale?: string
-  childMale?: string
-  childFemale?: string
-}
-
 export interface Appearance {
   _id: string
   officialName: string
   nicknames: string[]
-  images: AppearanceImage
+  imageUrl?: string
+  category: AppearanceCategory
   submittedBy:
     | string
     | {
@@ -212,7 +225,8 @@ export interface AppearanceSubmission {
   _id: string
   officialName: string
   nicknames: string[]
-  images?: AppearanceImage
+  imageUrl?: string // 單一外觀照片URL
+  category: AppearanceCategory
   submittedBy:
     | string
     | {

@@ -1,64 +1,43 @@
 import { ref, computed } from 'vue';
+import { appearanceApi } from '@/services/api/appearance';
 const __VLS_props = defineProps();
 const { isOpen } = __VLS_props;
 const emit = defineEmits();
+// 分類選項
+const categories = [
+    '外觀禮盒',
+    '上衣',
+    '髮型',
+    '披風',
+    '頭飾',
+    '背掛',
+    '腰掛',
+    '面掛',
+    '肩飾',
+    '眼飾',
+    '手飾',
+    '佩囊',
+    '小頭像',
+    '寵物',
+    '掛寵',
+    '坐騎',
+    '馬具',
+    '其他',
+];
 // 表單資料
 const formData = ref({
     officialName: '',
     nicknames: [],
-    images: {}, // 保留空對象以維持型別一致性
 });
+// 選擇的分類
+const selectedCategory = ref('其他');
 // 臨時的單一暱稱輸入
 const tempNickname = ref('');
-// 圖片上傳相關，暫時註釋但保留代碼以便未來重新啟用
-/*
-// 圖片上傳參照
-const imageInputs = ref<{
-  [key: string]: HTMLInputElement | null
-}>({
-  adultMale: null,
-  adultFemale: null,
-  childMale: null,
-  childFemale: null,
-})
-
-// 圖片預覽
-const imagePreview = ref<{
-  [key: string]: string
-}>({})
-
-// 處理圖片上傳
-const handleImageUpload = (type: keyof CreateAppearanceData['images']) => {
-  const input = imageInputs.value[type]
-  if (input && input.files && input.files[0]) {
-    const file = input.files[0]
-    const reader = new FileReader()
-
-    reader.onload = (e) => {
-      const result = e.target?.result as string
-      formData.value.images[type] = result
-      imagePreview.value[type] = result
-    }
-
-    reader.readAsDataURL(file)
-  }
-}
-
-// 移除圖片
-const removeImage = (type: keyof CreateAppearanceData['images']) => {
-  delete formData.value.images[type]
-  delete imagePreview.value[type]
-
-  // 重置文件輸入
-  const input = imageInputs.value[type]
-  if (input) {
-    input.value = ''
-  }
-}
-*/
+// 提交中狀態
+const isSubmitting = ref(false);
 // 驗證表單
 const isFormValid = computed(() => {
-    return formData.value.officialName.trim() !== '';
+    return formData.value.officialName.trim() !== '' && categories.includes(selectedCategory.value);
 });
 // 新增暱稱
 const addNickname = () => {
@@ -73,10 +52,30 @@ const removeNickname = (nickname) => {
     formData.value.nicknames = formData.value.nicknames.filter((n) => n !== nickname);
 };
 // 提交表單
-const submitForm = () => {
-    if (isFormValid.value) {
-        emit('submit', { ...formData.value });
-        resetForm();
+const submitForm = async () => {
+    if (isFormValid.value && !isSubmitting.value) {
+        isSubmitting.value = true;
+        try {
+            await appearanceApi.submitAppearance({
+                officialName: formData.value.officialName,
+                nicknames: formData.value.nicknames,
+                category: selectedCategory.value,
+            });
+            // 重置表單並關閉
+            resetForm();
+            // 通知父組件提交成功，讓父組件刷新數據
+            emit('submit');
+            // 關閉模態窗
+            emit('close');
+        }
+        catch (error) {
+            // 錯誤處理
+            console.error('提交外觀失敗', error);
+            alert('提交外觀失敗，請稍後再試。');
+        }
+        finally {
+            isSubmitting.value = false;
+        }
     }
 };
 // 重置表單
@@ -84,17 +83,8 @@ const resetForm = () => {
     formData.value = {
         officialName: '',
         nicknames: [],
-        images: {},
     };
-    // 圖片相關重置，暫時註釋
-    /*
-    imagePreview.value = {}
-  
-    // 重置所有文件輸入
-    Object.values(imageInputs.value).forEach((input) => {
-      if (input) input.value = ''
-    })
-    */
+    selectedCategory.value = '其他';
     tempNickname.value = '';
 };
 // 關閉模態窗
@@ -139,8 +129,32 @@ function __VLS_template() {
             value: ((__VLS_ctx.formData.officialName)),
             type: ("text"),
             required: (true),
-            placeholder: ("請輸入外觀的正式名稱"),
+            placeholder: ("請輸入遊戲內的正式名稱"),
         });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("form-group") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({});
+        __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: ("required") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("category-grid") },
+        });
+        for (const [category] of __VLS_getVForSourceType((__VLS_ctx.categories))) {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!((isOpen)))
+                            return;
+                        __VLS_ctx.selectedCategory = category;
+                    } },
+                key: ((category)),
+                type: ("button"),
+                ...{ class: ("category-btn") },
+                ...{ class: (({ selected: __VLS_ctx.selectedCategory === category })) },
+            });
+            (category);
+        }
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: ("form-group") },
         });
@@ -152,7 +166,7 @@ function __VLS_template() {
             ...{ onKeyup: (__VLS_ctx.addNickname) },
             value: ((__VLS_ctx.tempNickname)),
             type: ("text"),
-            placeholder: ("別稱, 例如:一代金,輸入完畢後請按新增"),
+            placeholder: ("選填, 例如:一代金,輸入完畢後請按新增"),
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             ...{ onClick: (__VLS_ctx.addNickname) },
@@ -183,10 +197,6 @@ function __VLS_template() {
             }
         }
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: ("form-group image-upload-notice") },
-        });
-        __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: ("form-actions") },
         });
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
@@ -197,10 +207,11 @@ function __VLS_template() {
         __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             type: ("submit"),
             ...{ class: ("submit-btn") },
-            disabled: ((!__VLS_ctx.isFormValid)),
+            disabled: ((!__VLS_ctx.isFormValid || __VLS_ctx.isSubmitting)),
         });
+        (__VLS_ctx.isSubmitting ? '提交中...' : '提交');
     }
-    ['appearance-modal-overlay', 'appearance-modal-content', 'modal-close-btn', 'appearance-form', 'form-group', 'required', 'form-group', 'nickname-input-group', 'add-nickname-btn', 'nicknames-list', 'nickname-tag', 'remove-nickname-btn', 'form-group', 'image-upload-notice', 'form-actions', 'cancel-btn', 'submit-btn',];
+    ['appearance-modal-overlay', 'appearance-modal-content', 'modal-close-btn', 'appearance-form', 'form-group', 'required', 'form-group', 'required', 'category-grid', 'category-btn', 'selected', 'form-group', 'nickname-input-group', 'add-nickname-btn', 'nicknames-list', 'nickname-tag', 'remove-nickname-btn', 'form-actions', 'cancel-btn', 'submit-btn',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -219,8 +230,11 @@ function __VLS_template() {
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
+            categories: categories,
             formData: formData,
+            selectedCategory: selectedCategory,
             tempNickname: tempNickname,
+            isSubmitting: isSubmitting,
             isFormValid: isFormValid,
             addNickname: addNickname,
             removeNickname: removeNickname,

@@ -1,3 +1,4 @@
+// controllers/appearanceController.ts
 import { Request, Response, NextFunction } from "express";
 import AppearanceSubmission from "../models/appearanceSubmissionModel";
 import Appearance from "../models/appearanceModel";
@@ -12,17 +13,38 @@ class AppearanceController {
     next: NextFunction
   ) => {
     try {
-      const { officialName, nicknames, images } = req.body;
-      const userId = req.user._id;
+      const { officialName, nicknames, category } = req.body;
 
-      // 檢查是否已存在相同名稱的外觀
-      const existingAppearance = await Appearance.findOne({ officialName });
-      if (existingAppearance) {
+      // 驗證 category 是否在有效範圍內
+      const validCategories = [
+        "外觀禮盒",
+        "上衣",
+        "髮型",
+        "披風",
+        "頭飾",
+        "背掛",
+        "腰掛",
+        "面掛",
+        "肩飾",
+        "眼飾",
+        "手飾",
+        "佩囊",
+        "小頭像",
+        "寵物",
+        "掛寵",
+        "坐騎",
+        "馬具",
+        "其他",
+      ];
+
+      if (!category || !validCategories.includes(category)) {
         return res.status(400).json({
           status: "error",
-          message: "已存在相同名稱的外觀",
+          message: "無效的外觀分類",
         });
       }
+
+      const userId = req.user._id;
 
       // 檢查是否已有相同名稱的提交正在審核中
       const existingSubmission = await AppearanceSubmission.findOne({
@@ -40,7 +62,7 @@ class AppearanceController {
       const submission = await AppearanceSubmission.create({
         officialName,
         nicknames: nicknames || [],
-        images: images || {},
+        category, // 加入 category
         submittedBy: userId,
         status: "pending",
         approvals: [],
@@ -175,21 +197,50 @@ class AppearanceController {
         if (submission.approvals.length >= 3) {
           submission.status = "approved";
 
-          // 創建正式的外觀記錄
-          await Appearance.create({
+          // 檢查是否已存在相同名稱的外觀
+          let existingAppearance = await Appearance.findOne({
             officialName: submission.officialName,
-            nicknames: submission.nicknames,
-            images: submission.images,
-            submittedBy: submission.submittedBy,
-            approvedBy: submission.approvals.map((a) => a.userId),
           });
+
+          if (existingAppearance) {
+            // 合併 nicknames，去除重複
+            const updatedNicknames = Array.from(
+              new Set([
+                ...existingAppearance.nicknames,
+                ...(submission.nicknames || []),
+              ])
+            );
+
+            // 更新現有的外觀
+            existingAppearance = await Appearance.findOneAndUpdate(
+              { officialName: submission.officialName },
+              {
+                nicknames: updatedNicknames,
+                category: submission.category, // 直接覆蓋 category
+                imageUrl: submission.imageUrl, // 如果需要更新圖片
+              },
+              { new: true }
+            );
+          } else {
+            // 創建新的外觀記錄
+            existingAppearance = await Appearance.create({
+              officialName: submission.officialName,
+              nicknames: submission.nicknames || [],
+              imageUrl: submission.imageUrl,
+              category: submission.category,
+              submittedBy: submission.submittedBy,
+              approvedBy: submission.approvals.map((a) => a.userId),
+            });
+          }
 
           // 記錄系統日誌
           await SystemLog.create({
             type: "appearance",
             action: "approve_final",
             userId,
-            details: `外觀 ${submission.officialName} 已被批准並添加到正式資料庫`,
+            details: `外觀 ${submission.officialName} 已被批准並${
+              existingAppearance ? "更新" : "添加"
+            }到正式資料庫`,
             ip: req.ip,
           });
         }

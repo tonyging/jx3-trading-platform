@@ -1,6 +1,8 @@
 <!-- src/components/CreateAppearanceModal.vue -->
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { AppearanceCategory } from '@/types'
+import { appearanceApi } from '@/services/api/appearance'
 
 // 定義屬性和事件
 const { isOpen } = defineProps<{
@@ -9,82 +11,49 @@ const { isOpen } = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'submit', data: CreateAppearanceData): void
+  (e: 'submit'): void
 }>()
 
-// 定義表單資料型別
-interface CreateAppearanceData {
-  officialName: string
-  nicknames: string[]
-  // 保留圖片字段以便未來重新啟用
-  images: {
-    adultMale?: string
-    adultFemale?: string
-    childMale?: string
-    childFemale?: string
-  }
-}
+// 分類選項
+const categories: AppearanceCategory[] = [
+  '外觀禮盒',
+  '上衣',
+  '髮型',
+  '披風',
+  '頭飾',
+  '背掛',
+  '腰掛',
+  '面掛',
+  '肩飾',
+  '眼飾',
+  '手飾',
+  '佩囊',
+  '小頭像',
+  '寵物',
+  '掛寵',
+  '坐騎',
+  '馬具',
+  '其他',
+]
 
 // 表單資料
-const formData = ref<CreateAppearanceData>({
+const formData = ref({
   officialName: '',
-  nicknames: [],
-  images: {}, // 保留空對象以維持型別一致性
+  nicknames: [] as string[],
 })
+
+// 選擇的分類
+const selectedCategory = ref<AppearanceCategory>('其他')
 
 // 臨時的單一暱稱輸入
 const tempNickname = ref('')
 
-// 圖片上傳相關，暫時註釋但保留代碼以便未來重新啟用
-/*
-// 圖片上傳參照
-const imageInputs = ref<{
-  [key: string]: HTMLInputElement | null
-}>({
-  adultMale: null,
-  adultFemale: null,
-  childMale: null,
-  childFemale: null,
-})
-
-// 圖片預覽
-const imagePreview = ref<{
-  [key: string]: string
-}>({})
-
-// 處理圖片上傳
-const handleImageUpload = (type: keyof CreateAppearanceData['images']) => {
-  const input = imageInputs.value[type]
-  if (input && input.files && input.files[0]) {
-    const file = input.files[0]
-    const reader = new FileReader()
-
-    reader.onload = (e) => {
-      const result = e.target?.result as string
-      formData.value.images[type] = result
-      imagePreview.value[type] = result
-    }
-
-    reader.readAsDataURL(file)
-  }
-}
-
-// 移除圖片
-const removeImage = (type: keyof CreateAppearanceData['images']) => {
-  delete formData.value.images[type]
-  delete imagePreview.value[type]
-
-  // 重置文件輸入
-  const input = imageInputs.value[type]
-  if (input) {
-    input.value = ''
-  }
-}
-*/
+// 提交中狀態
+const isSubmitting = ref(false)
 
 // 驗證表單
 const isFormValid = computed(() => {
-  return formData.value.officialName.trim() !== ''
+  return formData.value.officialName.trim() !== '' && categories.includes(selectedCategory.value)
 })
 
 // 新增暱稱
@@ -102,10 +71,31 @@ const removeNickname = (nickname: string) => {
 }
 
 // 提交表單
-const submitForm = () => {
-  if (isFormValid.value) {
-    emit('submit', { ...formData.value })
-    resetForm()
+const submitForm = async () => {
+  if (isFormValid.value && !isSubmitting.value) {
+    isSubmitting.value = true
+    try {
+      await appearanceApi.submitAppearance({
+        officialName: formData.value.officialName,
+        nicknames: formData.value.nicknames,
+        category: selectedCategory.value,
+      })
+
+      // 重置表單並關閉
+      resetForm()
+
+      // 通知父組件提交成功，讓父組件刷新數據
+      emit('submit')
+
+      // 關閉模態窗
+      emit('close')
+    } catch (error) {
+      // 錯誤處理
+      console.error('提交外觀失敗', error)
+      alert('提交外觀失敗，請稍後再試。')
+    } finally {
+      isSubmitting.value = false
+    }
   }
 }
 
@@ -114,17 +104,8 @@ const resetForm = () => {
   formData.value = {
     officialName: '',
     nicknames: [],
-    images: {},
   }
-  // 圖片相關重置，暫時註釋
-  /*
-  imagePreview.value = {}
-
-  // 重置所有文件輸入
-  Object.values(imageInputs.value).forEach((input) => {
-    if (input) input.value = ''
-  })
-  */
+  selectedCategory.value = '其他'
   tempNickname.value = ''
 }
 
@@ -140,19 +121,36 @@ const closeModal = () => {
     <div class="appearance-modal-content">
       <button class="modal-close-btn" @click="closeModal">✕</button>
 
-      <h2>提交新外觀</h2>
+      <h2>新增外觀數據</h2>
 
       <form @submit.prevent="submitForm" class="appearance-form">
         <!-- 外觀名稱 -->
         <div class="form-group">
-          <label for="officialName">外觀正式名稱 <span class="required">*</span></label>
+          <label for="officialName">正式名稱 <span class="required">*</span></label>
           <input
             id="officialName"
             v-model="formData.officialName"
             type="text"
             required
-            placeholder="請輸入外觀的正式名稱"
+            placeholder="請輸入遊戲內的正式名稱"
           />
+        </div>
+
+        <!-- 分類選擇 -->
+        <div class="form-group">
+          <label>外觀分類 <span class="required">*</span></label>
+          <div class="category-grid">
+            <button
+              v-for="category in categories"
+              :key="category"
+              type="button"
+              class="category-btn"
+              :class="{ selected: selectedCategory === category }"
+              @click="selectedCategory = category"
+            >
+              {{ category }}
+            </button>
+          </div>
         </div>
 
         <!-- 暱稱管理 -->
@@ -162,7 +160,7 @@ const closeModal = () => {
             <input
               v-model="tempNickname"
               type="text"
-              placeholder="別稱, 例如:一代金,輸入完畢後請按新增"
+              placeholder="選填, 例如:一代金,輸入完畢後請按新增"
               @keyup.enter="addNickname"
             />
             <button type="button" @click="addNickname" class="add-nickname-btn">新增</button>
@@ -178,61 +176,12 @@ const closeModal = () => {
           </div>
         </div>
 
-        <!-- 圖片上傳部分暫時註釋 -->
-        <!--
-        <div class="form-group">
-          <label>外觀圖片</label>
-          <div class="image-upload-grid">
-            <div
-              v-for="(label, type) in {
-                adultMale: '成男',
-                adultFemale: '成女',
-                childMale: '正太',
-                childFemale: '蘿莉',
-              }"
-              :key="type"
-              class="image-upload-item"
-            >
-              <label :for="`${type}Upload`">{{ label }}</label>
-
-              <div v-if="imagePreview[type]" class="image-preview">
-                <img :src="imagePreview[type]" :alt="label" />
-                <button type="button" @click="removeImage(type)" class="remove-image-btn">
-                  移除
-                </button>
-              </div>
-
-              <input
-                :id="`${type}Upload`"
-                type="file"
-                accept="image/*"
-                :ref="(el) => (imageInputs[type] = el)"
-                @change="() => handleImageUpload(type)"
-                style="display: none"
-              />
-
-              <button
-                v-if="!imagePreview[type]"
-                type="button"
-                @click="imageInputs[type]?.click()"
-                class="upload-image-btn"
-              >
-                上傳圖片
-              </button>
-            </div>
-          </div>
-        </div>
-        -->
-
-        <!-- 添加功能暫時停用的提示 -->
-        <div class="form-group image-upload-notice">
-          <p>【圖片上傳功能暫時停用，未來將重新開放】</p>
-        </div>
-
         <!-- 提交按鈕 -->
         <div class="form-actions">
           <button type="button" class="cancel-btn" @click="closeModal">取消</button>
-          <button type="submit" class="submit-btn" :disabled="!isFormValid">提交</button>
+          <button type="submit" class="submit-btn" :disabled="!isFormValid || isSubmitting">
+            {{ isSubmitting ? '提交中...' : '提交' }}
+          </button>
         </div>
       </form>
     </div>
@@ -352,70 +301,6 @@ $border-color: #e0e0e0;
     }
   }
 
-  /* 圖片上傳相關樣式保留 */
-  .image-upload-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-
-    .image-upload-item {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: center;
-
-      .image-preview {
-        position: relative;
-        width: 100%;
-        aspect-ratio: 1/1;
-        overflow: hidden;
-        border-radius: 8px;
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .remove-image-btn {
-          position: absolute;
-          top: 10px;
-          right: 10px;
-          background-color: rgba(0, 0, 0, 0.5);
-          color: white;
-          border: none;
-          padding: 5px 10px;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-      }
-
-      .upload-image-btn {
-        background-color: $background-color;
-        border: 1px dashed $border-color;
-        color: $text-color;
-        padding: 10px;
-        border-radius: 4px;
-        cursor: pointer;
-        width: 100%;
-      }
-    }
-  }
-
-  /* 添加圖片上傳功能暫時停用的提示樣式 */
-  .image-upload-notice {
-    background-color: $background-color;
-    padding: 15px;
-    border-radius: 8px;
-    text-align: center;
-
-    p {
-      color: $text-color;
-      font-style: italic;
-      margin: 0;
-    }
-  }
-
   .form-actions {
     display: flex;
     justify-content: space-between;
@@ -435,7 +320,7 @@ $border-color: #e0e0e0;
       color: $text-color;
 
       &:hover {
-        background-color: #e0e0e0; // 替代 darken 函數
+        background-color: darken($background-color, 10%);
       }
     }
 
@@ -444,13 +329,38 @@ $border-color: #e0e0e0;
       color: white;
 
       &:disabled {
-        background-color: #e09a9d; // 替代 lighten 函數
+        background-color: lighten($primary-color, 20%);
         cursor: not-allowed;
       }
 
       &:not(:disabled):hover {
-        background-color: #8e2124; // 替代 darken 函數
+        background-color: darken($primary-color, 10%);
       }
+    }
+  }
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+
+  .category-btn {
+    padding: 8px;
+    border: 1px solid $border-color;
+    background-color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &.selected {
+      background-color: $primary-color;
+      color: white;
+      border-color: $primary-color;
+    }
+
+    &:hover {
+      background-color: $background-color;
     }
   }
 }
