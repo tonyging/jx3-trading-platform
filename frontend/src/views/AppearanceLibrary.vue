@@ -1,6 +1,6 @@
 <!-- src/views/AppearanceLibrary.vue -->
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { appearanceApi } from '@/services/api/appearance'
 import type { Appearance, AppearanceSubmission } from '@/types'
 import CreateAppearanceModal from '@/components/CreateAppearanceModal.vue'
@@ -9,6 +9,9 @@ import { useUserStore } from '@/stores/user'
 
 // 獲取用戶信息
 const userStore = useUserStore()
+
+// 判斷是否為管理員
+const isAdmin = computed(() => userStore.currentUser?.role === 'admin')
 
 // 定義目前的活躍頁籤
 const activeTab = ref<'official' | 'pending'>('official')
@@ -36,6 +39,12 @@ const isCreateModalOpen = ref(false)
 const rejectModalOpen = ref(false)
 const currentSubmissionId = ref('')
 const rejectReason = ref('')
+
+// 上傳圖片相關狀態
+const isUploadModalOpen = ref(false)
+const selectedAppearanceId = ref('')
+const uploadError = ref<string | null>(null)
+const isUploading = ref(false)
 
 // 載入資料的方法
 const loadData = async () => {
@@ -177,9 +186,62 @@ const handleReviewAppearance = async (submissionId: string, action: 'approve' | 
 // 獲取適當的圖片URL (用於顯示外觀的圖片，如果有的話)
 const getAppearanceImageUrl = (item: Appearance | AppearanceSubmission): string | undefined => {
   if (item.imageUrl) {
+    console.log('imageUrl', item.imageUrl)
     return item.imageUrl
   }
   return undefined
+}
+
+// 打開上傳圖片模態窗
+const openUploadModal = (appearanceId: string) => {
+  selectedAppearanceId.value = appearanceId
+  isUploadModalOpen.value = true
+  uploadError.value = null
+}
+
+// 關閉上傳圖片模態窗
+const closeUploadModal = () => {
+  isUploadModalOpen.value = false
+  selectedAppearanceId.value = ''
+  uploadError.value = null
+}
+
+// 處理圖片上傳
+const handleImageUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (!target.files || target.files.length === 0) {
+    return
+  }
+
+  const file = target.files[0]
+
+  // 驗證文件類型
+  const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  if (!validImageTypes.includes(file.type)) {
+    uploadError.value = '不支持的文件類型，只允許JPG、PNG、GIF或WebP'
+    return
+  }
+
+  // 驗證文件大小 (5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    uploadError.value = '文件太大，最大允許5MB'
+    return
+  }
+
+  isUploading.value = true
+  uploadError.value = null
+
+  try {
+    await appearanceApi.uploadAppearanceImage(selectedAppearanceId.value, file)
+    closeUploadModal()
+    // 重新加載數據以反映圖片更新
+    loadData()
+  } catch (error) {
+    console.error('上傳圖片失敗', error)
+    uploadError.value = '上傳圖片失敗，請稍後再試'
+  } finally {
+    isUploading.value = false
+  }
 }
 
 // 確保 nicknames 始終是數組
@@ -250,8 +312,25 @@ onMounted(() => {
                   class="appearance-image"
                 />
                 <div v-else class="no-image">
-                  <span>尚無圖片</span>
+                  <!-- 管理員看到上傳按鈕，普通用戶看到「尚無圖片」 -->
+                  <button
+                    v-if="isAdmin"
+                    class="upload-btn"
+                    @click="openUploadModal(appearance._id)"
+                  >
+                    上傳圖片
+                  </button>
+                  <span v-else>尚無圖片</span>
                 </div>
+
+                <!-- 對於已有圖片的情況，管理員可以看到「更新圖片」按鈕 -->
+                <button
+                  v-if="isAdmin && getAppearanceImageUrl(appearance)"
+                  class="update-image-btn"
+                  @click="openUploadModal(appearance._id)"
+                >
+                  更新圖片
+                </button>
               </div>
               <div class="appearance-info">
                 <h3 class="appearance-name">{{ appearance.officialName }}</h3>
@@ -382,6 +461,36 @@ onMounted(() => {
         <div class="modal-actions">
           <button class="cancel-btn" @click="closeRejectModal">取消</button>
           <button class="submit-btn" @click="submitReject">確認拒絕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 上傳圖片模態窗 -->
+    <div v-if="isUploadModalOpen" class="modal-overlay">
+      <div class="upload-modal">
+        <h3>上傳外觀圖片</h3>
+        <p>請選擇要上傳的圖片 (支持JPG、PNG、GIF、WebP，最大5MB)</p>
+
+        <div class="upload-form">
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            @change="handleImageUpload"
+            :disabled="isUploading"
+          />
+
+          <div v-if="uploadError" class="upload-error">
+            {{ uploadError }}
+          </div>
+
+          <div v-if="isUploading" class="upload-loading">
+            <div class="loading-spinner"></div>
+            <span>上傳中...</span>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="cancel-btn" @click="closeUploadModal" :disabled="isUploading">取消</button>
         </div>
       </div>
     </div>
@@ -606,6 +715,43 @@ $transition: all 0.3s ease;
       justify-content: center;
       color: #999;
       font-size: 14px;
+    }
+
+    .upload-btn {
+      padding: $spacing-unit $spacing-unit * 2;
+      background-color: $primary-color;
+      color: white;
+      border: none;
+      border-radius: $spacing-unit;
+      cursor: pointer;
+      transition: $transition;
+
+      &:hover {
+        background-color: $primary-hover;
+      }
+    }
+
+    .update-image-btn {
+      position: absolute;
+      bottom: $spacing-unit;
+      right: $spacing-unit;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: none;
+      border-radius: $spacing-unit;
+      padding: $spacing-unit $spacing-unit * 1.5;
+      font-size: 14px;
+      cursor: pointer;
+      transition: $transition;
+      opacity: 0; // 默認不顯示
+
+      &:hover {
+        background-color: rgba($primary-color, 0.9);
+      }
+    }
+
+    &:hover .update-image-btn {
+      opacity: 1; // 鼠標懸停時顯示按鈕
     }
   }
   .field-label {
@@ -859,6 +1005,84 @@ $transition: all 0.3s ease;
         &:hover {
           background-color: $error-darker;
         }
+      }
+    }
+  }
+}
+
+// 上傳圖片模態窗樣式
+.upload-modal {
+  background-color: white;
+  border-radius: $spacing-unit;
+  padding: $spacing-unit * 3;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: $box-shadow;
+
+  h3 {
+    margin: 0 0 $spacing-unit * 2 0;
+    color: $text-color;
+  }
+
+  p {
+    margin-bottom: $spacing-unit * 2;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .upload-form {
+    margin-bottom: $spacing-unit * 2;
+
+    input[type='file'] {
+      width: 100%;
+      padding: $spacing-unit;
+      border: 1px dashed #e0e0e0;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .upload-error {
+      color: $error-color;
+      margin-top: $spacing-unit;
+      font-size: 14px;
+    }
+
+    .upload-loading {
+      display: flex;
+      align-items: center;
+      margin-top: $spacing-unit;
+
+      .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba($primary-color, 0.1);
+        border-radius: 50%;
+        border-top: 2px solid $primary-color;
+        animation: spin 1s linear infinite;
+        margin-right: $spacing-unit;
+      }
+    }
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    .cancel-btn {
+      padding: $spacing-unit $spacing-unit * 2;
+      border-radius: 4px;
+      border: none;
+      background-color: #f0f0f0;
+      color: #666;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #e0e0e0;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
     }
   }

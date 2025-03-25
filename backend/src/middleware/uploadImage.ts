@@ -5,7 +5,7 @@ import { Request } from "express";
 import fs from "fs";
 
 // 確保上傳目錄存在
-const uploadDir = "./uploads/appearances";
+const uploadDir = path.join(process.cwd(), "uploads/appearances");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }

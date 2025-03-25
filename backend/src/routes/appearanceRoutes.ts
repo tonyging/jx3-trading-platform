@@ -31,8 +31,16 @@ router.delete(
 // 上傳外觀圖片 (僅限管理員)
 router.post(
   "/:appearanceId/upload-image",
-  isAdmin, // 確保用戶是管理員
-  uploadImage.single("image"), // 使用上傳中間件
+  isAdmin,
+  uploadImage.single("image"),
+  (req, res, next) => {
+    console.log("文件上傳信息:", {
+      file: req.file,
+      body: req.body,
+      params: req.params,
+    });
+    next();
+  },
   appearanceController.uploadAppearanceImage
 );
 

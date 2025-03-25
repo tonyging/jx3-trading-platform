@@ -41,5 +41,16 @@ export const appearanceApi = {
         const response = await api.delete(`/api/appearances/submission/${submissionId}`);
         return response.data;
     },
+    // 上傳外觀圖片 (管理員專用)
+    uploadAppearanceImage: async (appearanceId, imageFile) => {
+        console.log('Uploading file:', imageFile);
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        for (const pair of formData.entries()) {
+            console.log(pair[0], pair[1]);
+        }
+        const response = await api.post(`/api/appearances/${appearanceId}/upload-image`, formData);
+        return response.data;
+    },
 };
 //# sourceMappingURL=appearance.js.map

@@ -5,6 +5,7 @@ import type {
   AppearanceSubmissionListResponse,
   AppearanceSubmissionResponse,
   AppearanceCategory,
+  Appearance,
 } from '@/types'
 
 export const appearanceApi = {
@@ -76,6 +77,27 @@ export const appearanceApi = {
       status: string
       message: string
     }>(`/api/appearances/submission/${submissionId}`)
+    return response.data
+  },
+
+  // 上傳外觀圖片 (管理員專用)
+  uploadAppearanceImage: async (appearanceId: string, imageFile: File) => {
+    console.log('Uploading file:', imageFile)
+
+    const formData = new FormData()
+    formData.append('image', imageFile)
+
+    for (const pair of formData.entries()) {
+      console.log(pair[0], pair[1])
+    }
+
+    const response = await api.post<{
+      status: string
+      data: {
+        appearance: Appearance
+        imageUrl: string
+      }
+    }>(`/api/appearances/${appearanceId}/upload-image`, formData)
     return response.data
   },
 }

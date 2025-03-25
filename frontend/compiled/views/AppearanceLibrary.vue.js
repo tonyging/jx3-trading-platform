@@ -1,10 +1,12 @@
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { appearanceApi } from '@/services/api/appearance';
 import CreateAppearanceModal from '@/components/CreateAppearanceModal.vue';
 import AppearancePagination from '@/components/AppearancePagination.vue';
 import { useUserStore } from '@/stores/user';
 // 獲取用戶信息
 const userStore = useUserStore();
+// 判斷是否為管理員
+const isAdmin = computed(() => userStore.currentUser?.role === 'admin');
 // 定義目前的活躍頁籤
 const activeTab = ref('official');
 // 定義資料狀態
@@ -26,6 +28,11 @@ const isCreateModalOpen = ref(false);
 const rejectModalOpen = ref(false);
 const currentSubmissionId = ref('');
 const rejectReason = ref('');
+// 上傳圖片相關狀態
+const isUploadModalOpen = ref(false);
+const selectedAppearanceId = ref('');
+const uploadError = ref(null);
+const isUploading = ref(false);
 // 載入資料的方法
 const loadData = async () => {
     isLoading.value = true;
@@ -156,9 +163,56 @@ const handleReviewAppearance = async (submissionId, action) => {
 // 獲取適當的圖片URL (用於顯示外觀的圖片，如果有的話)
 const getAppearanceImageUrl = (item) => {
     if (item.imageUrl) {
+        console.log('imageUrl', item.imageUrl);
         return item.imageUrl;
     }
     return undefined;
+};
+// 打開上傳圖片模態窗
+const openUploadModal = (appearanceId) => {
+    selectedAppearanceId.value = appearanceId;
+    isUploadModalOpen.value = true;
+    uploadError.value = null;
+};
+// 關閉上傳圖片模態窗
+const closeUploadModal = () => {
+    isUploadModalOpen.value = false;
+    selectedAppearanceId.value = '';
+    uploadError.value = null;
+};
+// 處理圖片上傳
+const handleImageUpload = async (event) => {
+    const target = event.target;
+    if (!target.files || target.files.length === 0) {
+        return;
+    }
+    const file = target.files[0];
+    // 驗證文件類型
+    const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validImageTypes.includes(file.type)) {
+        uploadError.value = '不支持的文件類型，只允許JPG、PNG、GIF或WebP';
+        return;
+    }
+    // 驗證文件大小 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        uploadError.value = '文件太大，最大允許5MB';
+        return;
+    }
+    isUploading.value = true;
+    uploadError.value = null;
+    try {
+        await appearanceApi.uploadAppearanceImage(selectedAppearanceId.value, file);
+        closeUploadModal();
+        // 重新加載數據以反映圖片更新
+        loadData();
+    }
+    catch (error) {
+        console.error('上傳圖片失敗', error);
+        uploadError.value = '上傳圖片失敗，請稍後再試';
+    }
+    finally {
+        isUploading.value = false;
+    }
 };
 // 確保 nicknames 始終是數組
 const ensureNicknames = (item) => {
@@ -176,7 +230,7 @@ function __VLS_template() {
     const __VLS_ctx = {};
     let __VLS_components;
     let __VLS_directives;
-    ['appearance-image-container', 'appearance-info', 'approve-btn', 'reject-btn', 'delete-btn', 'appearance-image-container', 'add-icon', 'add-text', 'add-icon', 'appearance-card', 'appearance-card', 'appearance-content', 'appearance-tabs', 'appearance-tabs', 'appearances-flex', 'appearance-card', 'search-container', 'appearance-card',];
+    ['update-image-btn', 'appearance-image-container', 'appearance-info', 'approve-btn', 'reject-btn', 'delete-btn', 'appearance-image-container', 'add-icon', 'add-text', 'add-icon', 'loading-spinner', 'modal-actions', 'cancel-btn', 'appearance-card', 'appearance-card', 'appearance-content', 'appearance-tabs', 'appearance-tabs', 'appearances-flex', 'appearance-card', 'search-container', 'appearance-card',];
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -268,7 +322,47 @@ function __VLS_template() {
                         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                             ...{ class: ("no-image") },
                         });
-                        __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                        if (__VLS_ctx.isAdmin) {
+                            __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                                ...{ onClick: (...[$event]) => {
+                                        if (!(!((__VLS_ctx.isLoading))))
+                                            return;
+                                        if (!(!((__VLS_ctx.error))))
+                                            return;
+                                        if (!((__VLS_ctx.activeTab === 'official')))
+                                            return;
+                                        if (!(!((__VLS_ctx.appearances.length === 0))))
+                                            return;
+                                        if (!(!((__VLS_ctx.getAppearanceImageUrl(appearance)))))
+                                            return;
+                                        if (!((__VLS_ctx.isAdmin)))
+                                            return;
+                                        __VLS_ctx.openUploadModal(appearance._id);
+                                    } },
+                                ...{ class: ("upload-btn") },
+                            });
+                        }
+                        else {
+                            __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                        }
+                    }
+                    if (__VLS_ctx.isAdmin && __VLS_ctx.getAppearanceImageUrl(appearance)) {
+                        __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                            ...{ onClick: (...[$event]) => {
+                                    if (!(!((__VLS_ctx.isLoading))))
+                                        return;
+                                    if (!(!((__VLS_ctx.error))))
+                                        return;
+                                    if (!((__VLS_ctx.activeTab === 'official')))
+                                        return;
+                                    if (!(!((__VLS_ctx.appearances.length === 0))))
+                                        return;
+                                    if (!((__VLS_ctx.isAdmin && __VLS_ctx.getAppearanceImageUrl(appearance))))
+                                        return;
+                                    __VLS_ctx.openUploadModal(appearance._id);
+                                } },
+                            ...{ class: ("update-image-btn") },
+                        });
                     }
                     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: ("appearance-info") },
@@ -539,7 +633,49 @@ function __VLS_template() {
             ...{ class: ("submit-btn") },
         });
     }
-    ['appearance-library-container', 'appearance-tabs', 'active', 'active', 'appearance-content', 'search-container', 'search-btn', 'loading-container', 'loading-spinner', 'error-container', 'official-appearances', 'empty-state', 'appearances-flex', 'appearance-card', 'appearance-image-container', 'appearance-image', 'no-image', 'appearance-info', 'appearance-name', 'appearance-category', 'field-label', 'category-tag', 'appearance-nicknames', 'field-label', 'nickname-wrapper', 'nickname-tag', 'no-nickname', 'pending-appearances', 'empty-state', 'appearance-card', 'add-card', 'add-icon', 'add-text', 'appearances-flex', 'appearance-card', 'submission-card', 'pending-card', 'appearance-info', 'appearance-name', 'appearance-category', 'field-label', 'category-tag', 'appearance-nicknames', 'field-label', 'nickname-wrapper', 'nickname-tag', 'no-nickname', 'submission-actions', 'delete-btn', 'approve-btn', 'reject-btn', 'appearance-card', 'add-card', 'add-icon', 'add-text', 'modal-overlay', 'reject-modal', 'modal-actions', 'cancel-btn', 'submit-btn',];
+    if (__VLS_ctx.isUploadModalOpen) {
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("modal-overlay") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("upload-modal") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
+        __VLS_elementAsFunction(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("upload-form") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
+            ...{ onChange: (__VLS_ctx.handleImageUpload) },
+            type: ("file"),
+            accept: ("image/jpeg,image/png,image/gif,image/webp"),
+            disabled: ((__VLS_ctx.isUploading)),
+        });
+        if (__VLS_ctx.uploadError) {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: ("upload-error") },
+            });
+            (__VLS_ctx.uploadError);
+        }
+        if (__VLS_ctx.isUploading) {
+            __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: ("upload-loading") },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: ("loading-spinner") },
+            });
+            __VLS_elementAsFunction(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        }
+        __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: ("modal-actions") },
+        });
+        __VLS_elementAsFunction(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.closeUploadModal) },
+            ...{ class: ("cancel-btn") },
+            disabled: ((__VLS_ctx.isUploading)),
+        });
+    }
+    ['appearance-library-container', 'appearance-tabs', 'active', 'active', 'appearance-content', 'search-container', 'search-btn', 'loading-container', 'loading-spinner', 'error-container', 'official-appearances', 'empty-state', 'appearances-flex', 'appearance-card', 'appearance-image-container', 'appearance-image', 'no-image', 'upload-btn', 'update-image-btn', 'appearance-info', 'appearance-name', 'appearance-category', 'field-label', 'category-tag', 'appearance-nicknames', 'field-label', 'nickname-wrapper', 'nickname-tag', 'no-nickname', 'pending-appearances', 'empty-state', 'appearance-card', 'add-card', 'add-icon', 'add-text', 'appearances-flex', 'appearance-card', 'submission-card', 'pending-card', 'appearance-info', 'appearance-name', 'appearance-category', 'field-label', 'category-tag', 'appearance-nicknames', 'field-label', 'nickname-wrapper', 'nickname-tag', 'no-nickname', 'submission-actions', 'delete-btn', 'approve-btn', 'reject-btn', 'appearance-card', 'add-card', 'add-icon', 'add-text', 'modal-overlay', 'reject-modal', 'modal-actions', 'cancel-btn', 'submit-btn', 'modal-overlay', 'upload-modal', 'upload-form', 'upload-error', 'upload-loading', 'loading-spinner', 'modal-actions', 'cancel-btn',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -560,6 +696,7 @@ const __VLS_self = (await import('vue')).defineComponent({
         return {
             CreateAppearanceModal: CreateAppearanceModal,
             AppearancePagination: AppearancePagination,
+            isAdmin: isAdmin,
             activeTab: activeTab,
             appearances: appearances,
             pendingSubmissions: pendingSubmissions,
@@ -570,6 +707,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             isCreateModalOpen: isCreateModalOpen,
             rejectModalOpen: rejectModalOpen,
             rejectReason: rejectReason,
+            isUploadModalOpen: isUploadModalOpen,
+            uploadError: uploadError,
+            isUploading: isUploading,
             loadData: loadData,
             handlePageChange: handlePageChange,
             handleSearch: handleSearch,
@@ -581,6 +721,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             submitReject: submitReject,
             handleReviewAppearance: handleReviewAppearance,
             getAppearanceImageUrl: getAppearanceImageUrl,
+            openUploadModal: openUploadModal,
+            closeUploadModal: closeUploadModal,
+            handleImageUpload: handleImageUpload,
             ensureNicknames: ensureNicknames,
         };
     },

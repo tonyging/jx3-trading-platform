@@ -17,7 +17,7 @@ const api = axios.create({
   baseURL: (() => {
     console.log('Environment:', import.meta.env.MODE)
     console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL)
-    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
   })(),
   timeout: 60000, // 增加到 60 秒以處理 Render 的冷啟動
 })
@@ -27,7 +27,10 @@ api.interceptors.request.use(
   (config) => {
     // 保留原始的 headers 對象，但設置我們需要的屬性
     if (config.headers) {
-      config.headers['Content-Type'] = 'application/json'
+      if (!(config.data instanceof FormData)) {
+        config.headers['Content-Type'] = 'application/json'
+      }
+
       config.headers['Accept'] = 'application/json'
 
       // 從 localStorage 獲取 token

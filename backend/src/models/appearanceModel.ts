@@ -84,7 +84,6 @@ const appearanceSchema = new Schema<IAppearance>(
 );
 
 // 添加索引
-appearanceSchema.index({ officialName: 1 });
 appearanceSchema.index({ nicknames: 1 });
 appearanceSchema.index({ category: 1 }); // 新增類別索引
 
