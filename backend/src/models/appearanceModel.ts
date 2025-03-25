@@ -1,3 +1,4 @@
+// models/appearanceModel.ts
 import mongoose, { Document, Schema, Types } from "mongoose";
 
 export interface IAppearanceImage {

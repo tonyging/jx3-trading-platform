@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import AppearanceSubmission from "../models/AppearanceSubmissionModel";
-import Appearance from "../models/AppearanceModel";
+import AppearanceSubmission from "../models/appearanceSubmissionModel";
+import Appearance from "../models/appearanceModel";
 import { Types } from "mongoose";
 import SystemLog from "../models/systemLogModel";
 
