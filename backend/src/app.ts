@@ -44,7 +44,6 @@ class App {
     // 應用 CORS 中間件
     this.app.use(cors(corsOptions));
     this.app.use((req: Request, res: Response, next: NextFunction) => {
-      console.log("原始請求數據:", req.query);
       console.log("收到前端請求:", {
         time: new Date().toISOString(),
         query: req.query,
@@ -53,6 +52,7 @@ class App {
     });
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+    this.app.use("/uploads", express.static("uploads"));
 
     this.app.use(
       (err: Error, req: Request, res: Response, next: NextFunction) => {

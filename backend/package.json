@@ -33,7 +33,7 @@
     "@types/geoip-lite": "^1.4.4",
     "@types/jsonwebtoken": "^9.0.8",
     "@types/mongoose": "^5.11.97",
-    "@types/multer": "^1.4.7",
+    "@types/multer": "^1.4.12",
     "@types/node": "^16.18.126",
     "@types/nodemailer": "^6.4.17",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
