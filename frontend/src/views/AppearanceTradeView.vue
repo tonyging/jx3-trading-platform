@@ -60,7 +60,11 @@ const isAdmin = computed(() => {
 const totalColumns = computed(() => {
   // 基礎列數（賣家、外觀名稱、類型、幣別、價格、交易方式、操作）
   let baseColumns = currentTab.value === 'completed' ? 4 : 7
-  // 如果是管理員，加上狀態列
+
+  if (currentTab.value === 'all') {
+    baseColumns += 1
+  }
+
   if (isAdmin.value) {
     baseColumns += 1
   }
@@ -99,6 +103,14 @@ const checkRatingStatus = async (tradeId: string): Promise<boolean> => {
     console.error('檢查評價狀態失敗:', error)
     return false
   }
+}
+
+// 獲取賣家名稱
+const getSellerName = (trade: AppearanceTrade) => {
+  if (typeof trade.sellerId === 'object' && trade.sellerId) {
+    return trade.sellerId.name || '未知賣家'
+  }
+  return '未知賣家'
 }
 
 // 載入外觀交易列表
@@ -553,6 +565,7 @@ const submitRating = async () => {
           <tr>
             <th>外觀名稱</th>
             <th>類型</th>
+            <th v-if="currentTab === 'all'">賣家</th>
             <template v-if="currentTab !== 'completed'">
               <th>幣別</th>
               <th>
@@ -585,7 +598,7 @@ const submitRating = async () => {
           <tr v-else v-for="trade in trades" :key="trade._id">
             <td>{{ getAppearanceName(trade) }}</td>
             <td>{{ getAppearanceCategory(trade) }}</td>
-
+            <td v-if="currentTab === 'all'">{{ getSellerName(trade) }}</td>
             <template v-if="currentTab !== 'completed'">
               <td>{{ getCurrencyDisplay(trade.currency) }}</td>
               <td>{{ formatPrice(trade.price) }}</td>
