@@ -5,11 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { appearanceTradeApi } from '@/services/api/appearanceTrade'
 import { uploadImageToFirebase } from '@/firebase/storage'
-import type {
-  AppearanceTrade,
-  AppearanceTradeStatus,
-  AppearancePaymentMethod,
-} from '@/types/appearanceTrade'
+import type { AppearanceTrade, AppearanceTradeStatus } from '@/types/appearanceTrade'
 
 // 定義可能的錯誤類型
 interface ApiError {
@@ -19,6 +15,12 @@ interface ApiError {
     }
   }
   message?: string
+}
+
+// 定義消息發送者的類型
+interface MessageSender {
+  _id: string
+  name?: string
 }
 
 // 獲取路由參數
@@ -92,7 +94,7 @@ const canCancelTransaction = computed(() => {
 })
 
 // 獲取發送者的名稱
-const getSenderName = (sender: any): string => {
+const getSenderName = (sender: string | MessageSender): string => {
   if (typeof sender === 'object' && sender !== null) {
     return sender.name || '未知用戶'
   }
@@ -127,7 +129,7 @@ const getSenderName = (sender: any): string => {
 }
 
 // 獲取發送者頭像的首字母
-const getSenderInitial = (sender: any): string => {
+const getSenderInitial = (sender: string | MessageSender): string => {
   const name = getSenderName(sender)
   return name.charAt(0) || '?'
 }

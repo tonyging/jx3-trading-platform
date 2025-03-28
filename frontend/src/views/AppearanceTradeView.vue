@@ -1,7 +1,6 @@
 // AppearanceTradeView.vue
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { appearanceTradeApi } from '@/services/api/appearanceTrade'
@@ -371,10 +370,7 @@ const handleSubmitEditTrade = async (data: {
 const handleConfirmReservation = async (paymentMethod: AppearancePaymentMethod) => {
   if (selectedTrade.value) {
     try {
-      const response = await appearanceTradeApi.reserveAppearanceTrade(
-        selectedTrade.value._id,
-        paymentMethod,
-      )
+      await appearanceTradeApi.reserveAppearanceTrade(selectedTrade.value._id, paymentMethod)
 
       // 關閉預訂模態框
       showReserveModal.value = false
