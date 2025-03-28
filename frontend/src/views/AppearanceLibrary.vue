@@ -1,6 +1,7 @@
 <!-- src/views/AppearanceLibrary.vue -->
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { appearanceApi } from '@/services/api/appearance'
 import type { Appearance, AppearanceSubmission } from '@/types'
 import CreateAppearanceModal from '@/components/CreateAppearanceModal.vue'
@@ -8,7 +9,8 @@ import AppearancePagination from '@/components/AppearancePagination.vue'
 import { useUserStore } from '@/stores/user'
 import { uploadImageToFirebase } from '@/firebase/storage'
 
-// 獲取用戶信息
+// 獲取路由和用戶信息
+const route = useRoute()
 const userStore = useUserStore()
 
 // 判斷是否為管理員
@@ -263,8 +265,27 @@ const ensureNicknames = (item: Appearance | AppearanceSubmission): string[] => {
   return []
 }
 
+// 監聽路由參數變化
+watch(
+  () => route.query.tab,
+  (newTab) => {
+    if (newTab === 'pending') {
+      activeTab.value = 'pending'
+    } else if (newTab === 'official') {
+      activeTab.value = 'official'
+    }
+  },
+)
+
 // 生命週期鉤子
 onMounted(() => {
+  // 檢查 URL 參數中是否有指定頁籤
+  if (route.query.tab === 'pending') {
+    activeTab.value = 'pending'
+  } else if (route.query.tab === 'official') {
+    activeTab.value = 'official'
+  }
+
   loadData()
 })
 </script>
@@ -513,14 +534,14 @@ onMounted(() => {
 // 基礎變數定義
 $primary-color: #b4282d;
 $primary-hover: #d4282d;
-$primary-darker: #8f2024; // 替代 darken($primary-color, 10%)
+$primary-darker: #8f2024;
 $background-color: #f5f5f5;
 $text-color: #333333;
 $success-color: #52c41a;
-$success-darker: #389e0d; // 替代 darken($success-color, 10%)
+$success-darker: #389e0d;
 $warning-color: #faad14;
 $error-color: #f5222d;
-$error-darker: #cf1322; // 替代 darken($error-color, 10%)
+$error-darker: #cf1322;
 $font-family: 'Microsoft YaHei', '微軟雅黑', sans-serif;
 $spacing-unit: 8px;
 $box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);

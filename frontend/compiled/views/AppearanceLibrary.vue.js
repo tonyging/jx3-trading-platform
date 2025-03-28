@@ -1,10 +1,12 @@
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { appearanceApi } from '@/services/api/appearance';
 import CreateAppearanceModal from '@/components/CreateAppearanceModal.vue';
 import AppearancePagination from '@/components/AppearancePagination.vue';
 import { useUserStore } from '@/stores/user';
 import { uploadImageToFirebase } from '@/firebase/storage';
-// 獲取用戶信息
+// 獲取路由和用戶信息
+const route = useRoute();
 const userStore = useUserStore();
 // 判斷是否為管理員
 const isAdmin = computed(() => userStore.currentUser?.role === 'admin');
@@ -231,8 +233,24 @@ const ensureNicknames = (item) => {
         return item.nicknames;
     return [];
 };
+// 監聽路由參數變化
+watch(() => route.query.tab, (newTab) => {
+    if (newTab === 'pending') {
+        activeTab.value = 'pending';
+    }
+    else if (newTab === 'official') {
+        activeTab.value = 'official';
+    }
+});
 // 生命週期鉤子
 onMounted(() => {
+    // 檢查 URL 參數中是否有指定頁籤
+    if (route.query.tab === 'pending') {
+        activeTab.value = 'pending';
+    }
+    else if (route.query.tab === 'official') {
+        activeTab.value = 'official';
+    }
     loadData();
 }); /* PartiallyEnd: #3632/scriptSetup.vue */
 function __VLS_template() {

@@ -121,6 +121,24 @@ const router = createRouter({
         title: '外觀資料庫 - 劍三交易平台',
       },
     },
+    {
+      path: '/appearance/trade',
+      name: 'appearance-trade',
+      component: () => import('@/views/AppearanceTradeView.vue'),
+      meta: {
+        requiresAuth: true,
+        title: '外觀交易 - 劍三交易平台',
+      },
+    },
+    {
+      path: '/appearance-trades/:id',
+      name: 'appearance-trade-detail',
+      component: () => import('@/views/AppearanceTradeDetailView.vue'),
+      meta: {
+        requiresAuth: true,
+        title: '外觀交易詳情 - 劍三交易平台',
+      },
+    },
   ],
 })
 

@@ -1,4 +1,5 @@
 // src/types/index.ts
+export * from './appearanceTrade'
 
 // 基礎型別定義
 export type UserRole = 'admin' | 'user' | 'banned'
