@@ -139,6 +139,15 @@ const router = createRouter({
         title: '外觀交易詳情 - 劍三交易平台',
       },
     },
+    {
+      path: '/account/trade',
+      name: '/account/trade',
+      component: () => import('@/views/AccountTradeUnderConstruction.vue'),
+      meta: {
+        requiresAuth: true,
+        title: '帳號交易 - 劍三交易平台',
+      },
+    },
   ],
 })
 
