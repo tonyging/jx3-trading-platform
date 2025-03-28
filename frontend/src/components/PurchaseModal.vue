@@ -82,6 +82,7 @@ const closeModal = () => {
 
 <style lang="scss" scoped>
 $primary-color: #b4282d;
+$primary-color-dark: #a3181d;
 $spacing-unit: 8px;
 $transition: all 0.3s ease;
 
@@ -185,7 +186,7 @@ $transition: all 0.3s ease;
     }
 
     .confirm-button {
-      background: linear-gradient(to right, $primary-color, darken($primary-color, 10%));
+      background: linear-gradient(to right, $primary-color, $primary-color-dark);
       color: white;
 
       &:disabled {

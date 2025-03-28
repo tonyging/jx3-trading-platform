@@ -30,12 +30,16 @@ class AppearanceTradeController {
       // 構建查詢條件
       const query: Record<string, any> = {};
 
-      if (status === "trading" && sellerId && buyerId && sellerId === buyerId) {
-        // 當用戶查詢自己參與的"trading"狀態交易時，使用$or查詢
+      if (
+        (status === "trading" || status === "completed") &&
+        sellerId &&
+        buyerId &&
+        sellerId === buyerId
+      ) {
         const userId = new Types.ObjectId(sellerId as string);
         query.$or = [
-          { sellerId: userId, status: "trading" },
-          { buyerId: userId, status: "trading" },
+          { sellerId: userId, status: status },
+          { buyerId: userId, status: status },
         ];
       } else {
         // 處理賣家過濾

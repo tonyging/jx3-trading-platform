@@ -60,7 +60,7 @@ const isAdmin = computed(() => {
 // 計算表格的總列數
 const totalColumns = computed(() => {
   // 基礎列數（賣家、外觀名稱、類型、幣別、價格、交易方式、操作）
-  let baseColumns = 7
+  let baseColumns = currentTab.value === 'completed' ? 4 : 7
   // 如果是管理員，加上狀態列
   if (isAdmin.value) {
     baseColumns += 1
@@ -73,7 +73,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 //頁籤狀態
-const currentTab = ref<'all' | 'my' | 'trading'>('all')
+const currentTab = ref<'all' | 'my' | 'trading' | 'completed'>('all')
 
 const sortFieldMap = {
   price: 'price',
@@ -90,6 +90,17 @@ const notification = ref({
   message: '',
   type: 'success' as 'success' | 'error',
 })
+
+// 檢查用戶是否已評價交易
+const checkRatingStatus = async (tradeId: string): Promise<boolean> => {
+  try {
+    const response = await ratingApi.checkRatingExists(tradeId, userStore.currentUser?.id || '')
+    return response.exists
+  } catch (error) {
+    console.error('檢查評價狀態失敗:', error)
+    return false
+  }
+}
 
 // 載入外觀交易列表
 const loadTrades = async () => {
@@ -116,6 +127,13 @@ const loadTrades = async () => {
           requestParams.buyerId = userStore.currentUser.id
         }
         break
+      case 'completed':
+        requestParams.status = 'completed'
+        if (userStore.currentUser?.id) {
+          requestParams.sellerId = userStore.currentUser.id
+          requestParams.buyerId = userStore.currentUser.id
+        }
+        break
       case 'my':
         if (!userStore.currentUser?.id) {
           await userStore.fetchCurrentUser()
@@ -136,6 +154,19 @@ const loadTrades = async () => {
 
     const response = await appearanceTradeApi.getAppearanceTrades(requestParams)
     trades.value = response.data.trades
+
+    // 在已完成頁籤中，檢查評價狀態
+    if (currentTab.value === 'completed') {
+      ratedTransactions.value.clear() // 清空之前的已評價交易
+      for (const trade of trades.value) {
+        if (trade._id) {
+          const hasRated = await checkRatingStatus(trade._id)
+          if (hasRated) {
+            ratedTransactions.value.add(trade._id)
+          }
+        }
+      }
+    }
   } catch (error: unknown) {
     const apiError = error as ApiError
     showNotification(
@@ -183,9 +214,9 @@ const handleReserveTrade = (trade: AppearanceTrade) => {
 }
 
 // 切換頁籤的方法
-const switchTab = async (tab: 'all' | 'my' | 'trading') => {
+const switchTab = async (tab: 'all' | 'my' | 'trading' | 'completed') => {
   currentTab.value = tab
-  if (tab === 'my' && !userStore.currentUser?.id) {
+  if ((tab === 'my' || tab === 'completed') && !userStore.currentUser?.id) {
     try {
       await userStore.fetchCurrentUser()
     } catch (error: unknown) {
@@ -412,6 +443,83 @@ const getCurrencyDisplay = (currency: AppearanceCurrency) => {
   }
   return currencyMap[currency] || currency
 }
+
+// 添加評價功能
+const showRatingModal = ref(false)
+const tradeToRate = ref<string | null>(null)
+const targetUserId = ref<string | null>(null)
+
+// 處理評價
+const handleRate = async (trade: AppearanceTrade) => {
+  if (!trade._id) {
+    showNotification('找不到相關交易資訊', 'error')
+    return
+  }
+
+  try {
+    // 檢查是否已評價
+    const ratingResponse = await ratingApi.checkRatingExists(
+      trade._id,
+      userStore.currentUser?.id || '',
+    )
+
+    if (ratingResponse.exists) {
+      // 如果已評價，獲取之前的評價詳情
+      const previousRatingResponse = await ratingApi.getTransactionRating(trade._id)
+      previousRating.value = previousRatingResponse.data.rating
+      showPreviousRatingModal.value = true
+      return
+    }
+
+    // 儲存交易ID
+    tradeToRate.value = trade._id
+
+    // 獲取評價對象的ID (賣家)
+    if (typeof trade.sellerId === 'object') {
+      targetUserId.value = trade.sellerId._id
+    } else {
+      targetUserId.value = trade.sellerId as string
+    }
+
+    // 顯示評價對話框
+    showRatingModal.value = true
+  } catch (error) {
+    console.error('檢查評價狀態失敗:', error)
+    showNotification('檢查評價狀態失敗', 'error')
+  }
+}
+
+// 提交評價
+const submitRating = async () => {
+  try {
+    if (!tradeToRate.value || !targetUserId.value) {
+      showNotification('評價資訊不完整', 'error')
+      return
+    }
+
+    await ratingApi.createRating({
+      toUserId: targetUserId.value,
+      score: ratingScore.value,
+      comment: ratingComment.value,
+      transactionId: tradeToRate.value,
+    })
+
+    // 更新已評價的交易列表
+    ratedTransactions.value.add(tradeToRate.value)
+
+    showRatingModal.value = false
+    showNotification('評價成功', 'success')
+
+    // 重新載入交易列表
+    await loadTrades()
+  } catch (error: unknown) {
+    const apiError = error as ApiError
+    showNotification(
+      apiError.response?.data?.message || (apiError.message as string) || '評價失敗',
+      'error',
+    )
+  }
+}
 </script>
 
 <template>
@@ -432,6 +540,12 @@ const getCurrencyDisplay = (currency: AppearanceCurrency) => {
         >
           交易中
         </button>
+        <button
+          :class="['tab', { active: currentTab === 'completed' }]"
+          @click="switchTab('completed')"
+        >
+          已完成
+        </button>
       </div>
       <button class="create-button" @click="handleCreateTrade">出售外觀</button>
     </div>
@@ -443,14 +557,24 @@ const getCurrencyDisplay = (currency: AppearanceCurrency) => {
           <tr>
             <th>外觀名稱</th>
             <th>類型</th>
-            <th>幣別</th>
-            <th>
-              <div class="sort-header" @click="handleSort('price')">
-                價格
-                <span :class="getSortIconClass('price')" />
-              </div>
-            </th>
-            <th>交易方式</th>
+            <template v-if="currentTab !== 'completed'">
+              <th>幣別</th>
+              <th>
+                <div class="sort-header" @click="handleSort('price')">
+                  價格
+                  <span :class="getSortIconClass('price')" />
+                </div>
+              </th>
+              <th>交易方式</th>
+            </template>
+            <template v-else>
+              <th>
+                <div class="sort-header" @click="handleSort('price')">
+                  價格
+                  <span :class="getSortIconClass('price')" />
+                </div>
+              </th>
+            </template>
             <th v-if="isAdmin">狀態</th>
             <th>操作</th>
           </tr>
@@ -465,14 +589,21 @@ const getCurrencyDisplay = (currency: AppearanceCurrency) => {
           <tr v-else v-for="trade in trades" :key="trade._id">
             <td>{{ getAppearanceName(trade) }}</td>
             <td>{{ getAppearanceCategory(trade) }}</td>
-            <td>{{ getCurrencyDisplay(trade.currency) }}</td>
-            <td>{{ formatPrice(trade.price) }}</td>
-            <td v-if="currentTab !== 'trading'">
-              {{ formatPaymentMethods(trade.paymentMethods) }}
-            </td>
-            <td v-else>
-              {{ trade.selectedPaymentMethod }}
-            </td>
+
+            <template v-if="currentTab !== 'completed'">
+              <td>{{ getCurrencyDisplay(trade.currency) }}</td>
+              <td>{{ formatPrice(trade.price) }}</td>
+              <td v-if="currentTab !== 'trading'">
+                {{ formatPaymentMethods(trade.paymentMethods) }}
+              </td>
+              <td v-else>
+                {{ trade.selectedPaymentMethod }}
+              </td>
+            </template>
+            <template v-else>
+              <td>{{ formatPrice(trade.price) }}</td>
+            </template>
+
             <td v-if="isAdmin">
               <span :class="['status-tag', getStatusClass(trade.status)]" :title="trade.status">
                 {{ getStatusDisplay(trade.status) }}
@@ -482,6 +613,24 @@ const getCurrencyDisplay = (currency: AppearanceCurrency) => {
               <!-- 交易中頁籤的按鈕邏輯 -->
               <template v-if="currentTab === 'trading'">
                 <button class="view-button" @click="handleViewTrade(trade)">查看交易</button>
+              </template>
+
+              <!-- 已完成頁籤的按鈕邏輯 -->
+              <template v-else-if="currentTab === 'completed'">
+                <div class="transaction-actions">
+                  <button class="view-button" @click="handleViewTrade(trade)">查看交易</button>
+                  <!-- 顯示評價按鈕，當是買家且未評價時 -->
+                  <button
+                    v-if="
+                      typeof trade.buyerId === 'object' &&
+                      trade.buyerId._id === userStore.currentUser?.id
+                    "
+                    class="rate-button"
+                    @click="handleRate(trade)"
+                  >
+                    {{ ratedTransactions.has(trade._id) ? '已評價' : '評價賣家' }}
+                  </button>
+                </div>
               </template>
 
               <!-- 其他頁籤的按鈕邏輯 -->
@@ -551,6 +700,84 @@ const getCurrencyDisplay = (currency: AppearanceCurrency) => {
       </div>
     </div>
 
+    <!-- 評價相關模態框 -->
+    <div v-if="showRatingModal" class="rating-modal-overlay">
+      <div class="rating-modal">
+        <h3>評價賣家</h3>
+        <div class="rating-stars">
+          <div class="stars-label">評分:</div>
+          <div class="stars-container">
+            <button
+              v-for="i in 5"
+              :key="i"
+              type="button"
+              :class="['star-btn', { active: i <= ratingScore }]"
+              @click="ratingScore = i"
+            >
+              <span>★</span>
+            </button>
+          </div>
+          <div class="stars-value">{{ ratingScore }} 顆星</div>
+        </div>
+        <div class="rating-comment">
+          <label for="rating-comment">評價內容:</label>
+          <textarea
+            id="rating-comment"
+            v-model="ratingComment"
+            placeholder="請輸入您的評價內容..."
+            rows="4"
+          ></textarea>
+        </div>
+        <div class="rating-actions">
+          <button class="cancel-btn" @click="showRatingModal = false">取消</button>
+          <button class="submit-btn" @click="submitRating">提交評價</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 已評價查看模態框 -->
+    <div v-if="showPreviousRatingModal" class="previous-rating-modal-overlay">
+      <div class="previous-rating-modal">
+        <h3>已評價的交易</h3>
+        <div class="previous-rating-stars">
+          <div class="stars-label">評分:</div>
+          <div class="stars-container">
+            <button
+              v-for="i in 5"
+              :key="i"
+              type="button"
+              :class="['star-btn', { active: i <= (previousRating?.score || 0) }]"
+              disabled
+            >
+              <span>★</span>
+            </button>
+          </div>
+          <div class="stars-value">{{ previousRating?.score || 0 }} 顆星</div>
+        </div>
+        <div class="previous-rating-comment">
+          <label>評價內容:</label>
+          <p>{{ previousRating?.comment || '無評價內容' }}</p>
+          <div class="rating-date">
+            評價時間:
+            {{
+              previousRating?.createdAt
+                ? new Date(previousRating.createdAt).toLocaleString('zh-TW', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : '未知'
+            }}
+          </div>
+        </div>
+        <div class="previous-rating-actions">
+          <button @click="showPreviousRatingModal = false">關閉</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 通知組件 -->
     <div v-if="notification.show" :class="['notification', `notification-${notification.type}`]">
       {{ notification.message }}
@@ -558,7 +785,6 @@ const getCurrencyDisplay = (currency: AppearanceCurrency) => {
   </main>
 </template>
 
-// AppearanceTradeView.vue - 繼續樣式部分
 <style lang="scss" scoped>
 // 基礎變數定義
 $primary-color: #b4282d;
@@ -590,6 +816,11 @@ $admin-hover: #3a7bd5;
   display: flex;
   gap: $spacing-unit * 2;
   align-items: center;
+}
+
+.transaction-actions {
+  display: flex;
+  gap: $spacing-unit * 2;
 }
 
 .status-tag {
@@ -847,6 +1078,22 @@ td {
   }
 }
 
+.rate-button {
+  padding: $spacing-unit * 1.5 $spacing-unit * 2;
+  background: linear-gradient(to right, #ffa940, #fa8c16);
+  color: white;
+  border: none;
+  border-radius: $spacing-unit;
+  cursor: pointer;
+  transition: $transition;
+  font-weight: 600;
+
+  &:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(to right, #fa8c16, #d46b08);
+  }
+}
+
 .product-actions {
   display: flex;
   gap: $spacing-unit * 2;
@@ -939,6 +1186,241 @@ td {
   }
 }
 
+// 評價模態框樣式
+.rating-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.rating-modal {
+  background: white;
+  border-radius: $spacing-unit * 2;
+  width: 90%;
+  max-width: 500px;
+  padding: $spacing-unit * 4;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: $spacing-unit * 3;
+    color: $text-color;
+    text-align: center;
+    font-size: 18px;
+  }
+
+  .rating-stars {
+    margin-bottom: $spacing-unit * 3;
+
+    .stars-label {
+      margin-bottom: $spacing-unit;
+      font-weight: 500;
+    }
+
+    .stars-container {
+      display: flex;
+      gap: $spacing-unit;
+      margin-bottom: $spacing-unit;
+
+      .star-btn {
+        background: none;
+        border: none;
+        font-size: 30px;
+        cursor: pointer;
+        color: #d9d9d9;
+        transition: all 0.2s ease;
+        padding: 0;
+
+        &.active {
+          color: #ffc107;
+        }
+
+        &:hover {
+          transform: scale(1.1);
+        }
+      }
+    }
+
+    .stars-value {
+      font-size: 14px;
+      color: #666;
+    }
+  }
+
+  .rating-comment {
+    margin-bottom: $spacing-unit * 3;
+
+    label {
+      display: block;
+      margin-bottom: $spacing-unit;
+      font-weight: 500;
+    }
+
+    textarea {
+      width: 100%;
+      padding: $spacing-unit * 1.5;
+      border: 1px solid #d9d9d9;
+      border-radius: $spacing-unit;
+      font-size: 14px;
+      resize: vertical;
+
+      &:focus {
+        border-color: $primary-color;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba($primary-color, 0.1);
+      }
+    }
+  }
+
+  .rating-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-unit * 2;
+
+    button {
+      padding: $spacing-unit * 1.5 $spacing-unit * 3;
+      border-radius: $spacing-unit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .cancel-btn {
+      background: white;
+      border: 1px solid #d9d9d9;
+      color: #666;
+
+      &:hover {
+        background: #f5f5f5;
+      }
+    }
+
+    .submit-btn {
+      background: $primary-color;
+      border: none;
+      color: white;
+
+      &:hover {
+        background: $primary-hover;
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+
+.previous-rating-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.previous-rating-modal {
+  background: white;
+  border-radius: $spacing-unit * 2;
+  width: 90%;
+  max-width: 500px;
+  padding: $spacing-unit * 4;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: $spacing-unit * 3;
+    color: $text-color;
+    text-align: center;
+    font-size: 18px;
+  }
+
+  .previous-rating-stars {
+    margin-bottom: $spacing-unit * 3;
+
+    .stars-label {
+      margin-bottom: $spacing-unit;
+      font-weight: 500;
+    }
+
+    .stars-container {
+      display: flex;
+      gap: $spacing-unit;
+      margin-bottom: $spacing-unit;
+
+      .star-btn {
+        background: none;
+        border: none;
+        font-size: 30px;
+        cursor: default;
+        color: #d9d9d9;
+        padding: 0;
+
+        &.active {
+          color: #ffc107;
+        }
+      }
+    }
+
+    .stars-value {
+      font-size: 14px;
+      color: #666;
+    }
+  }
+
+  .previous-rating-comment {
+    margin-bottom: $spacing-unit * 3;
+
+    label {
+      display: block;
+      margin-bottom: $spacing-unit;
+      font-weight: 500;
+    }
+
+    p {
+      background-color: #f5f5f5;
+      padding: $spacing-unit * 2;
+      border-radius: $spacing-unit;
+      min-height: 100px;
+    }
+
+    .rating-date {
+      text-align: right;
+      color: #666;
+      font-size: 14px;
+      margin-top: $spacing-unit * 2;
+    }
+  }
+
+  .previous-rating-actions {
+    display: flex;
+    justify-content: center;
+
+    button {
+      padding: $spacing-unit * 1.5 $spacing-unit * 3;
+      background-color: $primary-color;
+      color: white;
+      border: none;
+      border-radius: $spacing-unit;
+      cursor: pointer;
+
+      &:hover {
+        background-color: $primary-hover;
+      }
+    }
+  }
+}
+
 // 通知樣式
 .notification {
   position: fixed;
@@ -1020,9 +1502,19 @@ td {
   .view-button,
   .buy-button,
   .edit-button,
-  .delete-button {
+  .delete-button,
+  .rate-button {
     padding: $spacing-unit ($spacing-unit * 1.5);
     font-size: 14px;
+  }
+
+  .transaction-actions {
+    flex-direction: column;
+    gap: $spacing-unit;
+
+    button {
+      width: 100%;
+    }
   }
 }
 </style>

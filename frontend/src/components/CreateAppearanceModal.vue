@@ -190,7 +190,9 @@ const closeModal = () => {
 
 <style lang="scss" scoped>
 $primary-color: #b4282d;
+$primary-color-hover: #a3181d; // 預先定義的深色版本，取代 darken
 $background-color: #f5f5f5;
+$background-color-hover: #e5e5e5; // 預先定義的深色版本，取代 darken
 $text-color: #333;
 $border-color: #e0e0e0;
 
@@ -320,7 +322,7 @@ $border-color: #e0e0e0;
       color: $text-color;
 
       &:hover {
-        background-color: darken($background-color, 10%);
+        background-color: $background-color-hover;
       }
     }
 
@@ -329,12 +331,12 @@ $border-color: #e0e0e0;
       color: white;
 
       &:disabled {
-        background-color: lighten($primary-color, 20%);
+        background-color: #e57a7e; // 使用具體顏色值代替 lighten
         cursor: not-allowed;
       }
 
       &:not(:disabled):hover {
-        background-color: darken($primary-color, 10%);
+        background-color: $primary-color-hover;
       }
     }
   }
