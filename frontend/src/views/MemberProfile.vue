@@ -88,7 +88,14 @@ const phoneVerificationState = reactive({
   isVerifying: false,
   isCodeSent: false,
   isVerified: false,
+  countryCode: '+886',
 })
+
+// 國家選項
+const countryOptions = [
+  { code: '+886', name: '台灣', placeholder: '例：0912345678' },
+  { code: '+852', name: '香港', placeholder: '例：98765432' },
+]
 
 // Discord相關的狀態
 const discordState = reactive({
@@ -280,9 +287,26 @@ async function handleSendVerification() {
       return
     }
 
-    const formattedPhoneNumber = phoneVerificationState.phoneNumber.startsWith('+')
-      ? phoneVerificationState.phoneNumber
-      : `+886${phoneVerificationState.phoneNumber.replace(/^0/, '')}`
+    // 根據選擇的國家處理手機號碼格式
+    let formattedPhoneNumber: string
+
+    // 台灣號碼處理
+    if (phoneVerificationState.countryCode === '+886') {
+      // 移除開頭的 0
+      formattedPhoneNumber = phoneVerificationState.phoneNumber.startsWith('0')
+        ? `+886${phoneVerificationState.phoneNumber.substring(1)}`
+        : `+886${phoneVerificationState.phoneNumber}`
+    }
+    // 香港號碼處理
+    else if (phoneVerificationState.countryCode === '+852') {
+      formattedPhoneNumber = `+852${phoneVerificationState.phoneNumber}`
+    }
+    // 其他情況，直接使用輸入的號碼加上國碼
+    else {
+      formattedPhoneNumber = `${phoneVerificationState.countryCode}${phoneVerificationState.phoneNumber}`
+    }
+
+    console.log('發送驗證碼到:', formattedPhoneNumber)
 
     const confirmationResult = await signInWithPhoneNumber(
       auth,
@@ -455,12 +479,31 @@ watch(currentMenu, (newMenu) => {
             <div class="security-item-content">
               <div v-if="!phoneVerificationState.isVerified" class="phone-verification">
                 <div v-if="!phoneVerificationState.isCodeSent">
-                  <input
-                    v-model="phoneVerificationState.phoneNumber"
-                    type="tel"
-                    placeholder="請輸入手機號碼"
-                    :disabled="phoneVerificationState.isVerifying"
-                  />
+                  <div class="country-select-container">
+                    <select
+                      v-model="phoneVerificationState.countryCode"
+                      class="country-select"
+                      :disabled="phoneVerificationState.isVerifying"
+                    >
+                      <option
+                        v-for="country in countryOptions"
+                        :key="country.code"
+                        :value="country.code"
+                      >
+                        {{ country.name }} ({{ country.code }})
+                      </option>
+                    </select>
+                    <input
+                      v-model="phoneVerificationState.phoneNumber"
+                      type="tel"
+                      :placeholder="
+                        countryOptions.find((c) => c.code === phoneVerificationState.countryCode)
+                          ?.placeholder
+                      "
+                      :disabled="phoneVerificationState.isVerifying"
+                      class="phone-input"
+                    />
+                  </div>
                   <!-- reCAPTCHA container -->
                   <div id="recaptcha-container" class="mb-4"></div>
                   <button
@@ -1065,6 +1108,51 @@ $discord-color: #5865f2;
   }
 }
 
+.country-select-container {
+  display: flex;
+  gap: $spacing-unit;
+  margin-bottom: $spacing-unit * 2;
+}
+
+.country-select {
+  padding: $spacing-unit * 2;
+  border: 1px solid #ddd;
+  border-radius: $spacing-unit;
+  transition: $transition;
+  flex-basis: 40%;
+  background-color: white;
+
+  &:focus {
+    border-color: $primary-color;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba($primary-color, 0.1);
+  }
+
+  &:disabled {
+    background-color: #f0f0f0;
+    cursor: not-allowed;
+  }
+}
+
+.phone-input {
+  flex-grow: 1;
+  padding: $spacing-unit * 2;
+  border: 1px solid #ddd;
+  border-radius: $spacing-unit;
+  transition: $transition;
+
+  &:focus {
+    border-color: $primary-color;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba($primary-color, 0.1);
+  }
+
+  &:disabled {
+    background-color: #f0f0f0;
+    cursor: not-allowed;
+  }
+}
+
 .secondary-button {
   background-color: transparent;
   color: $primary-color;
@@ -1176,6 +1264,16 @@ $discord-color: #5865f2;
 
 // 更小螢幕的額外調整
 @media (max-width: 480px) {
+  .country-select-container {
+    flex-direction: column;
+    gap: $spacing-unit;
+  }
+
+  .country-select {
+    width: 100%;
+    flex-basis: auto;
+  }
+
   .menu-item {
     min-width: 80px;
     padding: $spacing-unit;
