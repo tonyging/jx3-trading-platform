@@ -4,6 +4,7 @@ import Transaction from "../models/transactionModel";
 import mongoose, { Types } from "mongoose";
 import User, { IUser } from "../models/userModel";
 import activityTrackingService from "../services/activityTrackingService";
+import pushNotificationService from "../services/pushNotificationService";
 
 interface IProductQueryParams {
   page?: string;
@@ -291,6 +292,21 @@ class ProductController {
         transactionId: updatedProduct.transactionId,
         buyerId: updatedProduct.buyerId,
       });
+
+      // 確保獲取正確的 userId (ObjectId)
+      const sellerId =
+        typeof existingProduct.userId === "object" &&
+        "_id" in existingProduct.userId
+          ? existingProduct.userId._id
+          : existingProduct.userId;
+
+      await pushNotificationService.sendTradeNotification(
+        sellerId,
+        "trade_reserved",
+        existingProduct.characterNickname, // 商品名稱
+        transaction._id as Types.ObjectId, // 交易ID
+        req.user.name // 買家名稱
+      );
 
       res.status(200).json({
         status: "success",
