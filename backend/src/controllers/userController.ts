@@ -762,10 +762,8 @@ class UserController {
   ) {
     try {
       const { email } = req.body;
-      console.log("收到重設密碼請求:", { email });
 
       if (!email) {
-        console.log("缺少電子郵件地址");
         return res.status(400).json({
           status: "error",
           message: "請提供電子郵件地址",
@@ -1174,6 +1172,52 @@ class UserController {
         });
       }
     } catch (error) {
+      next(error);
+    }
+  };
+
+  // 測試推播通知
+  public testPushNotification = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const userId = req.user._id;
+
+      // 檢查用戶是否已訂閱推播
+      const isSubscribed = await pushNotificationService.isUserSubscribed(
+        userId
+      );
+
+      if (!isSubscribed) {
+        return res.status(400).json({
+          status: "error",
+          message: "此用戶尚未訂閱推播通知，請先訂閱",
+        });
+      }
+
+      // 發送測試推播
+      const result = await pushNotificationService.sendNotification(
+        userId,
+        "測試推播通知",
+        "這是一條測試推播通知，用於確認推播功能是否正常工作。",
+        "/"
+      );
+
+      if (result) {
+        res.status(200).json({
+          status: "success",
+          message: "測試推播通知已發送",
+        });
+      } else {
+        res.status(500).json({
+          status: "error",
+          message: "發送測試推播通知失敗",
+        });
+      }
+    } catch (error) {
+      console.error("發送測試推播通知時出錯:", error);
       next(error);
     }
   };

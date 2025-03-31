@@ -77,12 +77,6 @@ const dismissPrompt = () => {
 // 檢查推播訂閱狀態
 const checkSubscriptionStatus = async () => {
   try {
-    // 先檢查本地存儲
-    if (localStorage.getItem('pushNotificationsSubscribed') === 'true') {
-      isSubscribed.value = true
-      return
-    }
-
     // 如果用戶已登入，檢查後端的訂閱狀態
     if (userStore.isAuthenticated) {
       const response = await userService.checkPushSubscriptionStatus()

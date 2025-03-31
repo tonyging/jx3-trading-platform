@@ -78,4 +78,11 @@ router.delete(
   userController.deletePushSubscription
 );
 
+// 測試推播通知
+router.post(
+  "/test-push-notification",
+  authenticate,
+  userController.testPushNotification
+);
+
 export default router;

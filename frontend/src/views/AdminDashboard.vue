@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { adminApi } from '@/services/api/admin'
 import type { User, Product, Transaction } from '@/types'
+import PushNotificationTester from '@/components/PushNotificationTester.vue'
 
 // 定義可能的錯誤類型
 interface ApiError {
@@ -232,6 +233,12 @@ onMounted(() => {
           @click="switchTab('transactions')"
         >
           交易管理
+        </button>
+        <button
+          :class="['tab-button', { active: activeTab === 'tests' }]"
+          @click="switchTab('tests')"
+        >
+          測試功能
         </button>
       </div>
 
@@ -516,6 +523,17 @@ onMounted(() => {
           </tbody>
         </table>
       </div>
+
+      <!-- 系統功能測試頁面 -->
+      <div v-if="activeTab === 'tests'" class="dashboard-panel">
+        <h2>系統功能測試</h2>
+
+        <div class="test-section">
+          <h3>推播通知測試</h3>
+          <p>點擊下方按鈕發送測試推播通知。這將僅發送給當前登入的用戶。</p>
+          <PushNotificationTester />
+        </div>
+      </div>
     </div>
 
     <!-- 通知組件 -->
@@ -720,6 +738,27 @@ $transition: all 0.3s ease;
       font-weight: 600;
       color: $primary-color;
     }
+  }
+}
+
+.test-section {
+  background-color: #f9f9f9;
+  border-radius: $spacing-unit;
+  padding: $spacing-unit * 3;
+  margin-top: $spacing-unit * 4;
+  margin-bottom: $spacing-unit * 4;
+  border: 1px dashed #ccc;
+
+  h3 {
+    font-size: 18px;
+    color: $primary-color;
+    margin-top: 0;
+    margin-bottom: $spacing-unit * 2;
+  }
+
+  p {
+    color: #666;
+    margin-bottom: $spacing-unit * 2;
   }
 }
 

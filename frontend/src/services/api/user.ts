@@ -238,4 +238,21 @@ export const userService = {
       throw new Error(apiError.response?.data?.message || '檢查推播訂閱狀態失敗')
     }
   },
+
+  // 測試推播
+  testPushNotification: async (): Promise<{
+    status: string
+    message: string
+  }> => {
+    try {
+      const response = await api.post<{
+        status: string
+        message: string
+      }>('/api/users/test-push-notification')
+      return response.data
+    } catch (error: unknown) {
+      const apiError = error as ApiError
+      throw new Error(apiError.response?.data?.message || '測試推播通知發送失敗')
+    }
+  },
 }
