@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import { Types } from "mongoose";
 import geoip from "geoip-lite";
 import { auth } from "../config/firebase";
+import pushNotificationService from "../services/pushNotificationService";
 
 class UserController {
   // 發送驗證碼
@@ -1087,6 +1088,93 @@ class UserController {
         status: "error",
         message: "解除 Discord 連結失敗",
       });
+    }
+  };
+
+  // 保存推播訂閱
+  public savePushSubscription = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { subscription } = req.body;
+      const userId = req.user._id;
+
+      if (!subscription) {
+        return res.status(400).json({
+          status: "error",
+          message: "未提供訂閱資訊",
+        });
+      }
+
+      const result = await pushNotificationService.saveSubscription(
+        userId,
+        subscription
+      );
+
+      if (result) {
+        res.status(200).json({
+          status: "success",
+          message: "推播訂閱已保存",
+        });
+      } else {
+        res.status(400).json({
+          status: "error",
+          message: "保存推播訂閱失敗",
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // 檢查推播訂閱狀態
+  public checkPushSubscription = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const userId = req.user._id;
+      const isSubscribed = await pushNotificationService.isUserSubscribed(
+        userId
+      );
+
+      res.status(200).json({
+        status: "success",
+        data: {
+          isSubscribed,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // 刪除推播訂閱
+  public deletePushSubscription = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const userId = req.user._id;
+      const result = await pushNotificationService.deleteSubscription(userId);
+
+      if (result) {
+        res.status(200).json({
+          status: "success",
+          message: "推播訂閱已刪除",
+        });
+      } else {
+        res.status(400).json({
+          status: "error",
+          message: "刪除推播訂閱失敗",
+        });
+      }
+    } catch (error) {
+      next(error);
     }
   };
 }

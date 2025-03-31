@@ -24,6 +24,11 @@ interface ApiError {
   message?: string
 }
 
+interface PushSubscriptionResponse {
+  status: string
+  message: string
+}
+
 export const userService = {
   // 發送驗證碼的新方法
   sendVerificationCode: async (emailAndPassword: { email: string; password: string }) => {
@@ -189,6 +194,48 @@ export const userService = {
     } catch (error: unknown) {
       const apiError = error as ApiError
       throw new Error(apiError.response?.data?.message || '解除Discord綁定失敗')
+    }
+  },
+
+  // 保存推播狀態
+  savePushSubscription: async (
+    subscription: PushSubscription,
+  ): Promise<PushSubscriptionResponse> => {
+    try {
+      const response = await api.post<PushSubscriptionResponse>('/api/users/push-subscription', {
+        subscription: JSON.stringify(subscription),
+      })
+      return response.data
+    } catch (error: unknown) {
+      const apiError = error as ApiError
+      throw new Error(apiError.response?.data?.message || '保存推播訂閱失敗')
+    }
+  },
+
+  // 取消推播訂閱
+  unsubscribeFromPushNotifications: async (): Promise<PushSubscriptionResponse> => {
+    try {
+      const response = await api.delete<PushSubscriptionResponse>('/api/users/push-subscription')
+      return response.data
+    } catch (error: unknown) {
+      const apiError = error as ApiError
+      throw new Error(apiError.response?.data?.message || '取消推播訂閱失敗')
+    }
+  },
+
+  // 檢查推播訂閱狀態
+  checkPushSubscriptionStatus: async (): Promise<{
+    status: string
+    data: { isSubscribed: boolean }
+  }> => {
+    try {
+      const response = await api.get<{ status: string; data: { isSubscribed: boolean } }>(
+        '/api/users/push-subscription',
+      )
+      return response.data
+    } catch (error: unknown) {
+      const apiError = error as ApiError
+      throw new Error(apiError.response?.data?.message || '檢查推播訂閱狀態失敗')
     }
   },
 }

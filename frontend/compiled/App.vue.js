@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useAppStore } from '@/stores/appState';
 import SidebarNavigation from '@/components/SidebarNavigation.vue';
+import PushNotificationRequest from '@/components/PushNotificationRequest.vue';
 import axios from 'axios';
 const userStore = useUserStore();
 const appStore = useAppStore();
@@ -82,6 +83,13 @@ function __VLS_template() {
     // @ts-ignore
     const __VLS_6 = __VLS_asFunctionalComponent(__VLS_5, new __VLS_5({}));
     const __VLS_7 = __VLS_6({}, ...__VLS_functionalComponentArgsRest(__VLS_6));
+    if (__VLS_ctx.userStore.isAuthenticated) {
+        // @ts-ignore
+        /** @type { [typeof PushNotificationRequest, ] } */ ;
+        // @ts-ignore
+        const __VLS_11 = __VLS_asFunctionalComponent(PushNotificationRequest, new PushNotificationRequest({}));
+        const __VLS_12 = __VLS_11({}, ...__VLS_functionalComponentArgsRest(__VLS_11));
+    }
     if (__VLS_ctx.appStore.isBackendWaking) {
         __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: ("backend-waking-overlay") },
@@ -120,6 +128,7 @@ const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
             SidebarNavigation: SidebarNavigation,
+            PushNotificationRequest: PushNotificationRequest,
             userStore: userStore,
             appStore: appStore,
             currentRoute: currentRoute,

@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/appState'
 import SidebarNavigation from '@/components/SidebarNavigation.vue'
+import PushNotificationRequest from '@/components/PushNotificationRequest.vue'
 import axios from 'axios'
 
 const userStore = useUserStore()
@@ -71,6 +72,9 @@ onMounted(async () => {
     <main class="main-content" :class="mainContentClass">
       <router-view />
     </main>
+
+    <!-- 推播通知請求組件 - 僅在使用者已登入時顯示 -->
+    <PushNotificationRequest v-if="userStore.isAuthenticated" />
 
     <!-- 全局加載指示器 -->
     <div v-if="appStore.isBackendWaking" class="backend-waking-overlay">

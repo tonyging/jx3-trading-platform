@@ -34,7 +34,9 @@ const isAdmin = computed(() => {
 const totalColumns = computed(() => {
     // 基礎列數（賣家、外觀名稱、類型、幣別、價格、交易方式、操作）
     let baseColumns = currentTab.value === 'completed' ? 4 : 7;
-    // 如果是管理員，加上狀態列
+    if (currentTab.value === 'all') {
+        baseColumns += 1;
+    }
     if (isAdmin.value) {
         baseColumns += 1;
     }
@@ -68,6 +70,13 @@ const checkRatingStatus = async (tradeId) => {
         console.error('檢查評價狀態失敗:', error);
         return false;
     }
+};
+// 獲取賣家名稱
+const getSellerName = (trade) => {
+    if (typeof trade.sellerId === 'object' && trade.sellerId) {
+        return trade.sellerId.name || '未知賣家';
+    }
+    return '未知賣家';
 };
 // 載入外觀交易列表
 const loadTrades = async () => {
@@ -476,6 +485,9 @@ function __VLS_template() {
     __VLS_elementAsFunction(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
     __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
+    if (__VLS_ctx.currentTab === 'all') {
+        __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
+    }
     if (__VLS_ctx.currentTab !== 'completed') {
         __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
         __VLS_elementAsFunction(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({});
@@ -534,6 +546,10 @@ function __VLS_template() {
             (__VLS_ctx.getAppearanceName(trade));
             __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
             (__VLS_ctx.getAppearanceCategory(trade));
+            if (__VLS_ctx.currentTab === 'all') {
+                __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
+                (__VLS_ctx.getSellerName(trade));
+            }
             if (__VLS_ctx.currentTab !== 'completed') {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({});
                 (__VLS_ctx.getCurrencyDisplay(trade.currency));
@@ -933,6 +949,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             userStore: userStore,
             currentTab: currentTab,
             notification: notification,
+            getSellerName: getSellerName,
             handleReserveTrade: handleReserveTrade,
             switchTab: switchTab,
             formatPrice: formatPrice,

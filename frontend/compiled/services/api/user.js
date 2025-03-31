@@ -150,5 +150,40 @@ export const userService = {
             throw new Error(apiError.response?.data?.message || '解除Discord綁定失敗');
         }
     },
+    // 保存推播狀態
+    savePushSubscription: async (subscription) => {
+        try {
+            const response = await api.post('/api/users/push-subscription', {
+                subscription: JSON.stringify(subscription),
+            });
+            return response.data;
+        }
+        catch (error) {
+            const apiError = error;
+            throw new Error(apiError.response?.data?.message || '保存推播訂閱失敗');
+        }
+    },
+    // 取消推播訂閱
+    unsubscribeFromPushNotifications: async () => {
+        try {
+            const response = await api.delete('/api/users/push-subscription');
+            return response.data;
+        }
+        catch (error) {
+            const apiError = error;
+            throw new Error(apiError.response?.data?.message || '取消推播訂閱失敗');
+        }
+    },
+    // 檢查推播訂閱狀態
+    checkPushSubscriptionStatus: async () => {
+        try {
+            const response = await api.get('/api/users/push-subscription');
+            return response.data;
+        }
+        catch (error) {
+            const apiError = error;
+            throw new Error(apiError.response?.data?.message || '檢查推播訂閱狀態失敗');
+        }
+    },
 };
 //# sourceMappingURL=user.js.map

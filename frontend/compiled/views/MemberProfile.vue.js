@@ -51,7 +51,13 @@ const phoneVerificationState = reactive({
     isVerifying: false,
     isCodeSent: false,
     isVerified: false,
+    countryCode: '+886',
 });
+// 國家選項
+const countryOptions = [
+    { code: '+886', name: '台灣', placeholder: '例：0912345678' },
+    { code: '+852', name: '香港', placeholder: '例：98765432' },
+];
 // Discord相關的狀態
 const discordState = reactive({
     isLinked: false,
@@ -212,9 +218,24 @@ async function handleSendVerification() {
             showNotification('reCAPTCHA 未正確初始化', 'error');
             return;
         }
-        const formattedPhoneNumber = phoneVerificationState.phoneNumber.startsWith('+')
-            ? phoneVerificationState.phoneNumber
-            : `+886${phoneVerificationState.phoneNumber.replace(/^0/, '')}`;
+        // 根據選擇的國家處理手機號碼格式
+        let formattedPhoneNumber;
+        // 台灣號碼處理
+        if (phoneVerificationState.countryCode === '+886') {
+            // 移除開頭的 0
+            formattedPhoneNumber = phoneVerificationState.phoneNumber.startsWith('0')
+                ? `+886${phoneVerificationState.phoneNumber.substring(1)}`
+                : `+886${phoneVerificationState.phoneNumber}`;
+        }
+        // 香港號碼處理
+        else if (phoneVerificationState.countryCode === '+852') {
+            formattedPhoneNumber = `+852${phoneVerificationState.phoneNumber}`;
+        }
+        // 其他情況，直接使用輸入的號碼加上國碼
+        else {
+            formattedPhoneNumber = `${phoneVerificationState.countryCode}${phoneVerificationState.phoneNumber}`;
+        }
+        console.log('發送驗證碼到:', formattedPhoneNumber);
         const confirmationResult = await signInWithPhoneNumber(auth, formattedPhoneNumber, window.recaptchaVerifier);
         phoneVerificationState.verificationId = confirmationResult.verificationId;
         phoneVerificationState.isCodeSent = true;
@@ -313,7 +334,7 @@ function __VLS_template() {
     const __VLS_ctx = {};
     let __VLS_components;
     let __VLS_directives;
-    ['verification-button', 'resend-button', 'settings-container', 'side-menu', 'menu-item', 'menu-item-icon', 'menu-item-text', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'discord-info', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'notification', 'discord-unlink-button', 'discord-button', 'discord-connect', 'save-button', 'logout-button',];
+    ['verification-button', 'resend-button', 'settings-container', 'side-menu', 'menu-item', 'menu-item-icon', 'menu-item-text', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'discord-info', 'country-select-container', 'country-select', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'notification', 'discord-unlink-button', 'discord-button', 'discord-connect', 'save-button', 'logout-button',];
     // CSS variable injection 
     // CSS variable injection end 
     __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -425,10 +446,28 @@ function __VLS_template() {
             });
             if (!__VLS_ctx.phoneVerificationState.isCodeSent) {
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+                __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: ("country-select-container") },
+                });
+                __VLS_elementAsFunction(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+                    value: ((__VLS_ctx.phoneVerificationState.countryCode)),
+                    ...{ class: ("country-select") },
+                    disabled: ((__VLS_ctx.phoneVerificationState.isVerifying)),
+                });
+                for (const [country] of __VLS_getVForSourceType((__VLS_ctx.countryOptions))) {
+                    __VLS_elementAsFunction(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                        key: ((country.code)),
+                        value: ((country.code)),
+                    });
+                    (country.name);
+                    (country.code);
+                }
                 __VLS_elementAsFunction(__VLS_intrinsicElements.input)({
                     type: ("tel"),
-                    placeholder: ("請輸入手機號碼"),
+                    placeholder: ((__VLS_ctx.countryOptions.find((c) => c.code === __VLS_ctx.phoneVerificationState.countryCode)
+                        ?.placeholder)),
                     disabled: ((__VLS_ctx.phoneVerificationState.isVerifying)),
+                    ...{ class: ("phone-input") },
                 });
                 (__VLS_ctx.phoneVerificationState.phoneNumber);
                 __VLS_elementAsFunction(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -550,7 +589,7 @@ function __VLS_template() {
         });
         (__VLS_ctx.notification.message);
     }
-    ['settings-container', 'side-menu', 'active', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'save-button', 'logout-button', 'settings-section', 'security-info', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'verified-email', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'phone-verification', 'mb-4', 'verification-button', 'verification-code-section', 'verification-input-group', 'verification-code-input', 'verification-actions', 'verification-button', 'verification-button', 'resend-button', 'security-item', 'discord-section', 'security-item-header', 'status', 'verified', 'security-item-content', 'discord-connect', 'discord-status', 'discord-connect-button', 'discord-icon', 'discord-info', 'discord-profile-container', 'discord-avatar', 'discord-user-details', 'discord-username', 'discord-unlink-button', 'notification',];
+    ['settings-container', 'side-menu', 'active', 'menu-item', 'menu-item-icon', 'menu-item-text', 'menu-item-label', 'menu-item-sublabel', 'main-settings-area', 'settings-section', 'user-form', 'form-group', 'save-button', 'logout-button', 'settings-section', 'security-info', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'verified-email', 'security-item', 'security-item-header', 'status', 'verified', 'security-item-content', 'phone-verification', 'country-select-container', 'country-select', 'phone-input', 'mb-4', 'verification-button', 'verification-code-section', 'verification-input-group', 'verification-code-input', 'verification-actions', 'verification-button', 'verification-button', 'resend-button', 'security-item', 'discord-section', 'security-item-header', 'status', 'verified', 'security-item-content', 'discord-connect', 'discord-status', 'discord-connect-button', 'discord-icon', 'discord-info', 'discord-profile-container', 'discord-avatar', 'discord-user-details', 'discord-username', 'discord-unlink-button', 'notification',];
     var __VLS_slots;
     var $slots;
     let __VLS_inheritedAttrs;
@@ -576,6 +615,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             userEmail: userEmail,
             notification: notification,
             phoneVerificationState: phoneVerificationState,
+            countryOptions: countryOptions,
             discordState: discordState,
             updateUserInfo: updateUserInfo,
             connectDiscord: connectDiscord,

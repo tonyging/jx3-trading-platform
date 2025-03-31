@@ -61,4 +61,21 @@ router.patch(
   userController.updateUserRole
 );
 
+// 推播訂閱相關路由
+router.post(
+  "/push-subscription",
+  authenticate,
+  userController.savePushSubscription
+);
+router.get(
+  "/push-subscription",
+  authenticate,
+  userController.checkPushSubscription
+);
+router.delete(
+  "/push-subscription",
+  authenticate,
+  userController.deletePushSubscription
+);
+
 export default router;
