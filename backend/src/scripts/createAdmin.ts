@@ -22,7 +22,7 @@ async function createAdminUser() {
     const adminData = {
       email: "tony10130357@gmail.com", // 設定管理員郵箱
       password: hashedPassword, // 設定安全的密碼
-      name: "系統管理員",
+      name: "槐詩",
       role: "admin",
       loginAttempts: 0,
       lockUntil: null,
